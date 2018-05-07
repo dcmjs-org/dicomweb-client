@@ -1,7 +1,7 @@
-import { searchForInstances } from './utils.js';
+import { DICOMwebClient } from './api.js';
 
-let utils = {
-  searchForInstances,
+let api = {
+  DICOMwebClient,
 };
 
-export { utils };
+export { api };
