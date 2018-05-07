@@ -2,7 +2,7 @@
   "name": "dicomweb-client",
   "version": "0.0.1",
   "description": "Implementation of DICOMweb client code",
-  "main": "build/dcmjs-client.js",
+  "main": "build/dicomweb-client.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rollup -c"
