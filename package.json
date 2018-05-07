@@ -1,0 +1,31 @@
+{
+  "name": "dicomweb-client",
+  "version": "0.0.1",
+  "description": "Implementation of DICOMweb client code",
+  "main": "build/dcmjs-client.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcmjs-org/dicomweb-client.git"
+  },
+  "keywords": [
+    "dicom",
+    "dcmjs",
+    "dicomweb",
+    "wado",
+    "qido",
+    "stow"
+  ],
+  "author": "Steve Pieper, Markus Herrmann",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dcmjs-org/dicomweb-client/issues"
+  },
+  "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
+  "devDependencies": {
+    "rollup": "^0.45.2"
+  }
+}
