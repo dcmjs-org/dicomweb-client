@@ -15,9 +15,9 @@
     "dicom",
     "dcmjs",
     "dicomweb",
-    "wado",
-    "qido",
-    "stow"
+    "wado-rs",
+    "qido-rs",
+    "stow-rs"
   ],
   "author": "Steve Pieper, Markus Herrmann",
   "license": "MIT",
