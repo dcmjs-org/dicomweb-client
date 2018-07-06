@@ -297,7 +297,7 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @param {String} sopInstanceUID SOP Instance UID
    * @param {Array} frameNumbers one-based index of frames
-   * @param {Object} options options (key "imageSubtype" to specify MIME image subtypes)
+   * @param {Object} options optionial parameters (key "imageSubtype" to specify MIME image subtypes)
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
   retrieveInstanceFrames(studyInstanceUID, seriesInstanceUID, sopInstanceUID, frameNumbers, options={}) {
@@ -369,12 +369,13 @@ class DICOMwebClient {
 
   /**
    * Stores DICOM instances.
-   * @param {String} studyInstanceUID Study Instance UID (optional)
+   * @param {Array} datasets DICOM datasets of instances that should be stored in DICOM JSON format
+   * @param {Object} options optional parameters (key "studyInstanceUID" to only store instances of a given study)
    */
-  storeInstances(studyInstanceUID) {
+  storeInstances(datasets, options={}) {
     let url = this.baseURL;
-    if (studyInstanceUID !== undefined) {
-      url += '/studies/' + studyInstanceUID;
+    if ('studyInstanceUID' in options) {
+      url += '/studies/' + options.studyInstanceUID;
     }
     console.error('storing instances is not yet implemented')
   }
