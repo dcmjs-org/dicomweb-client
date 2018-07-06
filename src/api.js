@@ -38,11 +38,13 @@ class DICOMwebClient {
     return queryString
   }
 
-  _httpRequest(url, method, headers, responseType, progressCallback) {
+  _httpRequest(url, method, headers, options={}) {
     return new Promise( (resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
-      request.responseType = responseType;
+      if ('responseType' in options) {
+        request.responseType = options.responseType;
+      }
 
       if (typeof(headers) === 'object') {
         Object.keys(headers).forEach(function (key) {
@@ -79,8 +81,10 @@ class DICOMwebClient {
       };
 
       // Event triggered while download progresses
-      if (typeof(progressCallback) === 'function') {
-          request.onprogress = progressCallback();
+      if ('progressCallback' in options) {
+        if (typeof(options.progressCallback) === 'function') {
+          request.onprogress = options.progressCallback();
+        }
       }
 
       // request.onprogress = function (event) {
@@ -95,12 +99,16 @@ class DICOMwebClient {
       //   return(percentComplete);
       // };
 
-      request.send();
+      if ('data' in options) {
+        request.send(options.data);
+      } else {
+        request.send();
+      }
     });
   }
 
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'get', headers, responseType, progressCallback);
+    return this._httpRequest(url, 'get', headers, {responseType, progressCallback});
   }
 
   _httpGetApplicationJson(url, params={}, progressCallback) {
@@ -158,17 +166,18 @@ class DICOMwebClient {
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpPost(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'post', headers, responseType, progressCallback);
+  _httpPost(url, headers, data, progressCallback) {
+    return this._httpRequest(url, 'post', headers, {data, progressCallback});
   }
 
-  _httpPostApplicationDicom(url, progressCallback) {
-    const headers = {
-      'Content-Type': 'application/dicom',
-      'Accept': 'application/dicom+json'
-    };
-    const responseType = 'json';
-    return this._httpPost(url, headers, responseType, progressCallback);
+  _httpPostApplicationDicom(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom'};
+    return this._httpPost(url, headers, data, progressCallback);
+  }
+
+  _httpPostApplicationJson(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom+json'};
+    return this._httpPost(url, headers, data, progressCallback);
   }
 
   /**
