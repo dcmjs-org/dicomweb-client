@@ -4,9 +4,14 @@ node_js:
   - "node"
 
 script:
+  # first, stop postgres so we can use our own from dcm4chee docker
   - sudo service postgresql stop
   # wait for postgresql to shutdown
   - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done
+  # now start dcm4chee archive and wait for it to startup
   - docker-compose -f dcm4chee-docker-compose.yml up -d
-  - curl http://localhost:8080/dcm4chee-arc/aets
-  - until curl localhost:8080; do echo waiting...; sleep 1; done
+  - until curl localhost:8080/dcm4chee-arc/aets; do echo waiting...; sleep 1; done
+  # at this point DICOMweb server is running and ready for testing
+  #
+  # now shut down the archive
+  - docker-compose -f dcm4chee-docker-compose.yml down
