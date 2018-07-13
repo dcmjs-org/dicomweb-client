@@ -4,6 +4,9 @@ node_js:
   - "node"
 
 script:
+  - sudo service postgresql stop
+  # wait for postgresql to shutdown
+  - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done
   - docker-compose -f dcm4chee-docker-compose.yml up -d
   - curl http://localhost:8080/dcm4chee-arc/aets
   - until curl localhost:8080; do echo waiting...; sleep 1; done
