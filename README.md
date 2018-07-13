@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/dcmjs-org/dicomweb-client.svg?branch=master)](https://travis-ci.com/dcmjs-org/dicomweb-client)
+
 # DICOMweb Client
 
 JavaScript client implementation of [DICOMweb](https://www.dicomstandard.org/dicomweb/).
