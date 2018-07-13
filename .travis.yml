@@ -4,4 +4,4 @@ node_js:
   - "node"
 
 script:
-  - docker-compose -f dcm4chee-docker-compose.yml up
+  - docker-compose -f dcm4chee-docker-compose.yml up -d
