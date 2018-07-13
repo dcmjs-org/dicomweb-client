@@ -22,7 +22,7 @@ services:
         max-size: "10m"
     ports:
       - "5432:5432"
-    env_file: docker-compose.env
+    env_file: dcm4chee-docker-compose.env
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
@@ -39,7 +39,7 @@ services:
       - "9990:9990"
       - "11112:11112"
       - "2575:2575"
-    env_file: docker-compose.env
+    env_file: dcm4chee-docker-compose.env
     environment:
       WILDFLY_CHOWN: /opt/wildfly/standalone /storage
       WILDFLY_WAIT_FOR: ldap:389 db:5432
