@@ -21,7 +21,7 @@ services:
       options:
         max-size: "10m"
     ports:
-      - "5432:5432"
+      - "15432:5432"
     env_file: dcm4chee-docker-compose.env
     volumes:
       - /etc/localtime:/etc/localtime:ro
@@ -42,7 +42,7 @@ services:
     env_file: dcm4chee-docker-compose.env
     environment:
       WILDFLY_CHOWN: /opt/wildfly/standalone /storage
-      WILDFLY_WAIT_FOR: ldap:389 db:5432
+      WILDFLY_WAIT_FOR: ldap:389 db:15432
     depends_on:
       - ldap
       - db
