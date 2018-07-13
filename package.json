@@ -28,7 +28,5 @@
   "devDependencies": {
     "rollup": "^0.45.2"
   },
-  "dependencies": {
-    "tape": "^4.9.1"
-  }
+  "dependencies": {}
 }
