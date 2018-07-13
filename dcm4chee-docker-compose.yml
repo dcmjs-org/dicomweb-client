@@ -8,7 +8,7 @@ services:
         max-size: "10m"
     ports:
       - "389:389"
-    env_file: docker-compose.env
+    env_file: dcm4chee-docker-compose.env
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
