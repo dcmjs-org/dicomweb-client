@@ -1,3 +1,7 @@
 language: node_js
+
 node_js:
   - "node"
+
+script:
+  - docker-compose -f dcm4chee-docker-compose.yml up
