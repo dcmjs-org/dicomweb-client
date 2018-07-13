@@ -27,5 +27,8 @@
   "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
   "devDependencies": {
     "rollup": "^0.45.2"
+  },
+  "dependencies": {
+    "tape": "^4.9.1"
   }
 }
