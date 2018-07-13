@@ -12,6 +12,7 @@ script:
   - docker-compose -f dcm4chee-docker-compose.yml up -d
   - until curl localhost:8080/dcm4chee-arc/aets; do echo waiting...; sleep 1; done
   # at this point DICOMweb server is running and ready for testing
+  - npm install
   - npm test
   # now shut down the archive
   - docker-compose -f dcm4chee-docker-compose.yml down
