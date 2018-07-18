@@ -4,7 +4,7 @@
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
   "scripts": {
-    "test": "node tests/test.js",
+    "test": "./test.sh",
     "build": "rollup -c"
   },
   "repository": {
@@ -26,7 +26,10 @@
   },
   "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
   "devDependencies": {
-    "rollup": "^0.45.2"
+    "rollup": "^0.45.2",
+    "tape": "^4.9.1"
   },
-  "dependencies": {}
+  "dependencies": {
+    "xhr2": "^0.1.4"
+  }
 }

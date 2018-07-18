@@ -10,9 +10,9 @@ test('timing test', function (t) {
     url: 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs',
   });
 
-  /* this fails for node because there is no XMLHttpRequest...
+  // this fails for node because there is no XMLHttpRequest...
   dwc.searchForStudies().then(console.log);
-  */
+  
 
   t.equal(dwc.constructor.name,"DICOMwebClient");
 

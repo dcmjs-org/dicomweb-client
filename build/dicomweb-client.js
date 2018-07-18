@@ -91,6 +91,8 @@ function findToken(message, token, offset) {
   return -1;
 }
 
+var XMLHttpRequest = require('xhr2');
+
 function isEmptyObject (obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
@@ -126,11 +128,13 @@ class DICOMwebClient {
     return queryString
   }
 
-  _httpRequest(url, method, headers, responseType, progressCallback) {
+  _httpRequest(url, method, headers, options={}) {
     return new Promise( (resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
-      request.responseType = responseType;
+      if ('responseType' in options) {
+        request.responseType = options.responseType;
+      }
 
       if (typeof(headers) === 'object') {
         Object.keys(headers).forEach(function (key) {
@@ -167,8 +171,10 @@ class DICOMwebClient {
       };
 
       // Event triggered while download progresses
-      if (typeof(progressCallback) === 'function') {
-          request.onprogress = progressCallback();
+      if ('progressCallback' in options) {
+        if (typeof(options.progressCallback) === 'function') {
+          request.onprogress = options.progressCallback();
+        }
       }
 
       // request.onprogress = function (event) {
@@ -183,12 +189,16 @@ class DICOMwebClient {
       //   return(percentComplete);
       // };
 
-      request.send();
+      if ('data' in options) {
+        request.send(options.data);
+      } else {
+        request.send();
+      }
     });
   }
 
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'get', headers, responseType, progressCallback);
+    return this._httpRequest(url, 'get', headers, {responseType, progressCallback});
   }
 
   _httpGetApplicationJson(url, params={}, progressCallback) {
@@ -246,17 +256,18 @@ class DICOMwebClient {
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpPost(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'post', headers, responseType, progressCallback);
+  _httpPost(url, headers, data, progressCallback) {
+    return this._httpRequest(url, 'post', headers, {data, progressCallback});
   }
 
-  _httpPostApplicationDicom(url, progressCallback) {
-    const headers = {
-      'Content-Type': 'application/dicom',
-      'Accept': 'application/dicom+json'
-    };
-    const responseType = 'json';
-    return this._httpPost(url, headers, responseType, progressCallback);
+  _httpPostApplicationDicom(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom'};
+    return this._httpPost(url, headers, data, progressCallback);
+  }
+
+  _httpPostApplicationJson(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom+json'};
+    return this._httpPost(url, headers, data, progressCallback);
   }
 
   /**
@@ -385,7 +396,7 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @param {String} sopInstanceUID SOP Instance UID
    * @param {Array} frameNumbers one-based index of frames
-   * @param {Object} options options (key "imageSubtype" to specify MIME image subtypes)
+   * @param {Object} options optionial parameters (key "imageSubtype" to specify MIME image subtypes)
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
   retrieveInstanceFrames(studyInstanceUID, seriesInstanceUID, sopInstanceUID, frameNumbers, options={}) {
@@ -457,12 +468,13 @@ class DICOMwebClient {
 
   /**
    * Stores DICOM instances.
-   * @param {String} studyInstanceUID Study Instance UID (optional)
+   * @param {Array} datasets DICOM datasets of instances that should be stored in DICOM JSON format
+   * @param {Object} options optional parameters (key "studyInstanceUID" to only store instances of a given study)
    */
-  storeInstances(studyInstanceUID) {
+  storeInstances(datasets, options={}) {
     let url = this.baseURL;
-    if (studyInstanceUID !== undefined) {
-      url += '/studies/' + studyInstanceUID;
+    if ('studyInstanceUID' in options) {
+      url += '/studies/' + options.studyInstanceUID;
     }
     console.error('storing instances is not yet implemented');
   }

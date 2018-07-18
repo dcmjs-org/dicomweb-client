@@ -1,3 +1,5 @@
+var XMLHttpRequest = require('xhr2');
+
 import {
   containsToken, findToken, identifyBoundary,
   uint8ArrayToString, stringToUint8Array
