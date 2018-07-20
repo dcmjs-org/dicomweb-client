@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <h1>
+                Example
+            </h1>
+            <hr>
+            <div class="row">
+                <div id='contents' class="col-xs-12">
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <!-- include the cornerstone library -->
+    <script src="../../build/dicomweb-client.js"></script>
+    <script>
+        if (!window.DICOMwebClient) {
+            console.warn('Failed to load dicomweb-client from build directory. Using unpkg instead.');
+            document.write('<script src="https://unpkg.com/dicomweb-client">\x3C/script>')
+        }
+    </script>
+    
+    <script>
+        const dwc = DICOMwebClient.api.DICOMwebClient;
+        const options = {
+            url: "https://dicomcloud.azurewebsites.net/wadors"
+        };
+
+        const dicomweb = new dwc(options)
+        const studyInstanceUid = '1.2.826.0.1.3680043.8.1055.1.20111103111148288.98361414.79379639'
+        const promise = dicomweb.retrieveStudyMetadata(studyInstanceUid);
+
+        promise.then(studyMetadata => {
+            const div = document.getElementById('contents');
+            div.innerText = JSON.stringify(studyMetadata, null, 2);
+            
+            console.log(studyMetadata);
+        }, error => {
+            throw new Error(error);
+        });
+    </script>
+</html>
