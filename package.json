@@ -5,7 +5,8 @@
   "main": "build/dicomweb-client.js",
   "scripts": {
     "test": "./test.sh",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "watch": "rollup -c -w"
   },
   "repository": {
     "type": "git",
@@ -26,10 +27,16 @@
   },
   "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
   "devDependencies": {
-    "rollup": "^0.45.2",
+    "rollup": "^0.63.2",
+    "rollup-plugin-commonjs": "8.3.0",
+    "rollup-plugin-json": "^3.0.0",
+    "rollup-plugin-node-resolve": "^3.3.0",
     "tape": "^4.9.1"
   },
   "dependencies": {
+    "ajv": "^6.5.2",
+    "rollup-plugin-node-builtins": "^2.1.2",
+    "rollup-plugin-node-globals": "^1.2.1",
     "xhr2": "^0.1.4"
   }
 }

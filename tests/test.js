@@ -13,6 +13,7 @@ test('timing test', function (t) {
   // this fails for node because there is no XMLHttpRequest...
   dwc.searchForStudies().then(console.log);
   
+  dwc.retrieveStudyMetadata(1);
 
   t.equal(dwc.constructor.name,"DICOMwebClient");
 

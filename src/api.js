@@ -1,4 +1,11 @@
-var XMLHttpRequest = require('xhr2');
+import * as Ajv from "ajv";
+
+import 'xhr2';
+
+const ajv = new Ajv.default({ allErrors:true, removeAdditional:'all' })
+import wadoRsRetrieveMetadata from '../schema/WADO-RS-RetrieveMetadata.json'
+
+ajv.addSchema(wadoRsRetrieveMetadata, 'wadoRsRetrieveMetadata');
 
 import {
   containsToken, findToken, identifyBoundary,
@@ -203,6 +210,17 @@ class DICOMwebClient {
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the study
    */
   retrieveStudyMetadata(studyInstanceUID, queryParams={}) {
+    const schemaName = 'wadoRsRetrieveMetadata';
+
+    const valid = ajv.validate(schemaName, {
+      studyInstanceUID,
+      queryParams
+    });
+
+    if (!valid) {
+      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
+    }
+
     console.log(`retrieve metadata of study ${studyInstanceUID}`);
     const url = this.baseURL +
               '/studies/' + studyInstanceUID +
@@ -236,13 +254,17 @@ class DICOMwebClient {
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the series
    */
   retrieveSeriesMetadata(studyInstanceUID, seriesInstanceUID) {
-    console.log(`retrieve metadata of series ${seriesInstanceUID}`);
-    if (studyInstanceUID === undefined) {
-      console.error('Study Instance UID is required for retrieval of series metadata')
+    const valid = ajv.validate(schemaName, {
+      studyInstanceUID,
+      seriesInstanceUID,
+      queryParams
+    });
+
+    if (!valid) {
+      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
     }
-    if (seriesInstanceUID === undefined) {
-      console.error('Series Instance UID is required for retrieval of series metadata')
-    }
+
+    console.log(`retrieve metadata of series ${seriesInstanceUID}`);    
     const url = this.baseURL +
               '/studies/' + studyInstanceUID +
               '/series/' + seriesInstanceUID +
@@ -284,16 +306,18 @@ class DICOMwebClient {
    * @returns {Object} metadata elements in DICOM JSON format
    */
   retrieveInstanceMetadata(studyInstanceUID, seriesInstanceUID, sopInstanceUID) {
+    const valid = ajv.validate(schemaName, {
+      studyInstanceUID,
+      seriesInstanceUID,
+      sopInstanceUID,
+      queryParams
+    });
+
+    if (!valid) {
+      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
+    }
+
     console.log(`retrieve metadata of instance ${sopInstanceUID}`);
-    if (studyInstanceUID === undefined) {
-      console.error('Study Instance UID is required for retrieval of instance metadata')
-    }
-    if (seriesInstanceUID === undefined) {
-      console.error('Series Instance UID is required for retrieval of instance metadata')
-    }
-    if (sopInstanceUID === undefined) {
-      console.error('SOP Instance UID is required for retrieval of instance metadata')
-    }
     const url = this.baseURL +
               '/studies/' + studyInstanceUID +
               '/series/' + seriesInstanceUID +

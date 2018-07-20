@@ -1,0 +1,21 @@
+{
+   "$schema": "http://json-schema.org/draft-07/schema#",
+   "title": "WADO-RS RetrieveMetadata",
+   "description": "http://dicom.nema.org/medical/dicom/current/output/html/part18.html#sect_6.5.6",
+   "type": "object",
+   "properties": {
+      "studyInstanceUID": {
+         "type": "string"
+      },
+      "seriesInstanceUID": {
+         "type": "string"
+      },
+      "sopInstanceUID": {
+         "type": "string"
+      }
+   },
+   "required": [ "studyInstanceUID" ],
+   "dependencies": {
+      "sopInstanceUID": { "required": ["seriesInstanceUID"] }
+   }
+}
