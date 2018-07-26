@@ -329,21 +329,21 @@ class DICOMwebClient {
               '/instances/' + sopInstanceUID +
               '/frames/' + frameNumbers.toString();
     options.imageSubtype = options.imageSubtype || undefined;
-    var func = this._httpGetApplicationOctetStream;
     if (options.imageSubtype) {
         if (options.imageSubtype === 'jpeg') {
-            func = this._httpGetImageJpeg;
+            var promise = this._httpGetImageJpeg(url);
         } else if (options.imageSubtype === 'x-jls') {
-            func = this._httpGetImageJpeg2000;
+            var promise = this._httpGetImageJpeg2000(url);
         } else if (options.imageSubtype === 'jp2') {
-            func = this._httpGetImageJpeg2000;
+            var promise = this._httpGetImageJpeg2000(url);
         } else {
             console.error(`MIME type "image/${options.imageSubtype}" is not supported`)
         }
+    } else {
+      var promise = this._httpGetApplicationOctetStream(url);
     }
 
-    // FIXME
-    return(this._httpGetImageJpeg(url).then((response) => {
+    return(promise.then((response) => {
       const message = new Uint8Array(response);
 
       // First look for the multipart mime header
