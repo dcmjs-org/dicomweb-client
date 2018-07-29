@@ -4,23 +4,23 @@ import commonjs from 'rollup-plugin-commonjs';
 import json from 'rollup-plugin-json';
 
 export default {
-    input: 'src/dicomweb-client.js',
-    output: [
-        {
-            file: 'build/dicomweb-client.js',
-            format: 'umd',
-            name: 'DICOMwebClient',
-        	sourceMap: true
-        },
-    ],
-    plugins: [
-    		resolve({
-    			jsnext: true,
-      			main: true,
-      			browser: true,
-    		}),
-    		commonjs(),
-    		builtins(),
-            json()
-		]
+  entry: 'src/dicomweb-client.js',
+  targets: [
+    {
+      dest: 'build/dicomweb-client.js',
+      format: 'umd',
+      name: 'DICOMwebClient',
+      sourceMap: true
+    },
+  ],
+  plugins: [
+    resolve({
+      jsnext: true,
+      main: true,
+      browser: true,
+    }),
+    commonjs(),
+    builtins(),
+    json()
+  ]
 };
