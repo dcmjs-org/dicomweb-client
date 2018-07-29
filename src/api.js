@@ -1,12 +1,3 @@
-import * as Ajv from "ajv";
-
-import 'xhr2';
-
-const ajv = new Ajv.default({ allErrors:true, removeAdditional:'all' })
-import wadoRsRetrieveMetadata from '../schema/WADO-RS-RetrieveMetadata.json'
-
-ajv.addSchema(wadoRsRetrieveMetadata, 'wadoRsRetrieveMetadata');
-
 import {
   containsToken, findToken, identifyBoundary,
   uint8ArrayToString, stringToUint8Array
@@ -191,15 +182,15 @@ class DICOMwebClient {
 
   /**
    * Searches for DICOM studies.
-   * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
+   * @param {Object} options options object - "queryParams" optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @return {Array} study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
-  searchForStudies(queryParams={}) {
+  searchForStudies(options={}) {
     console.log('search for studies');
     let url = this.baseURL +
               '/studies';
-    if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+    if ('queryParams' in options) {
+        url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
   }
@@ -209,21 +200,13 @@ class DICOMwebClient {
    * @param {String} studyInstanceUID Study Instance UID
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the study
    */
-  retrieveStudyMetadata(studyInstanceUID, queryParams={}) {
-    const schemaName = 'wadoRsRetrieveMetadata';
-
-    const valid = ajv.validate(schemaName, {
-      studyInstanceUID,
-      queryParams
-    });
-
-    if (!valid) {
-      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
+  retrieveStudyMetadata(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of study metadata')
     }
-
-    console.log(`retrieve metadata of study ${studyInstanceUID}`);
+    console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
+              '/studies/' + options.studyInstanceUID +
               '/metadata';
     return(this._httpGetApplicationJson(url));
   }
@@ -234,14 +217,14 @@ class DICOMwebClient {
    * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @returns {Array} series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
    */
-  searchForSeries(options={}, queryParams={}) {
-    console.log(`search series of study ${options.studyInstanceUID}`);
+  searchForSeries(options={}) {
     let url = this.baseURL;
     if ('studyInstanceUID' in options) {
-        url += '/studies/' + options.studyInstanceUID;
+      console.log(`search series of study ${options.studyInstanceUID}`);
+      url += '/studies/' + options.studyInstanceUID;
     }
     url += '/series';
-    if (options.queryParams) {
+    if ('queryParams' in options) {
         url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
@@ -253,22 +236,20 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the series
    */
-  retrieveSeriesMetadata(studyInstanceUID, seriesInstanceUID) {
-    const valid = ajv.validate(schemaName, {
-      studyInstanceUID,
-      seriesInstanceUID,
-      queryParams
-    });
-
-    if (!valid) {
-      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
+  retrieveSeriesMetadata(options) {
+    console.log(`retrieve metadata of series ${seriesInstanceUID}`);
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of series metadata')
+    }
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required for retrieval of series metadata')
     }
 
     console.log(`retrieve metadata of series ${seriesInstanceUID}`);    
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/metadata';
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/metadata';
     return(this._httpGetApplicationJson(url));
   }
 
@@ -278,7 +259,7 @@ class DICOMwebClient {
    * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @returns {Array} instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
-  searchForInstances(options={}, queryParams={}) {
+  searchForInstances(options={}) {
     let url = this.baseURL;
     if ('studyInstanceUID' in options) {
       url += '/studies/' + options.studyInstanceUID;
@@ -286,14 +267,14 @@ class DICOMwebClient {
         console.log(`search for instances of series ${options.seriesInstanceUID}`);
         url += '/series/' + options.seriesInstanceUID;
       } else {
-        console.error('study needs to be specified when searching for instances of a given series');
+        console.log(`search for instances of study ${options.studyInstanceUID}`);
       }
     } else {
-      console.log('search for instances');
+     console.log('search for instances');
     }
     url += '/instances';
-    if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+    if ('queryParams' in options) {
+        url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
   }
@@ -305,24 +286,22 @@ class DICOMwebClient {
    * @param {String} sopInstanceUID SOP Instance UID
    * @returns {Object} metadata elements in DICOM JSON format
    */
-  retrieveInstanceMetadata(studyInstanceUID, seriesInstanceUID, sopInstanceUID) {
-    const valid = ajv.validate(schemaName, {
-      studyInstanceUID,
-      seriesInstanceUID,
-      sopInstanceUID,
-      queryParams
-    });
-
-    if (!valid) {
-      throw new Error(`Invalid Arguments: ${ajv.errorsText()}`);
+  retrieveInstanceMetadata(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of instance metadata')
     }
-
-    console.log(`retrieve metadata of instance ${sopInstanceUID}`);
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required for retrieval of instance metadata')
+    }
+    if (!('sopInstanceUID' in options)) {
+      console.error('SOP Instance UID is required for retrieval of instance metadata')
+    }
+    console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/instances/' + sopInstanceUID +
-              '/metadata';
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/instances/' + options.sopInstanceUID +
+      '/metadata';
     return(this._httpGetApplicationJson(url));
   }
 
@@ -335,31 +314,31 @@ class DICOMwebClient {
    * @param {Object} options optionial parameters (key "imageSubtype" to specify MIME image subtypes)
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
-  retrieveInstanceFrames(studyInstanceUID, seriesInstanceUID, sopInstanceUID, frameNumbers, options={}) {
-    console.log(`retrieve frames ${frameNumbers.toString()} of instance ${sopInstanceUID}`);
-    if (studyInstanceUID === undefined) {
-      console.error('Study Instance UID is required for retrieval of instance frames')
+  retrieveInstanceFrames(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of instance metadata')
     }
-    if (seriesInstanceUID === undefined) {
-      console.error('Series Instance UID is required for retrieval of instance frames')
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required for retrieval of instance metadata')
     }
-    if (sopInstanceUID === undefined) {
-      console.error('SOP Instance UID is required for retrieval of instance frames')
+    if (!('sopInstanceUID' in options)) {
+      console.error('SOP Instance UID is required for retrieval of instance metadata')
     }
-    if (frameNumbers === undefined) {
+    if (!('frameNumbers' in options)) {
       console.error('frame numbers are required for retrieval of instance frames')
     }
+    console.log(`retrieve frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`)
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/instances/' + sopInstanceUID +
-              '/frames/' + frameNumbers.toString();
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/instances/' + options.sopInstanceUID +
+      '/frames/' + options.frameNumbers.toString();
     options.imageSubtype = options.imageSubtype || undefined;
     if (options.imageSubtype) {
         if (options.imageSubtype === 'jpeg') {
             var promise = this._httpGetImageJpeg(url);
         } else if (options.imageSubtype === 'x-jls') {
-            var promise = this._httpGetImageJpeg2000(url);
+            var promise = this._httpGetImageJpegLS(url);
         } else if (options.imageSubtype === 'jp2') {
             var promise = this._httpGetImageJpeg2000(url);
         } else {
@@ -385,9 +364,9 @@ class DICOMwebClient {
         console.error('header of response message does not specify boundary');
       }
 
-      var frames = [];
+      const frames = [];
       var offset = headerIndex + separator.length;
-      for (let i = 0; i < frameNumbers.length; i++) {
+      for (let i = 0; i < options.frameNumbers.length; i++) {
         let boundaryIndex = findToken(message, boundary, offset);
         let length = boundaryIndex - offset - 2; // exclude "\r\n"
 
@@ -397,7 +376,7 @@ class DICOMwebClient {
 
         offset += length + 2;
       }
-      return frames;
+      return(frames);
 
     }));
   }
@@ -407,12 +386,16 @@ class DICOMwebClient {
    * @param {Array} datasets DICOM datasets of instances that should be stored in DICOM JSON format
    * @param {Object} options optional parameters (key "studyInstanceUID" to only store instances of a given study)
    */
-  storeInstances(datasets, options={}) {
+  storeInstances(options) {
+    if (!('datasets' in options)) {
+      console.error('datasets are required for storing')
+    }
     let url = this.baseURL;
     if ('studyInstanceUID' in options) {
       url += '/studies/' + options.studyInstanceUID;
     }
     console.error('storing instances is not yet implemented')
+    // TODO
   }
 
 }
