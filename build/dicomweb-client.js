@@ -126,11 +126,13 @@ class DICOMwebClient {
     return queryString
   }
 
-  _httpRequest(url, method, headers, responseType, progressCallback) {
+  _httpRequest(url, method, headers, options={}) {
     return new Promise( (resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
-      request.responseType = responseType;
+      if ('responseType' in options) {
+        request.responseType = options.responseType;
+      }
 
       if (typeof(headers) === 'object') {
         Object.keys(headers).forEach(function (key) {
@@ -167,8 +169,10 @@ class DICOMwebClient {
       };
 
       // Event triggered while download progresses
-      if (typeof(progressCallback) === 'function') {
-          request.onprogress = progressCallback();
+      if ('progressCallback' in options) {
+        if (typeof(options.progressCallback) === 'function') {
+          request.onprogress = options.progressCallback();
+        }
       }
 
       // request.onprogress = function (event) {
@@ -183,12 +187,16 @@ class DICOMwebClient {
       //   return(percentComplete);
       // };
 
-      request.send();
+      if ('data' in options) {
+        request.send(options.data);
+      } else {
+        request.send();
+      }
     });
   }
 
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'get', headers, responseType, progressCallback);
+    return this._httpRequest(url, 'get', headers, {responseType, progressCallback});
   }
 
   _httpGetApplicationJson(url, params={}, progressCallback) {
@@ -246,30 +254,31 @@ class DICOMwebClient {
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpPost(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'post', headers, responseType, progressCallback);
+  _httpPost(url, headers, data, progressCallback) {
+    return this._httpRequest(url, 'post', headers, {data, progressCallback});
   }
 
-  _httpPostApplicationDicom(url, progressCallback) {
-    const headers = {
-      'Content-Type': 'application/dicom',
-      'Accept': 'application/dicom+json'
-    };
-    const responseType = 'json';
-    return this._httpPost(url, headers, responseType, progressCallback);
+  _httpPostApplicationDicom(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom'};
+    return this._httpPost(url, headers, data, progressCallback);
+  }
+
+  _httpPostApplicationJson(url, data, progressCallback) {
+    const headers = {'Content-Type': 'application/dicom+json'};
+    return this._httpPost(url, headers, data, progressCallback);
   }
 
   /**
    * Searches for DICOM studies.
-   * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
+   * @param {Object} options options object - "queryParams" optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @return {Array} study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
-  searchForStudies(queryParams={}) {
+  searchForStudies(options={}) {
     console.log('search for studies');
     let url = this.baseURL +
               '/studies';
-    if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+    if ('queryParams' in options) {
+        url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
   }
@@ -279,10 +288,13 @@ class DICOMwebClient {
    * @param {String} studyInstanceUID Study Instance UID
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the study
    */
-  retrieveStudyMetadata(studyInstanceUID, queryParams={}) {
-    console.log(`retrieve metadata of study ${studyInstanceUID}`);
+  retrieveStudyMetadata(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of study metadata');
+    }
+    console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
+              '/studies/' + options.studyInstanceUID +
               '/metadata';
     return(this._httpGetApplicationJson(url));
   }
@@ -293,14 +305,14 @@ class DICOMwebClient {
    * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @returns {Array} series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
    */
-  searchForSeries(options={}, queryParams={}) {
-    console.log(`search series of study ${options.studyInstanceUID}`);
+  searchForSeries(options={}) {
     let url = this.baseURL;
     if ('studyInstanceUID' in options) {
-        url += '/studies/' + options.studyInstanceUID;
+      console.log(`search series of study ${options.studyInstanceUID}`);
+      url += '/studies/' + options.studyInstanceUID;
     }
     url += '/series';
-    if (options.queryParams) {
+    if ('queryParams' in options) {
         url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
@@ -312,18 +324,18 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the series
    */
-  retrieveSeriesMetadata(studyInstanceUID, seriesInstanceUID) {
+  retrieveSeriesMetadata(options) {
     console.log(`retrieve metadata of series ${seriesInstanceUID}`);
-    if (studyInstanceUID === undefined) {
+    if (!('studyInstanceUID' in options)) {
       console.error('Study Instance UID is required for retrieval of series metadata');
     }
-    if (seriesInstanceUID === undefined) {
+    if (!('seriesInstanceUID' in options)) {
       console.error('Series Instance UID is required for retrieval of series metadata');
     }
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/metadata';
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/metadata';
     return(this._httpGetApplicationJson(url));
   }
 
@@ -333,7 +345,7 @@ class DICOMwebClient {
    * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
    * @returns {Array} instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
-  searchForInstances(options={}, queryParams={}) {
+  searchForInstances(options={}) {
     let url = this.baseURL;
     if ('studyInstanceUID' in options) {
       url += '/studies/' + options.studyInstanceUID;
@@ -341,14 +353,14 @@ class DICOMwebClient {
         console.log(`search for instances of series ${options.seriesInstanceUID}`);
         url += '/series/' + options.seriesInstanceUID;
       } else {
-        console.error('study needs to be specified when searching for instances of a given series');
+        console.log(`search for instances of study ${options.studyInstanceUID}`);
       }
     } else {
-      console.log('search for instances');
+     console.log('search for instances');
     }
     url += '/instances';
-    if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+    if ('queryParams' in options) {
+        url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     return(this._httpGetApplicationJson(url));
   }
@@ -360,22 +372,22 @@ class DICOMwebClient {
    * @param {String} sopInstanceUID SOP Instance UID
    * @returns {Object} metadata elements in DICOM JSON format
    */
-  retrieveInstanceMetadata(studyInstanceUID, seriesInstanceUID, sopInstanceUID) {
-    console.log(`retrieve metadata of instance ${sopInstanceUID}`);
-    if (studyInstanceUID === undefined) {
+  retrieveInstanceMetadata(options) {
+    if (!('studyInstanceUID' in options)) {
       console.error('Study Instance UID is required for retrieval of instance metadata');
     }
-    if (seriesInstanceUID === undefined) {
+    if (!('seriesInstanceUID' in options)) {
       console.error('Series Instance UID is required for retrieval of instance metadata');
     }
-    if (sopInstanceUID === undefined) {
+    if (!('sopInstanceUID' in options)) {
       console.error('SOP Instance UID is required for retrieval of instance metadata');
     }
+    console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/instances/' + sopInstanceUID +
-              '/metadata';
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/instances/' + options.sopInstanceUID +
+      '/metadata';
     return(this._httpGetApplicationJson(url));
   }
 
@@ -385,44 +397,44 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @param {String} sopInstanceUID SOP Instance UID
    * @param {Array} frameNumbers one-based index of frames
-   * @param {Object} options options (key "imageSubtype" to specify MIME image subtypes)
+   * @param {Object} options optionial parameters (key "imageSubtype" to specify MIME image subtypes)
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
-  retrieveInstanceFrames(studyInstanceUID, seriesInstanceUID, sopInstanceUID, frameNumbers, options={}) {
-    console.log(`retrieve frames ${frameNumbers.toString()} of instance ${sopInstanceUID}`);
-    if (studyInstanceUID === undefined) {
-      console.error('Study Instance UID is required for retrieval of instance frames');
+  retrieveInstanceFrames(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required for retrieval of instance metadata');
     }
-    if (seriesInstanceUID === undefined) {
-      console.error('Series Instance UID is required for retrieval of instance frames');
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required for retrieval of instance metadata');
     }
-    if (sopInstanceUID === undefined) {
-      console.error('SOP Instance UID is required for retrieval of instance frames');
+    if (!('sopInstanceUID' in options)) {
+      console.error('SOP Instance UID is required for retrieval of instance metadata');
     }
-    if (frameNumbers === undefined) {
+    if (!('frameNumbers' in options)) {
       console.error('frame numbers are required for retrieval of instance frames');
     }
+    console.log(`retrieve frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`);
     const url = this.baseURL +
-              '/studies/' + studyInstanceUID +
-              '/series/' + seriesInstanceUID +
-              '/instances/' + sopInstanceUID +
-              '/frames/' + frameNumbers.toString();
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/instances/' + options.sopInstanceUID +
+      '/frames/' + options.frameNumbers.toString();
     options.imageSubtype = options.imageSubtype || undefined;
-    var func = this._httpGetApplicationOctetStream;
     if (options.imageSubtype) {
         if (options.imageSubtype === 'jpeg') {
-            func = this._httpGetImageJpeg;
+            var promise = this._httpGetImageJpeg(url);
         } else if (options.imageSubtype === 'x-jls') {
-            func = this._httpGetImageJpeg2000;
+            var promise = this._httpGetImageJpegLS(url);
         } else if (options.imageSubtype === 'jp2') {
-            func = this._httpGetImageJpeg2000;
+            var promise = this._httpGetImageJpeg2000(url);
         } else {
             console.error(`MIME type "image/${options.imageSubtype}" is not supported`);
         }
+    } else {
+      var promise = this._httpGetApplicationOctetStream(url);
     }
 
-    // FIXME
-    return(this._httpGetImageJpeg(url).then((response) => {
+    return(promise.then((response) => {
       const message = new Uint8Array(response);
 
       // First look for the multipart mime header
@@ -438,9 +450,9 @@ class DICOMwebClient {
         console.error('header of response message does not specify boundary');
       }
 
-      var frames = [];
+      const frames = [];
       var offset = headerIndex + separator.length;
-      for (let i = 0; i < frameNumbers.length; i++) {
+      for (let i = 0; i < options.frameNumbers.length; i++) {
         let boundaryIndex = findToken(message, boundary, offset);
         let length = boundaryIndex - offset - 2; // exclude "\r\n"
 
@@ -450,21 +462,26 @@ class DICOMwebClient {
 
         offset += length + 2;
       }
-      return frames;
+      return(frames);
 
     }));
   }
 
   /**
    * Stores DICOM instances.
-   * @param {String} studyInstanceUID Study Instance UID (optional)
+   * @param {Array} datasets DICOM datasets of instances that should be stored in DICOM JSON format
+   * @param {Object} options optional parameters (key "studyInstanceUID" to only store instances of a given study)
    */
-  storeInstances(studyInstanceUID) {
+  storeInstances(options) {
+    if (!('datasets' in options)) {
+      console.error('datasets are required for storing');
+    }
     let url = this.baseURL;
-    if (studyInstanceUID !== undefined) {
-      url += '/studies/' + studyInstanceUID;
+    if ('studyInstanceUID' in options) {
+      url += '/studies/' + options.studyInstanceUID;
     }
     console.error('storing instances is not yet implemented');
+    // TODO
   }
 
 }
