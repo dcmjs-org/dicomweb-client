@@ -13,8 +13,7 @@ For further details please refer to [PS3.18 of the DICOM standard](http://dicom.
 
 The main motivation for this project is:
 * Support for storing, quering, retrieving DICOM objects over the web using RESTful services STOW-RS, QIDO-RS and WADO-RS, respectively
-* Support for browser and node client environments
-* Being awesome
+* Building a lightweight library to facilitate integration into web applications
 
 # Support
 
