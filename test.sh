@@ -5,7 +5,7 @@ until curl localhost:8080/dcm4chee-arc/aets; do echo waiting...; sleep 1; done
 
 # at this point DICOMweb server is running and ready for testing
 echo 'Installing and running tests'
-node tests/test.js
+./node_modules/.bin/mochify
 
 # now shut down the archive
 echo 'Shutting down Docker container'

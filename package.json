@@ -27,6 +27,9 @@
   },
   "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
   "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "mochify": "^5.8.0",
     "rollup": "^0.63.2",
     "rollup-plugin-commonjs": "8.3.0",
     "rollup-plugin-json": "^3.0.0",
