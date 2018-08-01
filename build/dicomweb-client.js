@@ -332,7 +332,6 @@
       if (!('seriesInstanceUID' in options)) {
         console.error('Series Instance UID is required for retrieval of series metadata');
       }
-
       console.log(`retrieve metadata of series ${seriesInstanceUID}`);    
       const url = this.baseURL +
         '/studies/' + options.studyInstanceUID +
