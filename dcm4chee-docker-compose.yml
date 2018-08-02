@@ -6,8 +6,8 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-    ports:
-      - "389:389"
+    expose:
+      - "389"
     env_file: dcm4chee-docker-compose.env
     volumes:
       - /tmp/dcm4chee-arc/ldap:/var/lib/ldap
@@ -18,8 +18,8 @@ services:
       driver: json-file
       options:
         max-size: "10m"
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     env_file: dcm4chee-docker-compose.env
     volumes:
       - /tmp/dcm4chee-arc/db:/var/lib/postgresql/data
@@ -30,11 +30,11 @@ services:
       options:
         max-size: "10m"
     ports:
-      - "8080:8080"
-      - "8443:8443"
-      - "9990:9990"
-      - "11112:11112"
-      - "2575:2575"
+      - "8008:8080"
+      # - "8443:8443"
+      # - "9990:9990"
+      # - "11112:11112"
+      # - "2575:2575"
     env_file: dcm4chee-docker-compose.env
     environment:
       WILDFLY_CHOWN: /opt/wildfly/standalone /storage

@@ -5,7 +5,7 @@ const dicomweb = require('../build/dicomweb-client.js');
 describe('dicomweb.api.DICOMwebClient', function (t) {
 
   const dwc = new dicomweb.api.DICOMwebClient({
-    url: 'http://localhost:8080/dcm4chee-arc/aets/DCM4CHEE/rs',
+    url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
   });
 
   it('should have correct constructor name', function() {
