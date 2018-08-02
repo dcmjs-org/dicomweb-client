@@ -30,12 +30,7 @@
     "chai": "^4.1.2",
     "mocha": "^5.2.0",
     "mochify": "^5.8.0",
-    "rollup": "^0.63.2",
-    "rollup-plugin-commonjs": "8.3.0",
-    "rollup-plugin-json": "^3.0.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
-    "rollup-plugin-node-resolve": "^3.3.0",
-    "tape": "^4.9.1"
+    "rollup": "^0.63.2"
   },
   "dependencies": {}
 }

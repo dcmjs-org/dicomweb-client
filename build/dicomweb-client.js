@@ -259,7 +259,7 @@
     }
 
     _httpPostApplicationDicom(url, data, progressCallback) {
-      const headers = {'Content-Type': 'application/dicom'};
+      const headers = {'Content-Type': 'multipart/related; type="application/dicom"'};
       return this._httpPost(url, headers, data, progressCallback);
     }
 
@@ -332,6 +332,7 @@
       if (!('seriesInstanceUID' in options)) {
         console.error('Series Instance UID is required for retrieval of series metadata');
       }
+
       console.log(`retrieve metadata of series ${seriesInstanceUID}`);    
       const url = this.baseURL +
         '/studies/' + options.studyInstanceUID +
@@ -480,9 +481,11 @@
       let url = this.baseURL;
       if ('studyInstanceUID' in options) {
         url += '/studies/' + options.studyInstanceUID;
+        console.log(`store instances for study ${options.studyInstanceUID}`);
+      } else {
+        console.log('store instances');
       }
-      console.error('storing instances is not yet implemented');
-      // TODO
+      this._httpPostApplicationDicom(url, datasets);
     }
 
   }
