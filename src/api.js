@@ -171,7 +171,7 @@ class DICOMwebClient {
   }
 
   _httpPostApplicationDicom(url, data, progressCallback) {
-    const headers = {'Content-Type': 'application/dicom'};
+    const headers = {'Content-Type': 'multipart/related; type="application/dicom"'};
     return this._httpPost(url, headers, data, progressCallback);
   }
 
