@@ -40,9 +40,8 @@ npm test
 ```js
 const url = 'http://localhost:8080/dicomweb';
 const client = new DICOMwebClient.api.DICOMwebClient({url});
-const studies = client.searchForStudies();
-studies.then(s => {
-  console.log(s)
+client.searchForStudies().then(studies => {
+  console.log(studies)
 });
 ```
 
