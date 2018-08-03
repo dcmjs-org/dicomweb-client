@@ -481,11 +481,9 @@
       let url = this.baseURL;
       if ('studyInstanceUID' in options) {
         url += '/studies/' + options.studyInstanceUID;
-        console.log(`store instances for study ${options.studyInstanceUID}`);
-      } else {
-        console.log('store instances');
       }
-      this._httpPostApplicationDicom(url, datasets);
+      console.error('storing instances is not yet implemented');
+      // TODO
     }
 
   }
