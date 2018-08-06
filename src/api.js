@@ -14,10 +14,15 @@ class DICOMwebClient {
 
   /**
   * @constructor
-  * @param {Object} options (choices: "url", "username", "password")
+  * @param {Object} options (choices: "url", "username", "password", "headers")
   */
   constructor(options) {
+
     this.baseURL = options.url;
+    if (!this.baseURL) {
+      console.error('DICOMweb base url provided - calls will fail')
+    }
+
     if ('username' in options) {
       this.username = options.username;
       if (!('password' in options)) {
@@ -25,6 +30,8 @@ class DICOMwebClient {
       }
       this.password = options.password;
     }
+
+    this.headers = options.headers || {};
   }
 
   static _parseQueryParameters(params={}) {
@@ -51,6 +58,13 @@ class DICOMwebClient {
           request.setRequestHeader(key, headers[key]);
         });
       }
+
+      // now add custom headers from the user
+      // (e.g. access tokens)
+      const userHeaders = this.headers;
+      Object.keys(userHeaders).forEach(function (key) {
+        request.setRequestHeader(key, userHeaders[key]);
+      });
 
       // Event triggered when upload starts
       request.onloadstart = function (event) {
