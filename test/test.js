@@ -12,9 +12,17 @@ describe('dicomweb.api.DICOMwebClient', function (t) {
     chai.expect(dwc.constructor.name).to.equal('DICOMwebClient');
   });
 
-  it('should find one study', function() {
+  it('should find zero studies', function() {
     return dwc.searchForStudies().then(studies => {
       chai.expect(studies).to.have.length(0);
+    });
+  });
+
+  // TODO: add the stow part
+
+  it('should find one study', function() {
+    return dwc.searchForStudies().then(studies => {
+      chai.expect(studies).to.have.length(1);
     });
   });
 
