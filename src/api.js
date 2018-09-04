@@ -97,7 +97,7 @@ class DICOMwebClient {
       // Event triggered while download progresses
       if ('progressCallback' in options) {
         if (typeof(options.progressCallback) === 'function') {
-          request.onprogress = options.progressCallback();
+          request.onprogress = options.progressCallback;
         }
       }
 
