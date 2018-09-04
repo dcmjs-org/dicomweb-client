@@ -37,12 +37,26 @@ npm test
 
 ## Usage
 
+```html
+<script type="text/javascript" src="https://unpkg.com/dicomweb-client"></script>
+```
+
 ```js
 const url = 'http://localhost:8080/dicomweb';
 const client = new DICOMwebClient.api.DICOMwebClient({url});
 client.searchForStudies().then(studies => {
   console.log(studies)
 });
+```
+
+
+## For maintainers
+
+Publish a new minor version
+```bash
+npm version minor
+npm publish
+git push --tags
 ```
 
 ## Support
