@@ -1,6 +1,6 @@
 {
   "name": "dicomweb-client",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
   "scripts": {
