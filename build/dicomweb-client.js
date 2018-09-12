@@ -339,7 +339,6 @@
      * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the series
      */
     retrieveSeriesMetadata(options) {
-      console.log(`retrieve metadata of series ${seriesInstanceUID}`);
       if (!('studyInstanceUID' in options)) {
         console.error('Study Instance UID is required for retrieval of series metadata');
       }
@@ -347,7 +346,7 @@
         console.error('Series Instance UID is required for retrieval of series metadata');
       }
 
-      console.log(`retrieve metadata of series ${seriesInstanceUID}`);    
+      console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);    
       const url = this.baseURL +
         '/studies/' + options.studyInstanceUID +
         '/series/' + options.seriesInstanceUID +
