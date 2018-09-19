@@ -31,8 +31,5 @@
     "mocha": "^5.2.0",
     "mochify": "^5.8.0",
     "rollup": "^0.63.2"
-  },
-  "dependencies": {
-    "npm": "^6.4.1"
   }
 }
