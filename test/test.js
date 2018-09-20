@@ -20,10 +20,10 @@ describe('dicomweb.api.DICOMwebClient', function (t) {
 
   // TODO: add the stow part
 
-  it('should find one study', function() {
+  /*it('should find one study', function() {
     return dwc.searchForStudies().then(studies => {
       chai.expect(studies).to.have.length(1);
     });
-  });
+  });*/
 
 });

@@ -15,4 +15,4 @@ before_script:
   # first, stop postgres so we can use our own from dcm4chee docker
   - sudo service postgresql stop
   # wait for postgresql to shutdown
-  - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done  
+  - while sudo lsof -Pi :5432 -sTCP:LISTEN -t; do sleep 1; done

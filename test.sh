@@ -12,6 +12,12 @@ echo ""
 echo 'Installing and running tests'
 ./node_modules/.bin/mochify
 
+# Store the exit code from mochify
+exit_code=$?
+
 # now shut down the archive
 echo 'Shutting down Docker container'
 docker-compose -f dcm4chee-docker-compose.yml down
+
+# Exit with the exit code from Mochify
+exit "$exit_code"
