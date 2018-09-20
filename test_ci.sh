@@ -13,7 +13,7 @@ echo ""
 
 # at this point DICOMweb server is running and ready for testing
 echo 'Installing and running tests'
-./node_modules/karma/bin/karma start karma.conf.js --browsers Chrome_without_security
+./node_modules/karma/bin/karma start karma.conf.js --browsers ChromeHeadless_without_security --single-run
 
 # Store the exit code from mochify
 exit_code=$?
