@@ -3,6 +3,8 @@ import {
   uint8ArrayToString, stringToUint8Array
 } from './message.js';
 
+import { guid, multipartEncode } from './utils.js';
+
 function isEmptyObject (obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
@@ -68,12 +70,12 @@ class DICOMwebClient {
 
       // Event triggered when upload starts
       request.onloadstart = function (event) {
-        // console.log('upload started: ', url)
+        console.log('upload started: ', url)
       };
 
       // Event triggered when upload ends
       request.onloadend = function (event) {
-        // console.log('upload finished')
+        console.log('upload finished')
       };
 
       // Handle response message
@@ -89,7 +91,15 @@ class DICOMwebClient {
             resolve([]);
           } else {
             console.error('request failed: ', request);
-            reject(request);
+            const error = new Error('request failed');
+            error.request = request;
+            error.response = request.response;
+            error.status = status;
+            console.error(error);
+            console.error(error.response);
+            console.error(window.location);
+
+            reject(error);
           }
         }
       };
@@ -258,7 +268,7 @@ class DICOMwebClient {
       console.error('Series Instance UID is required for retrieval of series metadata')
     }
 
-    console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);    
+    console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
     const url = this.baseURL +
       '/studies/' + options.studyInstanceUID +
       '/series/' + options.seriesInstanceUID +
@@ -403,14 +413,20 @@ class DICOMwebClient {
     if (!('datasets' in options)) {
       console.error('datasets are required for storing')
     }
-    let url = this.baseURL;
-    if ('studyInstanceUID' in options) {
-      url += '/studies/' + options.studyInstanceUID;
-    }
-    console.error('storing instances is not yet implemented')
-    // TODO
-  }
 
+    let url = `${this.baseURL}/studies`;
+    if ('studyInstanceUID' in options) {
+      url += `/${options.studyInstanceUID}`;
+    }
+
+    const boundary = guid();
+    const data = multipartEncode(options.datasets, boundary);
+    const headers = {
+      'Content-Type': `multipart/related; type=application/dicom; boundary=${boundary}`
+    };
+
+    return this._httpPost(url, headers, data, options.progressCallback);
+  }
 }
 
 export { DICOMwebClient };

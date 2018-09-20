@@ -4,7 +4,8 @@
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
   "scripts": {
-    "test": "./test.sh",
+    "test": "./test_ci.sh",
+    "test:watch": "./test.sh",
     "build": "rollup -c",
     "watch": "rollup -c -w"
   },
@@ -28,8 +29,12 @@
   "homepage": "https://github.com/dcmjs-org/dicomweb-client#readme",
   "devDependencies": {
     "chai": "^4.1.2",
+    "karma": "^3.0.0",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-mocha": "^1.3.0",
     "mocha": "^5.2.0",
-    "mochify": "^5.8.0",
+    "puppeteer": "^1.8.0",
     "rollup": "^0.63.2"
   }
 }
