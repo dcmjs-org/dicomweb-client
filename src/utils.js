@@ -70,21 +70,41 @@ function multipartEncode(datasets, boundary) {
   const contentTypeString = 'Content-Type: application/dicom';
   const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`;
   const footer = `\r\n--${boundary}--`;
-
-  // TODO: Currently this only encodes the first dataset
-  const part10Buffer = datasets[0];
   const headerArray = stringToArray(header);
-  const contentArray = new Uint8Array(part10Buffer);
   const footerArray = stringToArray(footer);
-  const length = headerArray.length + contentArray.length + footerArray.length;
+  const headerLength = headerArray.length;
+  const footerLength = footerArray.length;
+
+  let length = 0;
+
+  // Calculate the total length for the final array
+  const contentArrays = datasets.map(datasetBuffer => {
+    const contentArray = new Uint8Array(datasetBuffer);
+    const contentLength = contentArray.length;
+
+    length += headerLength + contentLength + footerLength;
+
+    return contentArray;
+  })
+
+  // Allocate the array
   const multipartArray = new Uint8Array(length);
 
-  console.warn('CONTENTARRAY');
-  console.warn(contentArray.length);
-
+  // Set the initial header
   multipartArray.set(headerArray, 0);
-  multipartArray.set(contentArray, headerArray.length);
-  multipartArray.set(footerArray, headerArray.length + contentArray.length);
+
+  // Write each dataset into the multipart array
+  let position = 0;
+  contentArrays.forEach(contentArray => {
+    const contentLength = contentArray.length;
+
+    multipartArray.set(headerArray, position);
+    multipartArray.set(contentArray, position + headerLength);
+
+    position += headerLength + contentArray.length;
+  });
+
+  multipartArray.set(footerArray, position);
 
   return multipartArray.buffer;
 };
