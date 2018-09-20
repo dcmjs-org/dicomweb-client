@@ -85,4 +85,86 @@ function findToken(message, token, offset) {
   return -1;
 }
 
-export { containsToken, findToken, identifyBoundary, uint8ArrayToString, stringToUint8Array };
+/**
+ * @typedef {Object} MultipartEncodedData
+ * @property {ArrayBuffer} data The encoded Multipart Data
+ * @property {String} boundary The boundary used to divide pieces of the encoded data
+ */
+
+/**
+ * Encode one or more DICOM datasets into a single body so it can be
+ * sent using the Multipart Content-Type.
+ *
+ * @param {ArrayBuffer[]} datasets Array containing each file to be encoded in the multipart body, passed as ArrayBuffers.
+ * @param {String} [boundary] Optional string to define a boundary between each part of the multipart body. If this is not specified, a random GUID will be generated.
+ * @return {MultipartEncodedData} The Multipart encoded data returned as an Object. This contains both the data itself, and the boundary string used to divide it.
+ */
+function multipartEncode(datasets, boundary=guid(), contentType='application/dicom') {
+  const contentTypeString = `Content-Type: ${contentType}`;
+  const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`;
+  const footer = `\r\n--${boundary}--`;
+  const headerArray = stringToUint8Array(header);
+  const footerArray = stringToUint8Array(footer);
+  const headerLength = headerArray.length;
+  const footerLength = footerArray.length;
+
+  let length = 0;
+
+  // Calculate the total length for the final array
+  const contentArrays = datasets.map(datasetBuffer => {
+    const contentArray = new Uint8Array(datasetBuffer);
+    const contentLength = contentArray.length;
+
+    length += headerLength + contentLength + footerLength;
+
+    return contentArray;
+  })
+
+  // Allocate the array
+  const multipartArray = new Uint8Array(length);
+
+  // Set the initial header
+  multipartArray.set(headerArray, 0);
+
+  // Write each dataset into the multipart array
+  let position = 0;
+  contentArrays.forEach(contentArray => {
+    const contentLength = contentArray.length;
+
+    multipartArray.set(headerArray, position);
+    multipartArray.set(contentArray, position + headerLength);
+
+    position += headerLength + contentArray.length;
+  });
+
+  multipartArray.set(footerArray, position);
+
+  return {
+    data: multipartArray.buffer,
+    boundary
+  };
+};
+
+/**
+ * Create a random GUID
+ *
+ * @return {string}
+ */
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
+
+export {
+  containsToken,
+  findToken,
+  identifyBoundary,
+  uint8ArrayToString,
+  stringToUint8Array,
+  multipartEncode,
+  guid,
+};

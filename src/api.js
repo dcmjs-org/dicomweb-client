@@ -1,9 +1,11 @@
 import {
-  containsToken, findToken, identifyBoundary,
-  uint8ArrayToString, stringToUint8Array
+  containsToken,
+  findToken,
+  identifyBoundary,
+  uint8ArrayToString,
+  stringToUint8Array,
+  multipartEncode
 } from './message.js';
-
-import { guid, multipartEncode } from './utils.js';
 
 function isEmptyObject (obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object;
@@ -419,8 +421,7 @@ class DICOMwebClient {
       url += `/${options.studyInstanceUID}`;
     }
 
-    const boundary = guid();
-    const data = multipartEncode(options.datasets, boundary);
+    const { data, boundary } = multipartEncode(options.datasets);
     const headers = {
       'Content-Type': `multipart/related; type=application/dicom; boundary=${boundary}`
     };

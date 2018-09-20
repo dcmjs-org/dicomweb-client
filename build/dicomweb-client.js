@@ -91,79 +91,26 @@
     return -1;
   }
 
-  function findSubstring(str, before, after) {
-      const beforeIndex = str.lastIndexOf(before) + before.length;
-      if (beforeIndex < before.length) {
-          return(null);
-      }
-      if (after !== undefined) {
-          const afterIndex = str.lastIndexOf(after);
-          if (afterIndex < 0) {
-              return(null);
-          } else{
-              return(str.substring(beforeIndex, afterIndex));
-          }
-      }
-      return(str.substring(beforeIndex));
-  }
+  /**
+   * @typedef {Object} MultipartEncodedData
+   * @property {ArrayBuffer} data The encoded Multipart Data
+   * @property {String} boundary The boundary used to divide pieces of the encoded data
+   */
 
-
-  function getStudyInstanceUIDFromUri(uri) {
-    var uid = findSubstring(uri, "studies/", "/series");
-    if (!uid) {
-      var uid = findSubstring(uri, "studies/");
-    }
-    if (!uid) {
-      console.debug('Study Instance UID could not be dertermined from URI "' + uri + '"');
-    }
-    return(uid);
-  }
-
-
-  function getSeriesInstanceUIDFromUri(uri) {
-    var uid = findSubstring(uri, "series/", "/instances");
-    if (!uid) {
-      var uid = findSubstring(uri, "series/");
-    }
-    if (!uid) {
-      console.debug('Series Instance UID could not be dertermined from URI "' + uri + '"');
-    }
-    return(uid);
-  }
-
-
-  function getSOPInstanceUIDFromUri(uri) {
-    var uid = findSubstring(uri, "/instances/", "/frames");
-    if (!uid) {
-      var uid = findSubstring(uri, "/instances/", "/metadata");
-    }
-    if (!uid) {
-      var uid = findSubstring(uri, "/instances/");
-    }
-    if (!uid) {
-      console.debug('SOP Instance UID could not be dertermined from URI"' + uri + '"');
-    }
-    return(uid);
-  }
-
-
-  function getFrameNumbersFromUri(uri) {
-    let numbers = findSubstring(uri, "/frames/");
-    if (numbers === undefined) {
-      console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
-    }
-    return(numbers.split(','));
-  }
-
-  function stringToArray(string) {
-    return Uint8Array.from(Array.from(string).map(letter => letter.charCodeAt(0)))
-  }
-  function multipartEncode(datasets, boundary) {
-    const contentTypeString = 'Content-Type: application/dicom';
+  /**
+   * Encode one or more DICOM datasets into a single body so it can be
+   * sent using the Multipart Content-Type.
+   *
+   * @param {ArrayBuffer[]} datasets Array containing each file to be encoded in the multipart body, passed as ArrayBuffers.
+   * @param {String} [boundary] Optional string to define a boundary between each part of the multipart body. If this is not specified, a random GUID will be generated.
+   * @return {MultipartEncodedData} The Multipart encoded data returned as an Object. This contains both the data itself, and the boundary string used to divide it.
+   */
+  function multipartEncode(datasets, boundary=guid(), contentType='application/dicom') {
+    const contentTypeString = `Content-Type: ${contentType}`;
     const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`;
     const footer = `\r\n--${boundary}--`;
-    const headerArray = stringToArray(header);
-    const footerArray = stringToArray(footer);
+    const headerArray = stringToUint8Array(header);
+    const footerArray = stringToUint8Array(footer);
     const headerLength = headerArray.length;
     const footerLength = footerArray.length;
 
@@ -198,8 +145,16 @@
 
     multipartArray.set(footerArray, position);
 
-    return multipartArray.buffer;
+    return {
+      data: multipartArray.buffer,
+      boundary
+    };
   }
+  /**
+   * Create a random GUID
+   *
+   * @return {string}
+   */
   function guid() {
     function s4() {
       return Math.floor((1 + Math.random()) * 0x10000)
@@ -623,14 +578,77 @@
         url += `/${options.studyInstanceUID}`;
       }
 
-      const boundary = guid();
-      const data = multipartEncode(options.datasets, boundary);
+      const { data, boundary } = multipartEncode(options.datasets);
       const headers = {
         'Content-Type': `multipart/related; type=application/dicom; boundary=${boundary}`
       };
 
       return this._httpPost(url, headers, data, options.progressCallback);
     }
+  }
+
+  function findSubstring(str, before, after) {
+      const beforeIndex = str.lastIndexOf(before) + before.length;
+      if (beforeIndex < before.length) {
+          return(null);
+      }
+      if (after !== undefined) {
+          const afterIndex = str.lastIndexOf(after);
+          if (afterIndex < 0) {
+              return(null);
+          } else{
+              return(str.substring(beforeIndex, afterIndex));
+          }
+      }
+      return(str.substring(beforeIndex));
+  }
+
+
+  function getStudyInstanceUIDFromUri(uri) {
+    var uid = findSubstring(uri, "studies/", "/series");
+    if (!uid) {
+      var uid = findSubstring(uri, "studies/");
+    }
+    if (!uid) {
+      console.debug('Study Instance UID could not be dertermined from URI "' + uri + '"');
+    }
+    return(uid);
+  }
+
+
+  function getSeriesInstanceUIDFromUri(uri) {
+    var uid = findSubstring(uri, "series/", "/instances");
+    if (!uid) {
+      var uid = findSubstring(uri, "series/");
+    }
+    if (!uid) {
+      console.debug('Series Instance UID could not be dertermined from URI "' + uri + '"');
+    }
+    return(uid);
+  }
+
+
+  function getSOPInstanceUIDFromUri(uri) {
+    var uid = findSubstring(uri, "/instances/", "/frames");
+    if (!uid) {
+      var uid = findSubstring(uri, "/instances/", "/metadata");
+    }
+    if (!uid) {
+      var uid = findSubstring(uri, "/instances/");
+    }
+    if (!uid) {
+      console.debug('SOP Instance UID could not be dertermined from URI"' + uri + '"');
+    }
+    return(uid);
+  }
+
+
+  function getFrameNumbersFromUri(uri) {
+    let numbers = findSubstring(uri, "/frames/");
+    if (numbers === undefined) {
+      console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
+    }
+    return(numbers.split(','));
   }
 
   let api = {
