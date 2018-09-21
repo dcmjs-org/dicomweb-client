@@ -461,6 +461,38 @@
       return(this._httpGetApplicationJson(url));
     }
 
+    /** Returns a WADO-URI URL for an instance
+     *
+     * @param {Object} options
+     * @returns {String} WADO-URI URL
+     */
+    buildInstanceWadoURIUrl(options) {
+      if (!('studyInstanceUID' in options)) {
+        console.error('Study Instance UID is required.');
+      }
+      if (!('seriesInstanceUID' in options)) {
+        console.error('Series Instance UID is required.');
+      }
+      if (!('sopInstanceUID' in options)) {
+        console.error('SOP Instance UID is required.');
+      }
+
+      const contentType = options.contentType || 'application/dicom';
+      const transferSyntax = options.transferSyntax || '*';
+      const params = [];
+
+      params.push('requestType=WADO');
+      params.push(`studyUID=${options.studyInstanceUID}`);
+      params.push(`seriesUID=${options.seriesInstanceUID}`);
+      params.push(`objectUID=${options.sopInstanceUID}`);
+      params.push(`contentType=${contentType}`);
+      params.push(`transferSyntax=${transferSyntax}`);
+
+      const paramString = params.join('&');
+
+      return `${this.baseURL}?${paramString}`;
+    }
+
     /**
      * Retrieves metadata for a DICOM instance.
      * @param {String} studyInstanceUID Study Instance UID
