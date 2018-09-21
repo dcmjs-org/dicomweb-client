@@ -4,12 +4,21 @@ import {
   identifyBoundary,
   uint8ArrayToString,
   stringToUint8Array,
-  multipartEncode
+  multipartEncode,
+  multipartDecode
 } from './message.js';
 
 function isEmptyObject (obj) {
     return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
+
+const getFirstResult = result => result[0];
+
+const MIMETYPES = {
+  DICOM: 'application/dicom',
+  DICOM_JSON: 'application/dicom+json',
+  OCTET_STREAM: 'application/octet-stream'
+};
 
 /**
 * Class for interacting with DICOMweb RESTful services.
@@ -72,12 +81,12 @@ class DICOMwebClient {
 
       // Event triggered when upload starts
       request.onloadstart = function (event) {
-        console.log('upload started: ', url)
+        //console.log('upload started: ', url)
       };
 
       // Event triggered when upload ends
       request.onloadend = function (event) {
-        console.log('upload finished')
+        //console.log('upload finished')
       };
 
       // Handle response message
@@ -143,52 +152,22 @@ class DICOMwebClient {
           url += DICOMwebClient._parseQueryParameters(params)
       }
     }
-    const headers = {'Accept': 'application/dicom+json'};
+    const headers = {'Accept': MIMETYPES.DICOM_JSON};
     const responseType = 'json';
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpGetApplicationOctetStream(url, params={}, progressCallback) {
+  _httpGetByMimeType(url, mimeType, params, responseType='arraybuffer', progressCallback) {
     if (typeof(params) === 'object') {
       if (!isEmptyObject(params)) {
-          url += DICOMwebClient._parseQueryParameters(params)
+        url += DICOMwebClient._parseQueryParameters(params)
       }
     }
-    const headers = {'Accept': 'multipart/related; type="application/octet-stream"'};
-    const responseType = 'arraybuffer';
-    return this._httpGet(url, headers, responseType, progressCallback);
-  }
 
-  _httpGetImageJpeg(url, params={}, progressCallback) {
-    if (typeof(params) === 'object') {
-      if (!isEmptyObject(params)) {
-          url += DICOMwebClient._parseQueryParameters(params)
-      }
-    }
-    const headers = {'Accept': 'multipart/related; type="image/jpeg"'};
-    const responseType = 'arraybuffer';
-    return this._httpGet(url, headers, responseType, progressCallback);
-  }
+    const headers = {
+      'Accept': `multipart/related; type="${mimeType}"`
+    };
 
-  _httpGetImageJpeg2000(url, params={}, progressCallback) {
-    if (typeof(params) === 'object') {
-      if (!isEmptyObject(params)) {
-          url += DICOMwebClient._parseQueryParameters(params)
-      }
-    }
-    const headers = {'Accept': 'multipart/related; type="image/jp2"'};
-    const responseType = 'arraybuffer';
-    return this._httpGet(url, headers, responseType, progressCallback);
-  }
-
-  _httpGetImageJpegLs(url, params={}, progressCallback) {
-    if (typeof(params) === 'object') {
-      if (!isEmptyObject(params)) {
-          url += DICOMwebClient._parseQueryParameters(params)
-      }
-    }
-    const headers = {'Accept': 'multipart/related; type="image/x-jls"'};
-    const responseType = 'arraybuffer';
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
@@ -196,13 +175,8 @@ class DICOMwebClient {
     return this._httpRequest(url, 'post', headers, {data, progressCallback});
   }
 
-  _httpPostApplicationDicom(url, data, progressCallback) {
-    const headers = {'Content-Type': 'multipart/related; type="application/dicom"'};
-    return this._httpPost(url, headers, data, progressCallback);
-  }
-
   _httpPostApplicationJson(url, data, progressCallback) {
-    const headers = {'Content-Type': 'application/dicom+json'};
+    const headers = {'Content-Type': MIMETYPES.DICOM_JSON};
     return this._httpPost(url, headers, data, progressCallback);
   }
 
@@ -320,7 +294,7 @@ class DICOMwebClient {
       console.error('SOP Instance UID is required.')
     }
 
-    const contentType = options.contentType || 'application/dicom';
+    const contentType = options.contentType || MIMETYPES.DICOM;
     const transferSyntax = options.transferSyntax || '*';
     const params = [];
 
@@ -359,7 +333,8 @@ class DICOMwebClient {
       '/series/' + options.seriesInstanceUID +
       '/instances/' + options.sopInstanceUID +
       '/metadata';
-    return(this._httpGetApplicationJson(url));
+
+    return this._httpGetApplicationJson(url);
   }
 
   /**
@@ -368,7 +343,7 @@ class DICOMwebClient {
    * @param {String} seriesInstanceUID Series Instance UID
    * @param {String} sopInstanceUID SOP Instance UID
    * @param {Array} frameNumbers one-based index of frames
-   * @param {Object} options optionial parameters (key "imageSubtype" to specify MIME image subtypes)
+   * @param {Object} options optional parameters (key "imageSubtype" to specify MIME image subtypes)
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
   retrieveInstanceFrames(options) {
@@ -390,52 +365,98 @@ class DICOMwebClient {
       '/series/' + options.seriesInstanceUID +
       '/instances/' + options.sopInstanceUID +
       '/frames/' + options.frameNumbers.toString();
-    options.imageSubtype = options.imageSubtype || undefined;
-    if (options.imageSubtype) {
-        if (options.imageSubtype === 'jpeg') {
-            var promise = this._httpGetImageJpeg(url);
-        } else if (options.imageSubtype === 'x-jls') {
-            var promise = this._httpGetImageJpegLS(url);
-        } else if (options.imageSubtype === 'jp2') {
-            var promise = this._httpGetImageJpeg2000(url);
-        } else {
-            console.error(`MIME type "image/${options.imageSubtype}" is not supported`)
-        }
-    } else {
-      var promise = this._httpGetApplicationOctetStream(url);
+
+
+    // TODO: Easier if user just provided mimetype directly? What is the benefit of adding 'image/'?
+    const mimeType = options.imageSubType ? `image/${options.imageSubType}` : MIMETYPES.OCTET_STREAM;
+
+    return this._httpGetByMimeType(url, mimeType).then(multipartDecode);
+  }
+
+  /**
+   * Retrieves a DICOM instance.
+   *
+   * @param {String} studyInstanceUID Study Instance UID
+   * @param {String} seriesInstanceUID Series Instance UID
+   * @param {String} sopInstanceUID SOP Instance UID
+   * @returns {Arraybuffer} DICOM Part 10 file as Arraybuffer
+   */
+  retrieveInstance(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required')
+    }
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required')
+    }
+    if (!('sopInstanceUID' in options)) {
+      console.error('SOP Instance UID is required')
+    }
+    const url = this.baseURL +
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID +
+      '/instances/' + options.sopInstanceUID;
+
+    return this._httpGetByMimeType(url, MIMETYPES.DICOM)
+        .then(multipartDecode)
+        .then(getFirstResult);
+  }
+
+  /**
+   * Retrieves a set of DICOM instance for a series.
+   *
+   * @param {String} studyInstanceUID Study Instance UID
+   * @param {String} seriesInstanceUID Series Instance UID
+   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   */
+  retrieveSeries(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required')
+    }
+    if (!('seriesInstanceUID' in options)) {
+      console.error('Series Instance UID is required')
+    }
+    const url = this.baseURL +
+      '/studies/' + options.studyInstanceUID +
+      '/series/' + options.seriesInstanceUID;
+
+    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+  }
+
+  /**
+   * Retrieves a set of DICOM instance for a study.
+   *
+   * @param {String} studyInstanceUID Study Instance UID
+   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   */
+  retrieveStudy(options) {
+    if (!('studyInstanceUID' in options)) {
+      console.error('Study Instance UID is required')
     }
 
-    return(promise.then((response) => {
-      const message = new Uint8Array(response);
+    const url = this.baseURL +
+      '/studies/' + options.studyInstanceUID;
 
-      // First look for the multipart mime header
-      let separator = stringToUint8Array('\r\n\r\n');
-      const headerIndex = findToken(message, separator);
-      if (headerIndex === -1) {
-        console.error('response message has no multipart mime header');
-      }
-      const header = uint8ArrayToString(message, 0, headerIndex);
+    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+  }
 
-      const boundary = identifyBoundary(header);
-      if (!boundary) {
-        console.error('header of response message does not specify boundary');
-      }
+  /**
+   * Retrieve and parse BulkData from a BulkDataURI location.
+   * Decodes the multipart encoded data and returns the resulting data
+   * as an ArrayBuffer.
+   *
+   * See http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.5.5.html
+   *
+   * @param {Object} options
+   * @return {Promise}
+   */
+  retrieveBulkData(options) {
+    if (!('BulkDataURI' in options)) {
+      throw new Error('BulkDataURI is required.');
+    }
 
-      const frames = [];
-      var offset = headerIndex + separator.length;
-      for (let i = 0; i < options.frameNumbers.length; i++) {
-        let boundaryIndex = findToken(message, boundary, offset);
-        let length = boundaryIndex - offset - 2; // exclude "\r\n"
-
-        // Extract pixel data from response message
-        let pixels = response.slice(offset, offset + length);
-        frames.push(pixels);
-
-        offset += length + 2;
-      }
-      return(frames);
-
-    }));
+    return this._httpGetByMimeType(options.BulkDataURI, MIMETYPES.OCTET_STREAM)
+      .then(multipartDecode)
+      .then(getFirstResult);
   }
 
   /**

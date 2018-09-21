@@ -37,6 +37,7 @@ function stringToUint8Array(str) {
  */
 function identifyBoundary(header) {
   const parts = header.split('\r\n');
+
   for (let i = 0; i < parts.length; i++) {
     if (parts[i].substr(0, 2) === '--') {
       return parts[i];
@@ -52,10 +53,11 @@ function identifyBoundary(header) {
  * @param {String} offset offset in message content from where search should start
  * @returns {Boolean} whether message contains token at offset
  */
-function containsToken(message, token, offset) {
+function containsToken(message, token, offset=0) {
   if (message + token.length > message.length) {
     return false;
   }
+
   let index = offset;
   for (let i = 0; i < token.length; i++) {
     if (token[i] !== message[index++]) {
@@ -73,15 +75,20 @@ function containsToken(message, token, offset) {
  * @param {String} offset message body offset from where search should start
  * @returns {Boolean} whether message has a part at given offset or not
  */
-function findToken(message, token, offset) {
-  offset = offset || 0;
-  for (let i = offset; i < message.length; i++) {
-    if (token[0] === message[i]) {
+function findToken(message, token, offset=0) {
+  const messageLength = message.length;
+
+  for (let i = offset; i < messageLength; i++) {
+    // If the first value of the message matches
+    // the first value of the token, check if
+    // this is the full token.
+    if (message[i] === token[0]) {
       if (containsToken(message, token, i)) {
         return i;
       }
     }
   }
+
   return -1;
 }
 
@@ -146,6 +153,62 @@ function multipartEncode(datasets, boundary=guid(), contentType='application/dic
 };
 
 /**
+ * Decode a Multipart encoded ArrayBuffer and return the components as an Array.
+ *
+ * @param {ArrayBuffer} response Data encoded as a 'multipart/related' message
+ * @returns {Array} The content
+ */
+function multipartDecode(response) {
+    const message = new Uint8Array(response);
+
+    // First look for the multipart mime header
+    const separator = stringToUint8Array('\r\n\r\n');
+    const headerIndex = findToken(message, separator);
+    if (headerIndex === -1) {
+      throw new Error('Response message has no multipart mime header');
+    }
+
+    const header = uint8ArrayToString(message, 0, headerIndex);
+    const boundaryString = identifyBoundary(header);
+    if (!boundaryString) {
+      throw new Error('Header of response message does not specify boundary');
+    }
+
+    const boundary = stringToUint8Array(boundaryString);
+    const boundaryLength = boundary.length;
+    const components = [];
+    let offset = headerIndex + separator.length;
+
+    // Loop until we cannot find any more boundaries
+    let boundaryIndex;
+
+    while (boundaryIndex !== -1) {
+      // Search for the next boundary in the message, starting
+      // from the current offset position
+      boundaryIndex = findToken(message, boundary, offset);
+
+      // If no further boundaries are found, stop here.
+      if (boundaryIndex === -1) {
+        break;
+      }
+
+      // Extract data from response message, excluding "\r\n"
+      const spacingLength = 2;
+      const length = boundaryIndex - offset - spacingLength;
+      const data = response.slice(offset, offset + length);
+
+      // Add the data to the array of results
+      components.push(data);
+
+      // Move the offset to the end of the current section,
+      // plus the identified boundary
+      offset += length + spacingLength + boundaryLength;
+    }
+
+    return components;
+}
+
+/**
  * Create a random GUID
  *
  * @return {string}
@@ -166,5 +229,6 @@ export {
   uint8ArrayToString,
   stringToUint8Array,
   multipartEncode,
+  multipartDecode,
   guid,
 };
