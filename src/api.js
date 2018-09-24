@@ -202,7 +202,7 @@ class DICOMwebClient {
    */
   retrieveStudyMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required for retrieval of study metadata')
+      throw new Error('Study Instance UID is required for retrieval of study metadata')
     }
     console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = this.baseURL +
@@ -238,10 +238,10 @@ class DICOMwebClient {
    */
   retrieveSeriesMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required for retrieval of series metadata')
+      throw new Error('Study Instance UID is required for retrieval of series metadata')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required for retrieval of series metadata')
+      throw new Error('Series Instance UID is required for retrieval of series metadata')
     }
 
     console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
@@ -285,13 +285,13 @@ class DICOMwebClient {
    */
   buildInstanceWadoURIUrl(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required.')
+      throw new Error('Study Instance UID is required.')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required.')
+      throw new Error('Series Instance UID is required.')
     }
     if (!('sopInstanceUID' in options)) {
-      console.error('SOP Instance UID is required.')
+      throw new Error('SOP Instance UID is required.')
     }
 
     const contentType = options.contentType || MIMETYPES.DICOM;
@@ -319,13 +319,13 @@ class DICOMwebClient {
    */
   retrieveInstanceMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required for retrieval of instance metadata')
+      throw new Error('Study Instance UID is required for retrieval of instance metadata')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required for retrieval of instance metadata')
+      throw new Error('Series Instance UID is required for retrieval of instance metadata')
     }
     if (!('sopInstanceUID' in options)) {
-      console.error('SOP Instance UID is required for retrieval of instance metadata')
+      throw new Error('SOP Instance UID is required for retrieval of instance metadata')
     }
     console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = this.baseURL +
@@ -348,16 +348,16 @@ class DICOMwebClient {
    */
   retrieveInstanceFrames(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required for retrieval of instance metadata')
+      throw new Error('Study Instance UID is required for retrieval of instance metadata')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required for retrieval of instance metadata')
+      throw new Error('Series Instance UID is required for retrieval of instance metadata')
     }
     if (!('sopInstanceUID' in options)) {
-      console.error('SOP Instance UID is required for retrieval of instance metadata')
+      throw new Error('SOP Instance UID is required for retrieval of instance metadata')
     }
     if (!('frameNumbers' in options)) {
-      console.error('frame numbers are required for retrieval of instance frames')
+      throw new Error('frame numbers are required for retrieval of instance frames')
     }
     console.log(`retrieve frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`)
     const url = this.baseURL +
@@ -383,13 +383,13 @@ class DICOMwebClient {
    */
   retrieveInstance(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required')
+      throw new Error('Series Instance UID is required')
     }
     if (!('sopInstanceUID' in options)) {
-      console.error('SOP Instance UID is required')
+      throw new Error('SOP Instance UID is required')
     }
     const url = this.baseURL +
       '/studies/' + options.studyInstanceUID +
@@ -410,10 +410,10 @@ class DICOMwebClient {
    */
   retrieveSeries(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required')
     }
     if (!('seriesInstanceUID' in options)) {
-      console.error('Series Instance UID is required')
+      throw new Error('Series Instance UID is required')
     }
     const url = this.baseURL +
       '/studies/' + options.studyInstanceUID +
@@ -430,7 +430,7 @@ class DICOMwebClient {
    */
   retrieveStudy(options) {
     if (!('studyInstanceUID' in options)) {
-      console.error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required')
     }
 
     const url = this.baseURL +
@@ -466,7 +466,7 @@ class DICOMwebClient {
    */
   storeInstances(options) {
     if (!('datasets' in options)) {
-      console.error('datasets are required for storing')
+      throw new Error('datasets are required for storing')
     }
 
     let url = `${this.baseURL}/studies`;
