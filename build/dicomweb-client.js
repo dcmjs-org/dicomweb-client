@@ -272,7 +272,7 @@
         if (index !== 0) {
           queryString += '&';
         }
-        queryString += key + '=' + window.encodeURIComponent(params[key]);
+        queryString += key + '=' + encodeURIComponent(params[key]);
       });
       return queryString
     }
@@ -324,10 +324,9 @@
               const error = new Error('request failed');
               error.request = request;
               error.response = request.response;
-              error.status = status;
+              error.status = request.status;
               console.error(error);
               console.error(error.response);
-              console.error(window.location);
 
               reject(error);
             }
