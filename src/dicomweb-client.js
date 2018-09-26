@@ -14,4 +14,6 @@ let utils = {
   getFrameNumbersFromUri
 };
 
+export { default as version } from './version.js';
+
 export { api, utils };

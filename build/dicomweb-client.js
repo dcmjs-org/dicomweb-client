@@ -872,6 +872,8 @@
     return numbers.split(',');
   }
 
+  var version = '0.3.2';
+
   var api = {
     DICOMwebClient: DICOMwebClient
   };
@@ -884,6 +886,7 @@
 
   exports.api = api;
   exports.utils = utils;
+  exports.version = version;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 
