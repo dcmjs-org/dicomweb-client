@@ -16,9 +16,9 @@ function findSubstring(str, before, after) {
 
 
 function getStudyInstanceUIDFromUri(uri) {
-  var uid = findSubstring(uri, "studies/", "/series");
+  let uid = findSubstring(uri, "studies/", "/series");
   if (!uid) {
-    var uid = findSubstring(uri, "studies/");
+    uid = findSubstring(uri, "studies/");
   }
   if (!uid) {
     console.debug('Study Instance UID could not be dertermined from URI "' + uri + '"');
@@ -28,9 +28,9 @@ function getStudyInstanceUIDFromUri(uri) {
 
 
 function getSeriesInstanceUIDFromUri(uri) {
-  var uid = findSubstring(uri, "series/", "/instances");
+  let uid = findSubstring(uri, "series/", "/instances");
   if (!uid) {
-    var uid = findSubstring(uri, "series/");
+    uid = findSubstring(uri, "series/");
   }
   if (!uid) {
     console.debug('Series Instance UID could not be dertermined from URI "' + uri + '"');
@@ -40,12 +40,12 @@ function getSeriesInstanceUIDFromUri(uri) {
 
 
 function getSOPInstanceUIDFromUri(uri) {
-  var uid = findSubstring(uri, "/instances/", "/frames");
+  let uid = findSubstring(uri, "/instances/", "/frames");
   if (!uid) {
-    var uid = findSubstring(uri, "/instances/", "/metadata");
+    uid = findSubstring(uri, "/instances/", "/metadata");
   }
   if (!uid) {
-    var uid = findSubstring(uri, "/instances/");
+    uid = findSubstring(uri, "/instances/");
   }
   if (!uid) {
     console.debug('SOP Instance UID could not be dertermined from URI"' + uri + '"');
@@ -55,7 +55,10 @@ function getSOPInstanceUIDFromUri(uri) {
 
 
 function getFrameNumbersFromUri(uri) {
-  let numbers = findSubstring(uri, "/frames/");
+  let numbers = findSubstring(uri, "/frames/", "/rendered");
+  if (!numbers) {
+    numbers = findSubstring(uri, "/frames/");
+  }
   if (numbers === undefined) {
     console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
   }

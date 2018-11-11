@@ -864,7 +864,7 @@
     var uid = findSubstring(uri, "studies/", "/series");
 
     if (!uid) {
-      var uid = findSubstring(uri, "studies/");
+      uid = findSubstring(uri, "studies/");
     }
 
     if (!uid) {
@@ -878,7 +878,7 @@
     var uid = findSubstring(uri, "series/", "/instances");
 
     if (!uid) {
-      var uid = findSubstring(uri, "series/");
+      uid = findSubstring(uri, "series/");
     }
 
     if (!uid) {
@@ -892,11 +892,11 @@
     var uid = findSubstring(uri, "/instances/", "/frames");
 
     if (!uid) {
-      var uid = findSubstring(uri, "/instances/", "/metadata");
+      uid = findSubstring(uri, "/instances/", "/metadata");
     }
 
     if (!uid) {
-      var uid = findSubstring(uri, "/instances/");
+      uid = findSubstring(uri, "/instances/");
     }
 
     if (!uid) {
@@ -907,7 +907,11 @@
   }
 
   function getFrameNumbersFromUri(uri) {
-    var numbers = findSubstring(uri, "/frames/");
+    var numbers = findSubstring(uri, "/frames/", "/rendered");
+
+    if (!numbers) {
+      numbers = findSubstring(uri, "/frames/");
+    }
 
     if (numbers === undefined) {
       console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
