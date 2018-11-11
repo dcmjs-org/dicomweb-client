@@ -402,8 +402,7 @@ class DICOMwebClient {
     if (!('frameNumbers' in options)) {
       throw new Error('frame numbers are required for retrieval of rendered instance frames')
     }
-    // The appropriate media type depends on a variety of things:
-    // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
+
     console.log(`retrieve rendered frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`)
     const url = this.wadoURL +
       '/studies/' + options.studyInstanceUID +
@@ -412,11 +411,13 @@ class DICOMwebClient {
       '/frames/' + options.frameNumbers.toString() +
       '/rendered';
 
-    if (!('mimeType' in options)) {
-      throw new Error('Media type is required for retrieval of multiple rendered instance frames')
+    let headers = {};
+    // The choice of an acceptable media type depends on a variety of things:
+    // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
+    if ('mimeType' in options) {
+      headers['Accept'] = options.mimeType;
     }
 
-    const headers = {'Accept': mimeType};
     const responseType = 'arraybuffer';
     return this._httpGet(url, headers, responseType);
   }
