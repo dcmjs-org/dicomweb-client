@@ -677,6 +677,46 @@
         return this._httpGetByMimeType(url, mimeType).then(multipartDecode);
       }
       /**
+       * Retrieves rendered frames for a DICOM instance.
+       * @param {Object} options options object
+       * @returns {Array} frame items as byte arrays of the pixel data element
+       */
+
+    }, {
+      key: "retrieveInstanceFramesRendered",
+      value: function retrieveInstanceFramesRendered(options) {
+        if (!('studyInstanceUID' in options)) {
+          throw new Error('Study Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('seriesInstanceUID' in options)) {
+          throw new Error('Series Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('sopInstanceUID' in options)) {
+          throw new Error('SOP Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('frameNumbers' in options)) {
+          throw new Error('frame numbers are required for retrieval of rendered instance frames');
+        } // The appropriate media type depends on a variety of things:
+        // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
+
+
+        console.log("retrieve rendered frames ".concat(options.frameNumbers.toString(), " of instance ").concat(options.sopInstanceUID));
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/frames/' + options.frameNumbers.toString() + '/rendered';
+
+        if (!('mimeType' in options)) {
+          throw new Error('Media type is required for retrieval of multiple rendered instance frames');
+        }
+
+        var headers = {
+          'Accept': mimeType
+        };
+        var responseType = 'arraybuffer';
+        return this._httpGet(url, headers, responseType);
+      }
+      /**
        * Retrieves a DICOM instance.
        * @param {Object} options options object
        * @returns {Arraybuffer} DICOM Part 10 file as Arraybuffer
