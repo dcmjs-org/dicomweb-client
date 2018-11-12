@@ -273,7 +273,9 @@
   var MIMETYPES = {
     DICOM: 'application/dicom',
     DICOM_JSON: 'application/dicom+json',
-    OCTET_STREAM: 'application/octet-stream'
+    OCTET_STREAM: 'application/octet-stream',
+    JPEG: 'image/jpeg',
+    PNG: 'image/png'
   };
   /**
   * Class for interacting with DICOMweb RESTful services.
@@ -292,7 +294,7 @@
       this.baseURL = options.url;
 
       if (!this.baseURL) {
-        console.error('DICOMweb base url provided - calls will fail');
+        console.error('no DICOMweb base url provided - calls will fail');
       }
 
       if ('username' in options) {
@@ -303,6 +305,27 @@
         }
 
         this.password = options.password;
+      }
+
+      if ('qidoURLPrefix' in options) {
+        console.log("use URL prefix for QIDO-RS: ".concat(options.qidoURLPrefix));
+        this.qidoURL = this.baseURL + '/' + options.qidoURLPrefix;
+      } else {
+        this.qidoURL = this.baseURL;
+      }
+
+      if ('wadoURLPrefix' in options) {
+        console.log("use URL prefix for WADO-RS: ".concat(options.wadoURLPrefix));
+        this.wadoURL = this.baseURL + '/' + options.wadoURLPrefix;
+      } else {
+        this.wadoURL = this.baseURL;
+      }
+
+      if ('stowURLPrefix' in options) {
+        console.log("use URL prefix for STOW-RS: ".concat(options.stowURLPrefix));
+        this.stowURL = this.baseURL + '/' + options.stowURLPrefix;
+      } else {
+        this.stowURL = this.baseURL;
       }
 
       this.headers = options.headers || {};
@@ -452,7 +475,7 @@
       }
       /**
        * Searches for DICOM studies.
-       * @param {Object} options options object - "queryParams" optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
+       * @param {Object} options options object
        * @return {Array} study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
        */
 
@@ -461,7 +484,7 @@
       value: function searchForStudies() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
         console.log('search for studies');
-        var url = this.baseURL + '/studies';
+        var url = this.qidoURL + '/studies';
 
         if ('queryParams' in options) {
           url += DICOMwebClient._parseQueryParameters(options.queryParams);
@@ -471,7 +494,7 @@
       }
       /**
        * Retrieves metadata for a DICOM study.
-       * @param {String} studyInstanceUID Study Instance UID
+       * @param {Object} options options object
        * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the study
        */
 
@@ -483,13 +506,12 @@
         }
 
         console.log("retrieve metadata of study ".concat(options.studyInstanceUID));
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/metadata';
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/metadata';
         return this._httpGetApplicationJson(url);
       }
       /**
        * Searches for DICOM series.
-       * @param {Object} options optional DICOM identifiers (choices: "studyInstanceUID")
-       * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
+       * @param {Object} options options object
        * @returns {Array} series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
        */
 
@@ -497,7 +519,7 @@
       key: "searchForSeries",
       value: function searchForSeries() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        var url = this.baseURL;
+        var url = this.qidoURL;
 
         if ('studyInstanceUID' in options) {
           console.log("search series of study ".concat(options.studyInstanceUID));
@@ -514,8 +536,7 @@
       }
       /**
        * Retrieves metadata for a DICOM series.
-       * @param {String} studyInstanceUID Study Instance UID
-       * @param {String} seriesInstanceUID Series Instance UID
+       * @param {Object} options options object
        * @returns {Array} metadata elements in DICOM JSON format for each instance belonging to the series
        */
 
@@ -531,13 +552,12 @@
         }
 
         console.log("retrieve metadata of series ".concat(options.seriesInstanceUID));
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/metadata';
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/metadata';
         return this._httpGetApplicationJson(url);
       }
       /**
        * Searches for DICOM instances.
-       * @param {Object} options optional DICOM identifiers (choices: "studyInstanceUID", "seriesInstanceUID")
-       * @param {Object} queryParams optional query parameters (choices: "fuzzymatching", "offset", "limit" or any valid DICOM attribute identifier)
+       * @param {Object} options options object
        * @returns {Array} instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
        */
 
@@ -545,7 +565,7 @@
       key: "searchForInstances",
       value: function searchForInstances() {
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-        var url = this.baseURL;
+        var url = this.qidoURL;
 
         if ('studyInstanceUID' in options) {
           url += '/studies/' + options.studyInstanceUID;
@@ -569,8 +589,7 @@
         return this._httpGetApplicationJson(url);
       }
       /** Returns a WADO-URI URL for an instance
-       *
-       * @param {Object} options
+       * @param {Object} options options object
        * @returns {String} WADO-URI URL
        */
 
@@ -603,9 +622,8 @@
       }
       /**
        * Retrieves metadata for a DICOM instance.
-       * @param {String} studyInstanceUID Study Instance UID
-       * @param {String} seriesInstanceUID Series Instance UID
-       * @param {String} sopInstanceUID SOP Instance UID
+       *
+       * @param {Object} options object
        * @returns {Object} metadata elements in DICOM JSON format
        */
 
@@ -625,16 +643,12 @@
         }
 
         console.log("retrieve metadata of instance ".concat(options.sopInstanceUID));
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/metadata';
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/metadata';
         return this._httpGetApplicationJson(url);
       }
       /**
        * Retrieves frames for a DICOM instance.
-       * @param {String} studyInstanceUID Study Instance UID
-       * @param {String} seriesInstanceUID Series Instance UID
-       * @param {String} sopInstanceUID SOP Instance UID
-       * @param {Array} frameNumbers one-based index of frames
-       * @param {Object} options optional parameters (key "imageSubtype" to specify MIME image subtypes)
+       * @param {Object} options options object
        * @returns {Array} frame items as byte arrays of the pixel data element
        */
 
@@ -642,15 +656,15 @@
       key: "retrieveInstanceFrames",
       value: function retrieveInstanceFrames(options) {
         if (!('studyInstanceUID' in options)) {
-          throw new Error('Study Instance UID is required for retrieval of instance metadata');
+          throw new Error('Study Instance UID is required for retrieval of instance frames');
         }
 
         if (!('seriesInstanceUID' in options)) {
-          throw new Error('Series Instance UID is required for retrieval of instance metadata');
+          throw new Error('Series Instance UID is required for retrieval of instance frames');
         }
 
         if (!('sopInstanceUID' in options)) {
-          throw new Error('SOP Instance UID is required for retrieval of instance metadata');
+          throw new Error('SOP Instance UID is required for retrieval of instance frames');
         }
 
         if (!('frameNumbers' in options)) {
@@ -658,17 +672,50 @@
         }
 
         console.log("retrieve frames ".concat(options.frameNumbers.toString(), " of instance ").concat(options.sopInstanceUID));
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/frames/' + options.frameNumbers.toString(); // TODO: Easier if user just provided mimetype directly? What is the benefit of adding 'image/'?
-
-        var mimeType = options.imageSubType ? "image/".concat(options.imageSubType) : MIMETYPES.OCTET_STREAM;
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/frames/' + options.frameNumbers.toString();
+        var mimeType = options.mimeType ? "".concat(options.mimeType) : MIMETYPES.OCTET_STREAM;
         return this._httpGetByMimeType(url, mimeType).then(multipartDecode);
       }
       /**
+       * Retrieves rendered frames for a DICOM instance.
+       * @param {Object} options options object
+       * @returns {Array} frame items as byte arrays of the pixel data element
+       */
+
+    }, {
+      key: "retrieveInstanceFramesRendered",
+      value: function retrieveInstanceFramesRendered(options) {
+        if (!('studyInstanceUID' in options)) {
+          throw new Error('Study Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('seriesInstanceUID' in options)) {
+          throw new Error('Series Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('sopInstanceUID' in options)) {
+          throw new Error('SOP Instance UID is required for retrieval of rendered instance frames');
+        }
+
+        if (!('frameNumbers' in options)) {
+          throw new Error('frame numbers are required for retrieval of rendered instance frames');
+        }
+
+        console.log("retrieve rendered frames ".concat(options.frameNumbers.toString(), " of instance ").concat(options.sopInstanceUID));
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID + '/frames/' + options.frameNumbers.toString() + '/rendered';
+        var headers = {}; // The choice of an acceptable media type depends on a variety of things:
+        // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
+
+        if ('mimeType' in options) {
+          headers['Accept'] = options.mimeType;
+        }
+
+        var responseType = 'arraybuffer';
+        return this._httpGet(url, headers, responseType);
+      }
+      /**
        * Retrieves a DICOM instance.
-       *
-       * @param {String} studyInstanceUID Study Instance UID
-       * @param {String} seriesInstanceUID Series Instance UID
-       * @param {String} sopInstanceUID SOP Instance UID
+       * @param {Object} options options object
        * @returns {Arraybuffer} DICOM Part 10 file as Arraybuffer
        */
 
@@ -687,14 +734,12 @@
           throw new Error('SOP Instance UID is required');
         }
 
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID;
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID + '/instances/' + options.sopInstanceUID;
         return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode).then(getFirstResult);
       }
       /**
        * Retrieves a set of DICOM instance for a series.
-       *
-       * @param {String} studyInstanceUID Study Instance UID
-       * @param {String} seriesInstanceUID Series Instance UID
+       * @param {Object} options options object
        * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
        */
 
@@ -709,13 +754,12 @@
           throw new Error('Series Instance UID is required');
         }
 
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID;
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID + '/series/' + options.seriesInstanceUID;
         return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
       }
       /**
        * Retrieves a set of DICOM instance for a study.
-       *
-       * @param {String} studyInstanceUID Study Instance UID
+       * @param {Object} options options object
        * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
        */
 
@@ -726,17 +770,17 @@
           throw new Error('Study Instance UID is required');
         }
 
-        var url = this.baseURL + '/studies/' + options.studyInstanceUID;
+        var url = this.wadoURL + '/studies/' + options.studyInstanceUID;
         return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
       }
       /**
-       * Retrieve and parse BulkData from a BulkDataURI location.
+       * Retrieves and parses BulkData from a BulkDataURI location.
        * Decodes the multipart encoded data and returns the resulting data
        * as an ArrayBuffer.
        *
        * See http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.5.5.html
        *
-       * @param {Object} options
+       * @param {Object} options options object
        * @return {Promise}
        */
 
@@ -751,8 +795,8 @@
       }
       /**
        * Stores DICOM instances.
-       * @param {Array} datasets DICOM datasets of instances that should be stored in DICOM JSON format
-       * @param {Object} options optional parameters (key "studyInstanceUID" to only store instances of a given study)
+       *
+       * @param {Object} options options object
        */
 
     }, {
@@ -762,7 +806,7 @@
           throw new Error('datasets are required for storing');
         }
 
-        var url = "".concat(this.baseURL, "/studies");
+        var url = "".concat(this.stowURL, "/studies");
 
         if ('studyInstanceUID' in options) {
           url += "/".concat(options.studyInstanceUID);
@@ -820,7 +864,7 @@
     var uid = findSubstring(uri, "studies/", "/series");
 
     if (!uid) {
-      var uid = findSubstring(uri, "studies/");
+      uid = findSubstring(uri, "studies/");
     }
 
     if (!uid) {
@@ -834,7 +878,7 @@
     var uid = findSubstring(uri, "series/", "/instances");
 
     if (!uid) {
-      var uid = findSubstring(uri, "series/");
+      uid = findSubstring(uri, "series/");
     }
 
     if (!uid) {
@@ -848,11 +892,11 @@
     var uid = findSubstring(uri, "/instances/", "/frames");
 
     if (!uid) {
-      var uid = findSubstring(uri, "/instances/", "/metadata");
+      uid = findSubstring(uri, "/instances/", "/metadata");
     }
 
     if (!uid) {
-      var uid = findSubstring(uri, "/instances/");
+      uid = findSubstring(uri, "/instances/");
     }
 
     if (!uid) {
@@ -863,7 +907,11 @@
   }
 
   function getFrameNumbersFromUri(uri) {
-    var numbers = findSubstring(uri, "/frames/");
+    var numbers = findSubstring(uri, "/frames/", "/rendered");
+
+    if (!numbers) {
+      numbers = findSubstring(uri, "/frames/");
+    }
 
     if (numbers === undefined) {
       console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
