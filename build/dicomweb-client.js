@@ -618,7 +618,7 @@
         params.push("contentType=".concat(contentType));
         params.push("transferSyntax=".concat(transferSyntax));
         var paramString = params.join('&');
-        return "".concat(this.baseURL, "?").concat(paramString);
+        return "".concat(this.wadoURL, "?").concat(paramString);
       }
       /**
        * Retrieves metadata for a DICOM instance.

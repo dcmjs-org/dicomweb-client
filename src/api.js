@@ -325,7 +325,7 @@ class DICOMwebClient {
 
     const paramString = params.join('&');
 
-    return `${this.baseURL}?${paramString}`;
+    return `${this.wadoURL}?${paramString}`;
   }
 
   /**
