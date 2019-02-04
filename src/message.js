@@ -50,11 +50,11 @@ function identifyBoundary(header) {
  * Checks whether a given token is contained by a message at a given offset.
  * @param {Uint8Array} message message content
  * @param {Uint8Array} token substring that should be present
- * @param {String} offset offset in message content from where search should start
+ * @param {Number} offset offset in message content from where search should start
  * @returns {Boolean} whether message contains token at offset
  */
 function containsToken(message, token, offset=0) {
-  if (message + token.length > message.length) {
+  if (offset + token.length > message.length) {
     return false;
   }
 
@@ -75,10 +75,13 @@ function containsToken(message, token, offset=0) {
  * @param {String} offset message body offset from where search should start
  * @returns {Boolean} whether message has a part at given offset or not
  */
-function findToken(message, token, offset=0) {
-  const messageLength = message.length;
+function findToken(message, token, offset=0, maxSearchLength) {
+  let searchLength = message.length;
+  if (maxSearchLength) {
+    searchLength = Math.min(offset + maxSearchLength, message.length);
+  }
 
-  for (let i = offset; i < messageLength; i++) {
+  for (let i = offset; i < searchLength; i++) {
     // If the first value of the message matches
     // the first value of the token, check if
     // this is the full token.
@@ -161,9 +164,15 @@ function multipartEncode(datasets, boundary=guid(), contentType='application/dic
 function multipartDecode(response) {
     const message = new Uint8Array(response);
 
+    /* Set a maximum length to search for the header boundaries, otherwise
+       findToken can run for a long time
+    */
+    const maxSearchLength = 1000;
+
+
     // First look for the multipart mime header
-    const separator = stringToUint8Array('\r\n\r\n');
-    const headerIndex = findToken(message, separator);
+    let separator = stringToUint8Array('\r\n\r\n');
+    let headerIndex = findToken(message, separator, 0, maxSearchLength);
     if (headerIndex === -1) {
       throw new Error('Response message has no multipart mime header');
     }
@@ -177,6 +186,7 @@ function multipartDecode(response) {
     const boundary = stringToUint8Array(boundaryString);
     const boundaryLength = boundary.length;
     const components = [];
+
     let offset = headerIndex + separator.length;
 
     // Loop until we cannot find any more boundaries

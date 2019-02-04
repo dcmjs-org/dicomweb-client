@@ -94,7 +94,7 @@
    * Checks whether a given token is contained by a message at a given offset.
    * @param {Uint8Array} message message content
    * @param {Uint8Array} token substring that should be present
-   * @param {String} offset offset in message content from where search should start
+   * @param {Number} offset offset in message content from where search should start
    * @returns {Boolean} whether message contains token at offset
    */
 
@@ -102,7 +102,7 @@
   function containsToken(message, token) {
     var offset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
-    if (message + token.length > message.length) {
+    if (offset + token.length > message.length) {
       return false;
     }
 
@@ -127,9 +127,14 @@
 
   function findToken(message, token) {
     var offset = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-    var messageLength = message.length;
+    var maxSearchLength = arguments.length > 3 ? arguments[3] : undefined;
+    var searchLength = message.length;
 
-    for (var i = offset; i < messageLength; i++) {
+    if (maxSearchLength) {
+      searchLength = Math.min(offset + maxSearchLength, message.length);
+    }
+
+    for (var i = offset; i < searchLength; i++) {
       // If the first value of the message matches
       // the first value of the token, check if
       // this is the full token.
@@ -202,10 +207,15 @@
    */
 
   function multipartDecode(response) {
-    var message = new Uint8Array(response); // First look for the multipart mime header
+    var message = new Uint8Array(response);
+    /* Set a maximum length to search for the header boundaries, otherwise
+       findToken can run for a long time
+    */
+
+    var maxSearchLength = 1000; // First look for the multipart mime header
 
     var separator = stringToUint8Array('\r\n\r\n');
-    var headerIndex = findToken(message, separator);
+    var headerIndex = findToken(message, separator, 0, maxSearchLength);
 
     if (headerIndex === -1) {
       throw new Error('Response message has no multipart mime header');
