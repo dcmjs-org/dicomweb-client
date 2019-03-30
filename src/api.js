@@ -179,15 +179,22 @@ class DICOMwebClient {
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpGetByMimeType(url, mimeType, params, responseType='arraybuffer', progressCallback) {
+  _httpGetByMimeType(url, mediaType, params, responseType='arraybuffer', progressCallback) {
+    const { mimeType, transferSyntaxUID } = mediaType;
+
     if (typeof(params) === 'object') {
       if (!isEmptyObject(params)) {
         url += DICOMwebClient._parseQueryParameters(params)
       }
     }
 
+    const acceptHeaderStringEntries = ['multipart/related', `type="${mimeType}"`];
+    if (transferSyntaxUID) {
+      acceptHeaderStringEntries.push(`transfer-syntax: ${transferSyntaxUID}`)
+    }
+
     const headers = {
-      'Accept': `multipart/related; type="${mimeType}"`
+      'Accept': acceptHeaderStringEntries.join('; ')
     };
 
     return this._httpGet(url, headers, responseType, progressCallback);
@@ -379,9 +386,12 @@ class DICOMwebClient {
       '/instances/' + options.sopInstanceUID +
       '/frames/' + options.frameNumbers.toString();
 
-    const mimeType = options.mimeType ? `${options.mimeType}` : MIMETYPES.OCTET_STREAM;
+    const mediaType = {
+      mimeType: options.mimeType || MIMETYPES.OCTET_STREAM,
+      transferSyntaxUID: options.transferSyntaxUID
+    };
 
-    return this._httpGetByMimeType(url, mimeType).then(multipartDecode);
+    return this._httpGetByMimeType(url, mediaType).then(multipartDecode);
   }
 
   /**
@@ -442,7 +452,12 @@ class DICOMwebClient {
       '/series/' + options.seriesInstanceUID +
       '/instances/' + options.sopInstanceUID;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM)
+    const mediaType = {
+      mimeType: options.mimeType || MIMETYPES.DICOM,
+      transferSyntaxUID: options.transferSyntaxUID
+    };
+
+    return this._httpGetByMimeType(url, mediaType)
         .then(multipartDecode)
         .then(getFirstResult);
   }
@@ -463,7 +478,12 @@ class DICOMwebClient {
       '/studies/' + options.studyInstanceUID +
       '/series/' + options.seriesInstanceUID;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+    const mediaType = {
+      mimeType: options.mimeType || MIMETYPES.DICOM,
+      transferSyntaxUID: options.transferSyntaxUID
+    };
+
+    return this._httpGetByMimeType(url, mediaType).then(multipartDecode);
   }
 
   /**
@@ -479,7 +499,12 @@ class DICOMwebClient {
     const url = this.wadoURL +
       '/studies/' + options.studyInstanceUID;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+    const mediaType = {
+      mimeType: options.mimeType || MIMETYPES.DICOM,
+      transferSyntaxUID: options.transferSyntaxUID
+    };
+
+    return this._httpGetByMimeType(url, mediaType).then(multipartDecode);
   }
 
   /**
@@ -497,7 +522,12 @@ class DICOMwebClient {
       throw new Error('BulkDataURI is required.');
     }
 
-    return this._httpGetByMimeType(options.BulkDataURI, MIMETYPES.OCTET_STREAM)
+    const mediaType = {
+      mimeType: options.mimeType || MIMETYPES.OCTET_STREAM,
+      transferSyntaxUID: options.transferSyntaxUID
+    };
+
+    return this._httpGetByMimeType(options.BulkDataURI, mediaType)
       .then(multipartDecode)
       .then(getFirstResult);
   }
