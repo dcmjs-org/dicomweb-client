@@ -147,6 +147,8 @@ describe('dicomweb.api.DICOMwebClient', function () {
 
     const bulkData = await dwc.retrieveBulkData(bulkDataOptions);
 
-    expect(bulkData).to.be.an('arraybuffer');
+    expect(bulkData).to.be.an('array');
+    expect(bulkData).to.to.have.length(1);
+    expect(bulkData[0]).to.be.an('arraybuffer');
   });
 });
