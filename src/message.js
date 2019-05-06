@@ -187,11 +187,11 @@ function multipartDecode(response) {
     const boundaryLength = boundary.length;
     const components = [];
 
-    let offset = headerIndex + separator.length;
+    let offset = boundaryLength;
 
     // Loop until we cannot find any more boundaries
     let boundaryIndex;
-
+    
     while (boundaryIndex !== -1) {
       // Search for the next boundary in the message, starting
       // from the current offset position
@@ -202,17 +202,22 @@ function multipartDecode(response) {
         break;
       }
 
+      let headerIndex = findToken(message, separator, offset, maxSearchLength);
+      if (headerIndex === -1) {
+        throw new Error('Response message part has no mime header');
+      }
+      offset = headerIndex + separator.length;
+
       // Extract data from response message, excluding "\r\n"
       const spacingLength = 2;
-      const length = boundaryIndex - offset - spacingLength;
-      const data = response.slice(offset, offset + length);
+      const data = response.slice(offset, boundaryIndex - spacingLength);
 
       // Add the data to the array of results
       components.push(data);
 
       // Move the offset to the end of the current section,
       // plus the identified boundary
-      offset += length + spacingLength + boundaryLength;
+      offset = boundaryIndex + boundaryLength;
     }
 
     return components;
