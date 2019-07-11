@@ -5,11 +5,11 @@ import {
   uint8ArrayToString,
   stringToUint8Array,
   multipartEncode,
-  multipartDecode
+  multipartDecode,
 } from './message.js';
 
-function isEmptyObject (obj) {
-    return Object.keys(obj).length === 0 && obj.constructor === Object;
+function isEmptyObject(obj) {
+  return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
 const getFirstResult = result => result[0];
@@ -19,50 +19,48 @@ const MIMETYPES = {
   DICOM_JSON: 'application/dicom+json',
   OCTET_STREAM: 'application/octet-stream',
   JPEG: 'image/jpeg',
-  PNG: 'image/png'
+  PNG: 'image/png',
 };
 
 /**
 * Class for interacting with DICOMweb RESTful services.
 */
 class DICOMwebClient {
-
   /**
   * @constructor
   * @param {Object} options (choices: "url", "username", "password", "headers")
   */
   constructor(options) {
-
     this.baseURL = options.url;
     if (!this.baseURL) {
-      console.error('no DICOMweb base url provided - calls will fail')
+      console.error('no DICOMweb base url provided - calls will fail');
     }
 
     if ('username' in options) {
       this.username = options.username;
       if (!('password' in options)) {
-        console.error('no password provided to authenticate with DICOMweb service')
+        console.error('no password provided to authenticate with DICOMweb service');
       }
       this.password = options.password;
     }
 
     if ('qidoURLPrefix' in options) {
       console.log(`use URL prefix for QIDO-RS: ${options.qidoURLPrefix}`);
-      this.qidoURL = this.baseURL + '/' + options.qidoURLPrefix;
+      this.qidoURL = `${this.baseURL}/${options.qidoURLPrefix}`;
     } else {
       this.qidoURL = this.baseURL;
     }
 
     if ('wadoURLPrefix' in options) {
       console.log(`use URL prefix for WADO-RS: ${options.wadoURLPrefix}`);
-      this.wadoURL = this.baseURL + '/' + options.wadoURLPrefix;
+      this.wadoURL = `${this.baseURL}/${options.wadoURLPrefix}`;
     } else {
       this.wadoURL = this.baseURL;
     }
 
     if ('stowURLPrefix' in options) {
       console.log(`use URL prefix for STOW-RS: ${options.stowURLPrefix}`);
-      this.stowURL = this.baseURL + '/' + options.stowURLPrefix;
+      this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`;
     } else {
       this.stowURL = this.baseURL;
     }
@@ -70,27 +68,27 @@ class DICOMwebClient {
     this.headers = options.headers || {};
   }
 
-  static _parseQueryParameters(params={}) {
+  static _parseQueryParameters(params = {}) {
     let queryString = '?';
-    Object.keys(params).forEach(function (key, index) {
+    Object.keys(params).forEach((key, index) => {
       if (index !== 0) {
-        queryString += '&'
+        queryString += '&';
       }
-      queryString += key + '=' + encodeURIComponent(params[key]);
+      queryString += `${key}=${encodeURIComponent(params[key])}`;
     });
-    return queryString
+    return queryString;
   }
 
-  _httpRequest(url, method, headers, options={}) {
-    return new Promise( (resolve, reject) => {
+  _httpRequest(url, method, headers, options = {}) {
+    return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
       if ('responseType' in options) {
         request.responseType = options.responseType;
       }
 
-      if (typeof(headers) === 'object') {
-        Object.keys(headers).forEach(function (key) {
+      if (typeof (headers) === 'object') {
+        Object.keys(headers).forEach((key) => {
           request.setRequestHeader(key, headers[key]);
         });
       }
@@ -98,18 +96,18 @@ class DICOMwebClient {
       // now add custom headers from the user
       // (e.g. access tokens)
       const userHeaders = this.headers;
-      Object.keys(userHeaders).forEach(function (key) {
+      Object.keys(userHeaders).forEach((key) => {
         request.setRequestHeader(key, userHeaders[key]);
       });
 
       // Event triggered when upload starts
       request.onloadstart = function (event) {
-        //console.log('upload started: ', url)
+        // console.log('upload started: ', url)
       };
 
       // Event triggered when upload ends
       request.onloadend = function (event) {
-        //console.log('upload finished')
+        // console.log('upload finished')
       };
 
       // Handle response message
@@ -139,7 +137,7 @@ class DICOMwebClient {
 
       // Event triggered while download progresses
       if ('progressCallback' in options) {
-        if (typeof(options.progressCallback) === 'function') {
+        if (typeof (options.progressCallback) === 'function') {
           request.onprogress = options.progressCallback;
         }
       }
@@ -165,40 +163,40 @@ class DICOMwebClient {
   }
 
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, 'get', headers, {responseType, progressCallback});
+    return this._httpRequest(url, 'get', headers, { responseType, progressCallback });
   }
 
-  _httpGetApplicationJson(url, params={}, progressCallback) {
-    if (typeof(params) === 'object') {
+  _httpGetApplicationJson(url, params = {}, progressCallback) {
+    if (typeof (params) === 'object') {
       if (!isEmptyObject(params)) {
-          url += DICOMwebClient._parseQueryParameters(params)
+        url += DICOMwebClient._parseQueryParameters(params);
       }
     }
-    const headers = {'Accept': MIMETYPES.DICOM_JSON};
+    const headers = { Accept: MIMETYPES.DICOM_JSON };
     const responseType = 'json';
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
-  _httpGetByMimeType(url, mimeType, params, responseType='arraybuffer', progressCallback) {
-    if (typeof(params) === 'object') {
+  _httpGetByMimeType(url, mimeType, params, responseType = 'arraybuffer', progressCallback) {
+    if (typeof (params) === 'object') {
       if (!isEmptyObject(params)) {
-        url += DICOMwebClient._parseQueryParameters(params)
+        url += DICOMwebClient._parseQueryParameters(params);
       }
     }
 
     const headers = {
-      'Accept': `multipart/related; type="${mimeType}"`
+      Accept: `multipart/related; type="${mimeType}"`,
     };
 
     return this._httpGet(url, headers, responseType, progressCallback);
   }
 
   _httpPost(url, headers, data, progressCallback) {
-    return this._httpRequest(url, 'post', headers, {data, progressCallback});
+    return this._httpRequest(url, 'post', headers, { data, progressCallback });
   }
 
   _httpPostApplicationJson(url, data, progressCallback) {
-    const headers = {'Content-Type': MIMETYPES.DICOM_JSON};
+    const headers = { 'Content-Type': MIMETYPES.DICOM_JSON };
     return this._httpPost(url, headers, data, progressCallback);
   }
 
@@ -207,14 +205,14 @@ class DICOMwebClient {
    * @param {Object} options options object
    * @return {Array} study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
-  searchForStudies(options={}) {
+  searchForStudies(options = {}) {
     console.log('search for studies');
-    let url = this.qidoURL +
-              '/studies';
+    let url = `${this.qidoURL
+    }/studies`;
     if ('queryParams' in options) {
-        url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return(this._httpGetApplicationJson(url));
+    return (this._httpGetApplicationJson(url));
   }
 
   /**
@@ -224,13 +222,13 @@ class DICOMwebClient {
    */
   retrieveStudyMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required for retrieval of study metadata')
+      throw new Error('Study Instance UID is required for retrieval of study metadata');
     }
     console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
-    const url = this.wadoURL +
-              '/studies/' + options.studyInstanceUID +
-              '/metadata';
-    return(this._httpGetApplicationJson(url));
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/metadata`;
+    return (this._httpGetApplicationJson(url));
   }
 
   /**
@@ -238,17 +236,17 @@ class DICOMwebClient {
    * @param {Object} options options object
    * @returns {Array} series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
    */
-  searchForSeries(options={}) {
+  searchForSeries(options = {}) {
     let url = this.qidoURL;
     if ('studyInstanceUID' in options) {
       console.log(`search series of study ${options.studyInstanceUID}`);
-      url += '/studies/' + options.studyInstanceUID;
+      url += `/studies/${options.studyInstanceUID}`;
     }
     url += '/series';
     if ('queryParams' in options) {
-        url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return(this._httpGetApplicationJson(url));
+    return (this._httpGetApplicationJson(url));
   }
 
   /**
@@ -258,18 +256,18 @@ class DICOMwebClient {
    */
   retrieveSeriesMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required for retrieval of series metadata')
+      throw new Error('Study Instance UID is required for retrieval of series metadata');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required for retrieval of series metadata')
+      throw new Error('Series Instance UID is required for retrieval of series metadata');
     }
 
     console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID +
-      '/metadata';
-    return(this._httpGetApplicationJson(url));
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID
+    }/metadata`;
+    return (this._httpGetApplicationJson(url));
   }
 
   /**
@@ -277,24 +275,24 @@ class DICOMwebClient {
    * @param {Object} options options object
    * @returns {Array} instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
-  searchForInstances(options={}) {
+  searchForInstances(options = {}) {
     let url = this.qidoURL;
     if ('studyInstanceUID' in options) {
-      url += '/studies/' + options.studyInstanceUID;
+      url += `/studies/${options.studyInstanceUID}`;
       if ('seriesInstanceUID' in options) {
         console.log(`search for instances of series ${options.seriesInstanceUID}`);
-        url += '/series/' + options.seriesInstanceUID;
+        url += `/series/${options.seriesInstanceUID}`;
       } else {
         console.log(`search for instances of study ${options.studyInstanceUID}`);
       }
     } else {
-     console.log('search for instances');
+      console.log('search for instances');
     }
     url += '/instances';
     if ('queryParams' in options) {
-        url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return(this._httpGetApplicationJson(url));
+    return (this._httpGetApplicationJson(url));
   }
 
   /** Returns a WADO-URI URL for an instance
@@ -303,13 +301,13 @@ class DICOMwebClient {
    */
   buildInstanceWadoURIUrl(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required.')
+      throw new Error('Study Instance UID is required.');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required.')
+      throw new Error('Series Instance UID is required.');
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required.')
+      throw new Error('SOP Instance UID is required.');
     }
 
     const contentType = options.contentType || MIMETYPES.DICOM;
@@ -336,20 +334,20 @@ class DICOMwebClient {
    */
   retrieveInstanceMetadata(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required for retrieval of instance metadata')
+      throw new Error('Study Instance UID is required for retrieval of instance metadata');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required for retrieval of instance metadata')
+      throw new Error('Series Instance UID is required for retrieval of instance metadata');
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required for retrieval of instance metadata')
+      throw new Error('SOP Instance UID is required for retrieval of instance metadata');
     }
     console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID +
-      '/instances/' + options.sopInstanceUID +
-      '/metadata';
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID
+    }/metadata`;
 
     return this._httpGetApplicationJson(url);
   }
@@ -361,23 +359,23 @@ class DICOMwebClient {
    */
   retrieveInstanceFrames(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required for retrieval of instance frames')
+      throw new Error('Study Instance UID is required for retrieval of instance frames');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required for retrieval of instance frames')
+      throw new Error('Series Instance UID is required for retrieval of instance frames');
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required for retrieval of instance frames')
+      throw new Error('SOP Instance UID is required for retrieval of instance frames');
     }
     if (!('frameNumbers' in options)) {
-      throw new Error('frame numbers are required for retrieval of instance frames')
+      throw new Error('frame numbers are required for retrieval of instance frames');
     }
-    console.log(`retrieve frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`)
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID +
-      '/instances/' + options.sopInstanceUID +
-      '/frames/' + options.frameNumbers.toString();
+    console.log(`retrieve frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`);
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID
+    }/frames/${options.frameNumbers.toString()}`;
 
     const mimeType = options.mimeType ? `${options.mimeType}` : MIMETYPES.OCTET_STREAM;
 
@@ -391,31 +389,31 @@ class DICOMwebClient {
    */
   retrieveInstanceFramesRendered(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required for retrieval of rendered instance frames')
+      throw new Error('Study Instance UID is required for retrieval of rendered instance frames');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required for retrieval of rendered instance frames')
+      throw new Error('Series Instance UID is required for retrieval of rendered instance frames');
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required for retrieval of rendered instance frames')
+      throw new Error('SOP Instance UID is required for retrieval of rendered instance frames');
     }
     if (!('frameNumbers' in options)) {
-      throw new Error('frame numbers are required for retrieval of rendered instance frames')
+      throw new Error('frame numbers are required for retrieval of rendered instance frames');
     }
 
-    console.log(`retrieve rendered frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`)
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID +
-      '/instances/' + options.sopInstanceUID +
-      '/frames/' + options.frameNumbers.toString() +
-      '/rendered';
+    console.log(`retrieve rendered frames ${options.frameNumbers.toString()} of instance ${options.sopInstanceUID}`);
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID
+    }/frames/${options.frameNumbers.toString()
+    }/rendered`;
 
-    let headers = {};
+    const headers = {};
     // The choice of an acceptable media type depends on a variety of things:
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
     if ('mimeType' in options) {
-      headers['Accept'] = options.mimeType;
+      headers.Accept = options.mimeType;
     }
 
     const responseType = 'arraybuffer';
@@ -429,22 +427,22 @@ class DICOMwebClient {
    */
   retrieveInstance(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required')
+      throw new Error('Series Instance UID is required');
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required')
+      throw new Error('SOP Instance UID is required');
     }
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID +
-      '/instances/' + options.sopInstanceUID;
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID}`;
 
     return this._httpGetByMimeType(url, MIMETYPES.DICOM)
-        .then(multipartDecode)
-        .then(getFirstResult);
+      .then(multipartDecode)
+      .then(getFirstResult);
   }
 
   /**
@@ -454,14 +452,14 @@ class DICOMwebClient {
    */
   retrieveSeries(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required');
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required')
+      throw new Error('Series Instance UID is required');
     }
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID +
-      '/series/' + options.seriesInstanceUID;
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID
+    }/series/${options.seriesInstanceUID}`;
 
     return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
   }
@@ -473,11 +471,11 @@ class DICOMwebClient {
    */
   retrieveStudy(options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required')
+      throw new Error('Study Instance UID is required');
     }
 
-    const url = this.wadoURL +
-      '/studies/' + options.studyInstanceUID;
+    const url = `${this.wadoURL
+    }/studies/${options.studyInstanceUID}`;
 
     return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
   }
@@ -509,7 +507,7 @@ class DICOMwebClient {
    */
   storeInstances(options) {
     if (!('datasets' in options)) {
-      throw new Error('datasets are required for storing')
+      throw new Error('datasets are required for storing');
     }
 
     let url = `${this.stowURL}/studies`;
@@ -519,7 +517,7 @@ class DICOMwebClient {
 
     const { data, boundary } = multipartEncode(options.datasets);
     const headers = {
-      'Content-Type': `multipart/related; type=application/dicom; boundary=${boundary}`
+      'Content-Type': `multipart/related; type=application/dicom; boundary=${boundary}`,
     };
 
     return this._httpPost(url, headers, data, options.progressCallback);
