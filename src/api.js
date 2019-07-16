@@ -9,6 +9,13 @@ function isEmptyObject(obj) {
 }
 
 const getFirstResult = result => result[0];
+const getFirstResultIfLengthGtOne = result => {
+  if (result.length > 1) {
+    return result;
+  }
+
+  return result[0]
+};
 
 const MEDIATYPES = {
   DICOM: "application/dicom",
@@ -188,7 +195,7 @@ class DICOMwebClient {
 
   /**
    * Performs an HTTP GET request that accepts a message with
-   "applicaton/pdf" media type.
+   "application/pdf" media type.
    * @param {String} url
    * @param {Object[]} mediaTypes
    * @param {Object} params
@@ -258,7 +265,7 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs an HTTP GET request that accepts a message with an image
+   * Performs an HTTP GET request that accepts a message with a text
    media type.
    *
    * @param {String} url
@@ -412,10 +419,10 @@ class DICOMwebClient {
         "1.2.840.10008.1.2.4.92": "image/jpx",
         "1.2.840.10008.1.2.4.93": "image/jpx"
       };
-    }
 
-    if (byteRange) {
-      headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      if (byteRange) {
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      }
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
@@ -469,10 +476,10 @@ class DICOMwebClient {
         "1.2.840.10008.1.2.4.105": "video/mp4",
         "1.2.840.10008.1.2.4.106": "video/mp4"
       };
-    }
 
-    if (byteRange) {
-      headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      if (byteRange) {
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      }
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
@@ -486,13 +493,13 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs a HTTP GET request that accepts a multipart message with "applicaton/dicom" media type
+   * Performs a HTTP GET request that accepts a multipart message with "application/dicom" media type
    *
    * @param {String} url unique resource locator
    * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
    * @param {Object} params additional HTTP GET query parameters
-   * @param {Boolean} rendered whether resource should be requested using rendered media types
+   * @param {Function} progressCallback
    * @private
    * @returns {Array} content of HTTP message body parts
    */
@@ -537,13 +544,14 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs a HTTP GET request that accepts a multipart message with "applicaton/dicom" media type
+   * Performs a HTTP GET request that accepts a multipart message with "application/octet-stream" media type
    *
    * @param {String} url unique resource locator
    * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
    * @param {Array} byteRange start and end of byte range
    * @param {Object} params additional HTTP GET query parameters
+   * @param {Function} progressCallback
    * @private
    * @returns {Array} content of HTTP message body parts
    */
@@ -617,7 +625,7 @@ class DICOMwebClient {
     }
 
     const fieldValueParts = mediaTypes.map(item => {
-      const { transferSyntaxUID, mediaType } = item;
+      const { mediaType } = item;
 
       DICOMwebClient._assertMediaTypeIsValid(mediaType);
       if (!supportedMediaTypes.includes(mediaType)) {
@@ -626,12 +634,7 @@ class DICOMwebClient {
         );
       }
 
-      let acceptHeaderStringEntry = `type="${mediaType}"`;
-      if (transferSyntaxUID) {
-        acceptHeaderStringEntry += ` transfer-syntax: ${transferSyntaxUID}`;
-      }
-
-      return acceptHeaderStringEntry;
+      return mediaType;
     });
 
     return fieldValueParts.join(", ");
@@ -988,11 +991,9 @@ class DICOMwebClient {
 
     if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
       return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("image")) {
+    } else if (commonMediaType.startsWith("image")) {
       return this._httpGetMultipartImage(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("video")) {
+    } else if (commonMediaType.startsWith("video")) {
       return this._httpGetMultipartVideo(url, mediaTypes);
     }
 
@@ -1010,17 +1011,17 @@ class DICOMwebClient {
   retrieveInstanceRendered(options) {
     if (!("studyInstanceUID" in options)) {
       throw new Error(
-        "Study Instance UID is required for retrieval of rendered instance frames"
+        "Study Instance UID is required for retrieval of rendered instance"
       );
     }
     if (!("seriesInstanceUID" in options)) {
       throw new Error(
-        "Series Instance UID is required for retrieval of rendered instance frames"
+        "Series Instance UID is required for retrieval of rendered instance"
       );
     }
     if (!("sopInstanceUID" in options)) {
       throw new Error(
-        "SOP Instance UID is required for retrieval of rendered instance frames"
+        "SOP Instance UID is required for retrieval of rendered instance"
       );
     }
 
@@ -1039,19 +1040,16 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
       return this._httpGetImage(url, mediaTypes, params);
-    }
-    if (commonMediaType.startsWith("video")) {
+    } else if (commonMediaType.startsWith("video")) {
       return this._httpGetVideo(url, mediaTypes, params);
-    }
-    if (commonMediaType.startsWith("text")) {
+    } else if (commonMediaType.startsWith("text")) {
       return this._httpGetText(url, mediaTypes, params);
-    }
-    if (commonMediaType === MEDIATYPES.PDF) {
+    } else if (commonMediaType === MEDIATYPES.PDF) {
       return this._httpGetApplicationPdf(url, params);
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of rendered frame.`
+      `Media type ${commonMediaType} is not supported for retrieval of rendered instance.`
     );
   }
 
@@ -1104,8 +1102,7 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
       return this._httpGetImage(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("video")) {
+    } else if (commonMediaType.startsWith("video")) {
       return this._httpGetVideo(url, mediaTypes);
     }
 
@@ -1117,7 +1114,7 @@ class DICOMwebClient {
   /**
    * Retrieves a DICOM instance.
    * @param {Object} options options object
-   * @returns {Arraybuffer} DICOM Part 10 file as Arraybuffer
+   * @returns {ArrayBuffer} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1144,19 +1141,14 @@ class DICOMwebClient {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes).then(
         getFirstResult
       );
-    }
-    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
       return this._httpGetMultipartApplicationOctetStream(url, mediaTypes).then(
         getFirstResult
       );
-    }
-    if (commonMediaType.startsWith("image")) {
-      // TODO: If length is >1, return all frames instead of using getFirstResult
-      return this._httpGetMultipartImage(url, mediaTypes).then(getFirstResult);
-    }
-    if (commonMediaType.startsWith("video")) {
-      // TODO: If length is >1, return all frames instead of using getFirstResult
-      return this._httpGetMultipartVideo(url, mediaTypes).then(getFirstResult);
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes).then(getFirstResultIfLengthGtOne);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetMultipartVideo(url, mediaTypes).then(getFirstResultIfLengthGtOne);
     }
 
     throw new Error(
@@ -1167,7 +1159,7 @@ class DICOMwebClient {
   /**
    * Retrieves a set of DICOM instance for a series.
    * @param {Object} options options object
-   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
    */
   retrieveSeries(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1190,14 +1182,11 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes);
-    }
-    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
       return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("image")) {
+    } else if (commonMediaType.startsWith("image")) {
       return this._httpGetMultipartImage(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("video")) {
+    } else if (commonMediaType.startsWith("video")) {
       return this._httpGetMultipartVideo(url, mediaTypes);
     }
 
@@ -1209,7 +1198,7 @@ class DICOMwebClient {
   /**
    * Retrieves a set of DICOM instance for a study.
    * @param {Object} options options object
-   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
    */
   retrieveStudy(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1227,14 +1216,11 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes);
-    }
-    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
       return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("image")) {
+    } else if (commonMediaType.startsWith("image")) {
       return this._httpGetMultipartImage(url, mediaTypes);
-    }
-    if (commonMediaType.startsWith("video")) {
+    } else if (commonMediaType.startsWith("video")) {
       return this._httpGetMultipartVideo(url, mediaTypes);
     }
 
@@ -1277,8 +1263,7 @@ class DICOMwebClient {
         mediaTypes,
         byteRange
       );
-    }
-    if (commonMediaType.startsWith("image")) {
+    } else if (commonMediaType.startsWith("image")) {
       return this._httpGetMultipartImage(url, mediaTypes, byteRange);
     }
 
