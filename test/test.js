@@ -22,6 +22,7 @@ function getTestDataInstance(url) {
 describe('dicomweb.api.DICOMwebClient', function () {
   const dwc = new DICOMwebClient.api.DICOMwebClient({
     url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
+    retrieveRendered: false
   });
 
   it('should have correct constructor name', function() {
