@@ -1,15 +1,27 @@
 import { multipartEncode, multipartDecode } from "./message.js";
 
+function isObject(obj) {
+  return typeof obj === "object" && obj !== null;
+}
+
 function isEmptyObject(obj) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
 const getFirstResult = result => result[0];
+const getFirstResultIfLengthGtOne = result => {
+  if (result.length > 1) {
+    return result;
+  }
 
-const MIMETYPES = {
+  return result[0]
+};
+
+const MEDIATYPES = {
   DICOM: "application/dicom",
   DICOM_JSON: "application/dicom+json",
   OCTET_STREAM: "application/octet-stream",
+  PDF: "application/pdf",
   JPEG: "image/jpeg",
   PNG: "image/png"
 };
@@ -165,12 +177,13 @@ class DICOMwebClient {
 
   _httpGetApplicationJson(url, params = {}, progressCallback) {
     let urlWithQueryParams = url;
+
     if (typeof params === "object") {
       if (!isEmptyObject(params)) {
         urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
       }
     }
-    const headers = { Accept: MIMETYPES.DICOM_JSON };
+    const headers = { Accept: MEDIATYPES.DICOM_JSON };
     const responseType = "json";
     return this._httpGet(
       urlWithQueryParams,
@@ -180,13 +193,17 @@ class DICOMwebClient {
     );
   }
 
-  _httpGetByMimeType(
-    url,
-    mimeType,
-    params,
-    responseType = "arraybuffer",
-    progressCallback
-  ) {
+  /**
+   * Performs an HTTP GET request that accepts a message with
+   "application/pdf" media type.
+   * @param {String} url
+   * @param {Object[]} mediaTypes
+   * @param {Object} params
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
+  _httpGetApplicationPdf(url, params = {}, progressCallback) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -194,11 +211,8 @@ class DICOMwebClient {
         urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
       }
     }
-
-    const headers = {
-      Accept: `multipart/related; type="${mimeType}"`
-    };
-
+    const headers = { Accept: MEDIATYPES.PDF };
+    const responseType = "json";
     return this._httpGet(
       urlWithQueryParams,
       headers,
@@ -207,13 +221,565 @@ class DICOMwebClient {
     );
   }
 
+  /**
+   * Performs an HTTP GET request that accepts a message with an image
+   media type.
+   *
+   * @param {String} url
+   * @param {Object[]} mediaTypes
+   * @param {Object} params
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
+  _httpGetImage(url, mediaTypes, params = {}, progressCallback) {
+    let urlWithQueryParams = url;
+
+    if (typeof params === "object") {
+      if (!isEmptyObject(params)) {
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+      }
+    }
+
+    const supportedMediaTypes = [
+      "image/",
+      "image/*",
+      "image/jpeg",
+      "image/jp2",
+      "image/gif",
+      "image/png"
+    ];
+
+    const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
+      mediaTypes,
+      supportedMediaTypes
+    );
+    const headers = { Accept: acceptHeaderFieldValue };
+    const responseType = "arraybuffer";
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      responseType,
+      progressCallback
+    );
+  }
+
+  /**
+   * Performs an HTTP GET request that accepts a message with a text
+   media type.
+   *
+   * @param {String} url
+   * @param {Object[]} mediaTypes
+   * @param {Object} params
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
+  _httpGetText(url, mediaTypes, params = {}, progressCallback) {
+    let urlWithQueryParams = url;
+
+    if (typeof params === "object") {
+      if (!isEmptyObject(params)) {
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+      }
+    }
+
+    const supportedMediaTypes = [
+      "text/",
+      "text/*",
+      "text/html",
+      "text/plain",
+      "text/rtf",
+      "text/xml"
+    ];
+
+    const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
+      mediaTypes,
+      supportedMediaTypes
+    );
+    const headers = { Accept: acceptHeaderFieldValue };
+    const responseType = "arraybuffer";
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      responseType,
+      progressCallback
+    );
+  }
+
+  /**
+   * Performs an HTTP GET request that accepts a message with a video
+   media type.
+   *
+   * @param {String} url
+   * @param {Object[]} mediaTypes
+   * @param {Object} params
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
+  _httpGetVideo(url, mediaTypes, params = {}, progressCallback) {
+    let urlWithQueryParams = url;
+
+    if (typeof params === "object") {
+      if (!isEmptyObject(params)) {
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+      }
+    }
+
+    const supportedMediaTypes = [
+      "video/",
+      "video/*",
+      "video/mpeg",
+      "video/mp4",
+      "video/H265"
+    ];
+
+    const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
+      mediaTypes,
+      supportedMediaTypes
+    );
+    const headers = { Accept: acceptHeaderFieldValue };
+    const responseType = "arraybuffer";
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      responseType,
+      progressCallback
+    );
+  }
+
+  /**
+   * Asserts that a given media type is valid.
+   *
+   * @params {String} mediaType media type
+   */
+  static _assertMediaTypeIsValid(mediaType) {
+    if (!mediaType) {
+      throw new Error(`Not a valid media type: ${mediaType}`);
+    }
+
+    const sepIndex = mediaType.indexOf("/");
+    if (sepIndex === -1) {
+      throw new Error(`Not a valid media type: ${mediaType}`);
+    }
+
+    const mediaTypeType = mediaType.slice(0, sepIndex);
+    const types = ["application", "image", "text", "video"];
+    if (!types.includes(mediaTypeType)) {
+      throw new Error(`Not a valid media type: ${mediaType}`);
+    }
+
+    if (mediaType.slice(sepIndex + 1).includes("/")) {
+      throw new Error(`Not a valid media type: ${mediaType}`);
+    }
+  }
+
+  /**
+   * Performs an HTTP GET request that accepts a multipart message with an image media type.
+   *
+   * @param {String} url unique resource locator
+   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   * @param {Array} byteRange start and end of byte range
+   * @param {Object} params additional HTTP GET query parameters
+   * @param {Boolean} rendered whether resource should be requested using rendered media types
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Array} content of HTTP message body parts
+   */
+  _httpGetMultipartImage(
+    url,
+    mediaTypes,
+    byteRange,
+    params,
+    rendered = false,
+    progressCallback
+  ) {
+    const headers = {};
+    let supportedMediaTypes;
+    if (rendered) {
+      supportedMediaTypes = [
+        "image/jpeg",
+        "image/gif",
+        "image/png",
+        "image/jp2"
+      ];
+    } else {
+      supportedMediaTypes = {
+        "1.2.840.10008.1.2.5": ["image/x-dicom-rle"],
+        "1.2.840.10008.1.2.4.50": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.51": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.57": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.70": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.80": ["image/x-jls", "image/jls"],
+        "1.2.840.10008.1.2.4.81": ["image/x-jls", "image/jls"],
+        "1.2.840.10008.1.2.4.90": ["image/jp2"],
+        "1.2.840.10008.1.2.4.91": ["image/jp2"],
+        "1.2.840.10008.1.2.4.92": ["image/jpx"],
+        "1.2.840.10008.1.2.4.93": ["image/jpx"]
+      };
+
+      if (byteRange) {
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      }
+    }
+
+    headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+      mediaTypes,
+      supportedMediaTypes
+    );
+
+    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+      multipartDecode
+    );
+  }
+
+  /**
+   * Performs an HTTP GET request that accepts a multipart message with a video media type.
+   *
+   * @param {String} url unique resource locator
+   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   * @param {Array} byteRange start and end of byte range
+   * @param {Object} params additional HTTP GET query parameters
+   * @param {Boolean} rendered whether resource should be requested using rendered media types
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Array} content of HTTP message body parts
+   */
+  _httpGetMultipartVideo(
+    url,
+    mediaTypes,
+    byteRange,
+    params,
+    rendered = false,
+    progressCallback
+  ) {
+    const headers = {};
+    let supportedMediaTypes;
+    if (rendered) {
+      supportedMediaTypes = [
+        "video/",
+        "video/*",
+        "video/mpeg2",
+        "video/mp4",
+        "video/H265"
+      ];
+    } else {
+      supportedMediaTypes = {
+        "1.2.840.10008.1.2.4.100": ["video/mpeg2"],
+        "1.2.840.10008.1.2.4.101": ["video/mpeg2"],
+        "1.2.840.10008.1.2.4.102": ["video/mp4"],
+        "1.2.840.10008.1.2.4.103": ["video/mp4"],
+        "1.2.840.10008.1.2.4.104": ["video/mp4"],
+        "1.2.840.10008.1.2.4.105": ["video/mp4"],
+        "1.2.840.10008.1.2.4.106": ["video/mp4"]
+      };
+
+      if (byteRange) {
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      }
+    }
+
+    headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+      mediaTypes,
+      supportedMediaTypes
+    );
+
+    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+      multipartDecode
+    );
+  }
+
+  /**
+   * Performs a HTTP GET request that accepts a multipart message with "application/dicom" media type
+   *
+   * @param {String} url unique resource locator
+   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   * @param {Object} params additional HTTP GET query parameters
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Array} content of HTTP message body parts
+   */
+  _httpGetMultipartApplicationDicom(url, mediaTypes, params, progressCallback) {
+    const headers = {};
+    const defaultMediaType = "application/dicom";
+    const supportedMediaTypes = {
+      "1.2.840.10008.1.2.1": [defaultMediaType],
+      "1.2.840.10008.1.2.5": [defaultMediaType],
+      "1.2.840.10008.1.2.4.50": [defaultMediaType],
+      "1.2.840.10008.1.2.4.51": [defaultMediaType],
+      "1.2.840.10008.1.2.4.57": [defaultMediaType],
+      "1.2.840.10008.1.2.4.70": [defaultMediaType],
+      "1.2.840.10008.1.2.4.80": [defaultMediaType],
+      "1.2.840.10008.1.2.4.81": [defaultMediaType],
+      "1.2.840.10008.1.2.4.90": [defaultMediaType],
+      "1.2.840.10008.1.2.4.91": [defaultMediaType],
+      "1.2.840.10008.1.2.4.92": [defaultMediaType],
+      "1.2.840.10008.1.2.4.93": [defaultMediaType],
+      "1.2.840.10008.1.2.4.100": [defaultMediaType],
+      "1.2.840.10008.1.2.4.101": [defaultMediaType],
+      "1.2.840.10008.1.2.4.102": [defaultMediaType],
+      "1.2.840.10008.1.2.4.103": [defaultMediaType],
+      "1.2.840.10008.1.2.4.104": [defaultMediaType],
+      "1.2.840.10008.1.2.4.105": [defaultMediaType],
+      "1.2.840.10008.1.2.4.106": [defaultMediaType]
+    };
+
+    let acceptableMediaTypes = mediaTypes;
+    if (!mediaTypes) {
+      acceptableMediaTypes = [{ mediaType: defaultMediaType }];
+    }
+
+    headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+      acceptableMediaTypes,
+      supportedMediaTypes
+    );
+
+    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+      multipartDecode
+    );
+  }
+
+  /**
+   * Performs a HTTP GET request that accepts a multipart message with "application/octet-stream" media type
+   *
+   * @param {String} url unique resource locator
+   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   * @param {Array} byteRange start and end of byte range
+   * @param {Object} params additional HTTP GET query parameters
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Array} content of HTTP message body parts
+   */
+  _httpGetMultipartApplicationOctetStream(
+    url,
+    mediaTypes,
+    byteRange,
+    params,
+    progressCallback
+  ) {
+    const headers = {};
+    const defaultMediaType = "application/octet-stream";
+    const supportedMediaTypes = {
+      "1.2.840.10008.1.2.1": [defaultMediaType]
+    };
+
+    let acceptableMediaTypes = mediaTypes;
+    if (!mediaTypes) {
+      acceptableMediaTypes = [{ mediaType: defaultMediaType }];
+    }
+
+    if (byteRange) {
+      headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+    }
+
+    headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+      acceptableMediaTypes,
+      supportedMediaTypes
+    );
+
+    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+      multipartDecode
+    );
+  }
+
   _httpPost(url, headers, data, progressCallback) {
-    return this._httpRequest(url, "post", headers, { data, progressCallback });
+    return this._httpRequest(url, "post", headers, {
+      data,
+      progressCallback
+    });
   }
 
   _httpPostApplicationJson(url, data, progressCallback) {
-    const headers = { "Content-Type": MIMETYPES.DICOM_JSON };
+    const headers = { "Content-Type": MEDIATYPES.DICOM_JSON };
     return this._httpPost(url, headers, data, progressCallback);
+  }
+
+  /**
+   * Parses media type and extracts its type and subtype.
+   *
+   * @param mediaType e.g. image/jpeg
+   * @private
+   */
+  static _parseMediaType(mediaType) {
+    DICOMwebClient._assertMediaTypeIsValid(mediaType);
+
+    return mediaType.split("/");
+  }
+
+  /**
+   * Builds an accept header field value for HTTP GET request messages.
+   *
+   * @param {Object[]} mediaTypes Acceptable media types
+   * @param {Object[]} supportedMediaTypes Supported media types
+   * @return {*}
+   * @private
+   */
+  static _buildAcceptHeaderFieldValue(mediaTypes, supportedMediaTypes) {
+    if (!Array.isArray(mediaTypes)) {
+      throw new Error("Acceptable media types must be provided as an Array");
+    }
+
+    const fieldValueParts = mediaTypes.map(item => {
+      const { mediaType } = item;
+
+      DICOMwebClient._assertMediaTypeIsValid(mediaType);
+      if (!supportedMediaTypes.includes(mediaType)) {
+        throw new Error(
+          `Media type ${mediaType} is not supported for requested resource`
+        );
+      }
+
+      return mediaType;
+    });
+
+    return fieldValueParts.join(", ");
+  }
+
+  /**
+     * Builds an accept header field value for HTTP GET multipart request
+     messages.
+     *
+     * @param {Object[]} mediaTypes Acceptable media types
+     * @param {Object[]} supportedMediaTypes Supported media types
+     * @private
+     */
+  static _buildMultipartAcceptHeaderFieldValue(
+    mediaTypes,
+    supportedMediaTypes
+  ) {
+    if (!Array.isArray(mediaTypes)) {
+      throw new Error("Acceptable media types must be provided as an Array");
+    }
+
+    if (!Array.isArray(supportedMediaTypes) && !isObject(supportedMediaTypes)) {
+      throw new Error(
+        "Supported media types must be provided as an Array or an Object"
+      );
+    }
+
+    const fieldValueParts = [];
+
+    mediaTypes.forEach(item => {
+      const { transferSyntaxUID, mediaType } = item;
+      DICOMwebClient._assertMediaTypeIsValid(mediaType);
+      let fieldValue = `multipart/related; type="${mediaType}"`;
+
+      if (isObject(supportedMediaTypes)) {
+        // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
+        // to one or more Media Types
+        if (!Object.values(supportedMediaTypes).flat(1).includes(mediaType)) {
+          if (!mediaType.endsWith("/*") || !mediaType.endsWith("/")) {
+            throw new Error(
+              `Media type ${mediaType} is not supported for requested resource`
+            );
+          }
+        }
+
+        if (transferSyntaxUID) {
+          if (transferSyntaxUID !== "*") {
+            if (!Object.keys(supportedMediaTypes).includes(transferSyntaxUID)) {
+              throw new Error(
+                `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`
+              );
+            }
+
+            const expectedMediaTypes = supportedMediaTypes[transferSyntaxUID];
+
+            if (!expectedMediaTypes.includes(mediaType)) {
+              const actualType = DICOMwebClient._parseMediaType(mediaType)[0];
+              expectedMediaTypes.map(expectedMediaType => {
+                  const expectedType = DICOMwebClient._parseMediaType(
+                    expectedMediaType
+                  )[0];
+                  const haveSameType = actualType === expectedType;
+
+                  if (
+                    haveSameType &&
+                    (mediaType.endsWith("/*") || mediaType.endsWith("/"))
+                  ) {
+                    return;
+                  }
+
+                  throw new Error(
+                    `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`
+                  );
+              })
+            }
+          }
+
+          fieldValue += `; transfer-syntax=${transferSyntaxUID}`;
+        }
+      } else if (
+        Array.isArray(supportedMediaTypes) &&
+        !supportedMediaTypes.includes(mediaType)
+      ) {
+        throw new Error(
+          `Media type ${mediaType} is not supported for requested resource`
+        );
+      }
+
+      fieldValueParts.push(fieldValue);
+    });
+
+    return fieldValueParts.join(", ");
+  }
+
+  /**
+   * Builds a range header field value for HTTP GET request messages.
+   *
+   * @param {Array} byteRange start and end of byte range
+   * @returns {String} range header field value
+   */
+  static _buildRangeHeaderFieldValue(byteRange = []) {
+    if (byteRange.length === 1) {
+      return `bytes=${byteRange[0]}-`;
+    }
+    if (byteRange.length === 2) {
+      return `bytes=${byteRange[0]}-${byteRange[1]}`;
+    }
+
+    return "bytes=0-";
+  }
+
+  /**
+   * Gets common type of acceptable media types and asserts that only
+   one type is specified. For example, ``("image/jpeg", "image/jp2")``
+   will pass, but ``("image/jpeg", "video/mpeg2")`` will raise an
+   exception.
+   * @param {String[]} acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   *
+   */
+  static _getCommonMediaType(mediaTypes) {
+    if (!mediaTypes || !mediaTypes.length) {
+      throw new Error("No acceptable media types provided");
+    }
+
+    const commonMediaTypes = new Set();
+    mediaTypes.forEach(item => {
+      const { mediaType } = item;
+
+      if (mediaType.startsWith("application")) {
+        commonMediaTypes.add(mediaType);
+      } else {
+        const type = DICOMwebClient._parseMediaType(mediaType)[0];
+
+        commonMediaTypes.add(`${type}/`);
+      }
+    });
+
+    if (commonMediaTypes.size === 0) {
+      throw new Error("No common acceptable media type could be identified.");
+    } else if (commonMediaTypes.size > 1) {
+      throw new Error("Acceptable media types must have the same type.");
+    }
+
+    return Array.from(commonMediaTypes)[0];
   }
 
   /**
@@ -284,7 +850,9 @@ class DICOMwebClient {
     }
 
     console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/metadata`;
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/metadata`;
     return this._httpGetApplicationJson(url);
   }
 
@@ -332,7 +900,7 @@ class DICOMwebClient {
       throw new Error("SOP Instance UID is required.");
     }
 
-    const contentType = options.contentType || MIMETYPES.DICOM;
+    const contentType = options.contentType || MEDIATYPES.DICOM;
     const transferSyntax = options.transferSyntax || "*";
     const params = [];
 
@@ -371,7 +939,9 @@ class DICOMwebClient {
       );
     }
     console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}/metadata`;
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID}/metadata`;
 
     return this._httpGetApplicationJson(url);
   }
@@ -413,11 +983,76 @@ class DICOMwebClient {
       options.sopInstanceUID
     }/frames/${options.frameNumbers.toString()}`;
 
-    const mimeType = options.mimeType
-      ? `${options.mimeType}`
-      : MIMETYPES.OCTET_STREAM;
+    const { mediaTypes } = options;
 
-    return this._httpGetByMimeType(url, mimeType).then(multipartDecode);
+    if (!mediaTypes) {
+      return this._httpGetMultipartApplicationOctetStream(url);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+
+    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetMultipartVideo(url, mediaTypes);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of frames.`
+    );
+  }
+
+  /**
+   * Retrieves an individual, server-side rendered DICOM instance.
+   *
+   * @param {Object} options options object
+   * @returns {Array} frame items as byte arrays of the pixel data element
+   */
+  retrieveInstanceRendered(options) {
+    if (!("studyInstanceUID" in options)) {
+      throw new Error(
+        "Study Instance UID is required for retrieval of rendered instance"
+      );
+    }
+    if (!("seriesInstanceUID" in options)) {
+      throw new Error(
+        "Series Instance UID is required for retrieval of rendered instance"
+      );
+    }
+    if (!("sopInstanceUID" in options)) {
+      throw new Error(
+        "SOP Instance UID is required for retrieval of rendered instance"
+      );
+    }
+
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID}/rendered`;
+
+    const { mediaTypes, params } = options;
+    const headers = {};
+
+    if (!mediaTypes) {
+      const responseType = "arraybuffer";
+      return this._httpGet(url, headers, responseType);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType.startsWith("image")) {
+      return this._httpGetImage(url, mediaTypes, params);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetVideo(url, mediaTypes, params);
+    } else if (commonMediaType.startsWith("text")) {
+      return this._httpGetText(url, mediaTypes, params);
+    } else if (commonMediaType === MEDIATYPES.PDF) {
+      return this._httpGetApplicationPdf(url, params);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of rendered instance.`
+    );
   }
 
   /**
@@ -447,7 +1082,7 @@ class DICOMwebClient {
       );
     }
 
-    console.log(
+    console.debug(
       `retrieve rendered frames ${options.frameNumbers.toString()} of instance ${
         options.sopInstanceUID
       }`
@@ -458,21 +1093,30 @@ class DICOMwebClient {
       options.sopInstanceUID
     }/frames/${options.frameNumbers.toString()}/rendered`;
 
+    const { mediaTypes } = options;
     const headers = {};
-    // The choice of an acceptable media type depends on a variety of things:
-    // http://dicom.nema.org/medical/dicom/current/output/chtml/part18/chapter_6.html#table_6.1.1-3
-    if ("mimeType" in options) {
-      headers.Accept = options.mimeType;
+
+    if (!mediaTypes) {
+      const responseType = "arraybuffer";
+      return this._httpGet(url, headers, responseType);
     }
 
-    const responseType = "arraybuffer";
-    return this._httpGet(url, headers, responseType);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType.startsWith("image")) {
+      return this._httpGetImage(url, mediaTypes);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetVideo(url, mediaTypes);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of rendered frame.`
+    );
   }
 
   /**
    * Retrieves a DICOM instance.
    * @param {Object} options options object
-   * @returns {Arraybuffer} DICOM Part 10 file as Arraybuffer
+   * @returns {ArrayBuffer} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
     if (!("studyInstanceUID" in options)) {
@@ -484,17 +1128,40 @@ class DICOMwebClient {
     if (!("sopInstanceUID" in options)) {
       throw new Error("SOP Instance UID is required");
     }
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}`;
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID}`;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM)
-      .then(multipartDecode)
-      .then(getFirstResult);
+    const { mediaTypes } = options;
+
+    if (!mediaTypes) {
+      return this._httpGetMultipartApplicationDicom(url).then(getFirstResult);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType === MEDIATYPES.DICOM) {
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes).then(
+        getFirstResult
+      );
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes).then(
+        getFirstResult
+      );
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes).then(getFirstResultIfLengthGtOne);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetMultipartVideo(url, mediaTypes).then(getFirstResultIfLengthGtOne);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of instance.`
+    );
   }
 
   /**
    * Retrieves a set of DICOM instance for a series.
    * @param {Object} options options object
-   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
    */
   retrieveSeries(options) {
     if (!("studyInstanceUID" in options)) {
@@ -503,15 +1170,37 @@ class DICOMwebClient {
     if (!("seriesInstanceUID" in options)) {
       throw new Error("Series Instance UID is required");
     }
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}`;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }`;
+
+    const { mediaTypes } = options;
+
+    if (!mediaTypes) {
+      return this._httpGetMultipartApplicationDicom(url);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType === MEDIATYPES.DICOM) {
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes);
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetMultipartVideo(url, mediaTypes);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of series.`
+    );
   }
 
   /**
    * Retrieves a set of DICOM instance for a study.
    * @param {Object} options options object
-   * @returns {Arraybuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
    */
   retrieveStudy(options) {
     if (!("studyInstanceUID" in options)) {
@@ -520,7 +1209,26 @@ class DICOMwebClient {
 
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}`;
 
-    return this._httpGetByMimeType(url, MIMETYPES.DICOM).then(multipartDecode);
+    const { mediaTypes } = options;
+
+    if (!mediaTypes) {
+      return this._httpGetMultipartApplicationDicom(url);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType === MEDIATYPES.DICOM) {
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes);
+    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes);
+    } else if (commonMediaType.startsWith("video")) {
+      return this._httpGetMultipartVideo(url, mediaTypes);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of study.`
+    );
   }
 
   /**
@@ -538,9 +1246,32 @@ class DICOMwebClient {
       throw new Error("BulkDataURI is required.");
     }
 
-    return this._httpGetByMimeType(options.BulkDataURI, MIMETYPES.OCTET_STREAM)
-      .then(multipartDecode)
-      .then(getFirstResult);
+    const url = options.BulkDataURI;
+    const { mediaTypes, byteRange } = options;
+
+    if (!mediaTypes) {
+      return this._httpGetMultipartApplicationOctetStream(
+        url,
+        mediaTypes,
+        byteRange
+      );
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+
+    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+      return this._httpGetMultipartApplicationOctetStream(
+        url,
+        mediaTypes,
+        byteRange
+      );
+    } else if (commonMediaType.startsWith("image")) {
+      return this._httpGetMultipartImage(url, mediaTypes, byteRange);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of bulk data.`
+    );
   }
 
   /**

@@ -22,6 +22,7 @@ function getTestDataInstance(url) {
 describe('dicomweb.api.DICOMwebClient', function () {
   const dwc = new DICOMwebClient.api.DICOMwebClient({
     url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
+    retrieveRendered: false
   });
 
   it('should have correct constructor name', function() {
@@ -147,6 +148,8 @@ describe('dicomweb.api.DICOMwebClient', function () {
 
     const bulkData = await dwc.retrieveBulkData(bulkDataOptions);
 
-    expect(bulkData).to.be.an('arraybuffer');
+    expect(bulkData).to.be.an('array');
+    expect(bulkData).to.to.have.length(1);
+    expect(bulkData[0]).to.be.an('arraybuffer');
   });
 });
