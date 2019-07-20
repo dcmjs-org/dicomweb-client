@@ -1,19 +1,17 @@
 function findSubstring(str, before, after) {
-    const beforeIndex = str.lastIndexOf(before) + before.length;
-    if (beforeIndex < before.length) {
-        return(null);
+  const beforeIndex = str.lastIndexOf(before) + before.length;
+  if (beforeIndex < before.length) {
+    return null;
+  }
+  if (after !== undefined) {
+    const afterIndex = str.lastIndexOf(after);
+    if (afterIndex < 0) {
+      return null;
     }
-    if (after !== undefined) {
-        const afterIndex = str.lastIndexOf(after);
-        if (afterIndex < 0) {
-            return(null);
-        } else{
-            return(str.substring(beforeIndex, afterIndex));
-        }
-    }
-    return(str.substring(beforeIndex));
+    return str.substring(beforeIndex, afterIndex);
+  }
+  return str.substring(beforeIndex);
 }
-
 
 function getStudyInstanceUIDFromUri(uri) {
   let uid = findSubstring(uri, "studies/", "/series");
@@ -21,11 +19,12 @@ function getStudyInstanceUIDFromUri(uri) {
     uid = findSubstring(uri, "studies/");
   }
   if (!uid) {
-    console.debug('Study Instance UID could not be dertermined from URI "' + uri + '"');
+    console.debug(
+      `Study Instance UID could not be dertermined from URI "${uri}"`
+    );
   }
-  return(uid);
+  return uid;
 }
-
 
 function getSeriesInstanceUIDFromUri(uri) {
   let uid = findSubstring(uri, "series/", "/instances");
@@ -33,11 +32,12 @@ function getSeriesInstanceUIDFromUri(uri) {
     uid = findSubstring(uri, "series/");
   }
   if (!uid) {
-    console.debug('Series Instance UID could not be dertermined from URI "' + uri + '"');
+    console.debug(
+      `Series Instance UID could not be dertermined from URI "${uri}"`
+    );
   }
-  return(uid);
+  return uid;
 }
-
 
 function getSOPInstanceUIDFromUri(uri) {
   let uid = findSubstring(uri, "/instances/", "/frames");
@@ -48,11 +48,10 @@ function getSOPInstanceUIDFromUri(uri) {
     uid = findSubstring(uri, "/instances/");
   }
   if (!uid) {
-    console.debug('SOP Instance UID could not be dertermined from URI"' + uri + '"');
+    console.debug(`SOP Instance UID could not be dertermined from URI"${uri}"`);
   }
-  return(uid);
+  return uid;
 }
-
 
 function getFrameNumbersFromUri(uri) {
   let numbers = findSubstring(uri, "/frames/", "/rendered");
@@ -60,14 +59,14 @@ function getFrameNumbersFromUri(uri) {
     numbers = findSubstring(uri, "/frames/");
   }
   if (numbers === undefined) {
-    console.debug('Frames Numbers could not be dertermined from URI"' + uri + '"');
+    console.debug(`Frames Numbers could not be dertermined from URI"${uri}"`);
   }
-  return(numbers.split(','));
+  return numbers.split(",");
 }
 
 export {
   getStudyInstanceUIDFromUri,
   getSeriesInstanceUIDFromUri,
   getSOPInstanceUIDFromUri,
-  getFrameNumbersFromUri,
+  getFrameNumbersFromUri
 };
