@@ -407,17 +407,17 @@ class DICOMwebClient {
       ];
     } else {
       supportedMediaTypes = {
-        "1.2.840.10008.1.2.5": "image/x-dicom-rle",
-        "1.2.840.10008.1.2.4.50": "image/jpeg",
-        "1.2.840.10008.1.2.4.51": "image/jpeg",
-        "1.2.840.10008.1.2.4.57": "image/jpeg",
-        "1.2.840.10008.1.2.4.70": "image/jpeg",
-        "1.2.840.10008.1.2.4.80": "image/x-jls",
-        "1.2.840.10008.1.2.4.81": "image/x-jls",
-        "1.2.840.10008.1.2.4.90": "image/jp2",
-        "1.2.840.10008.1.2.4.91": "image/jp2",
-        "1.2.840.10008.1.2.4.92": "image/jpx",
-        "1.2.840.10008.1.2.4.93": "image/jpx"
+        "1.2.840.10008.1.2.5": ["image/x-dicom-rle"],
+        "1.2.840.10008.1.2.4.50": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.51": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.57": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.70": ["image/jpeg"],
+        "1.2.840.10008.1.2.4.80": ["image/x-jls", "image/jls"],
+        "1.2.840.10008.1.2.4.81": ["image/x-jls", "image/jls"],
+        "1.2.840.10008.1.2.4.90": ["image/jp2"],
+        "1.2.840.10008.1.2.4.91": ["image/jp2"],
+        "1.2.840.10008.1.2.4.92": ["image/jpx"],
+        "1.2.840.10008.1.2.4.93": ["image/jpx"]
       };
 
       if (byteRange) {
@@ -468,13 +468,13 @@ class DICOMwebClient {
       ];
     } else {
       supportedMediaTypes = {
-        "1.2.840.10008.1.2.4.100": "video/mpeg2",
-        "1.2.840.10008.1.2.4.101": "video/mpeg2",
-        "1.2.840.10008.1.2.4.102": "video/mp4",
-        "1.2.840.10008.1.2.4.103": "video/mp4",
-        "1.2.840.10008.1.2.4.104": "video/mp4",
-        "1.2.840.10008.1.2.4.105": "video/mp4",
-        "1.2.840.10008.1.2.4.106": "video/mp4"
+        "1.2.840.10008.1.2.4.100": ["video/mpeg2"],
+        "1.2.840.10008.1.2.4.101": ["video/mpeg2"],
+        "1.2.840.10008.1.2.4.102": ["video/mp4"],
+        "1.2.840.10008.1.2.4.103": ["video/mp4"],
+        "1.2.840.10008.1.2.4.104": ["video/mp4"],
+        "1.2.840.10008.1.2.4.105": ["video/mp4"],
+        "1.2.840.10008.1.2.4.106": ["video/mp4"]
       };
 
       if (byteRange) {
@@ -507,25 +507,25 @@ class DICOMwebClient {
     const headers = {};
     const defaultMediaType = "application/dicom";
     const supportedMediaTypes = {
-      "1.2.840.10008.1.2.1": defaultMediaType,
-      "1.2.840.10008.1.2.5": defaultMediaType,
-      "1.2.840.10008.1.2.4.50": defaultMediaType,
-      "1.2.840.10008.1.2.4.51": defaultMediaType,
-      "1.2.840.10008.1.2.4.57": defaultMediaType,
-      "1.2.840.10008.1.2.4.70": defaultMediaType,
-      "1.2.840.10008.1.2.4.80": defaultMediaType,
-      "1.2.840.10008.1.2.4.81": defaultMediaType,
-      "1.2.840.10008.1.2.4.90": defaultMediaType,
-      "1.2.840.10008.1.2.4.91": defaultMediaType,
-      "1.2.840.10008.1.2.4.92": defaultMediaType,
-      "1.2.840.10008.1.2.4.93": defaultMediaType,
-      "1.2.840.10008.1.2.4.100": defaultMediaType,
-      "1.2.840.10008.1.2.4.101": defaultMediaType,
-      "1.2.840.10008.1.2.4.102": defaultMediaType,
-      "1.2.840.10008.1.2.4.103": defaultMediaType,
-      "1.2.840.10008.1.2.4.104": defaultMediaType,
-      "1.2.840.10008.1.2.4.105": defaultMediaType,
-      "1.2.840.10008.1.2.4.106": defaultMediaType
+      "1.2.840.10008.1.2.1": [defaultMediaType],
+      "1.2.840.10008.1.2.5": [defaultMediaType],
+      "1.2.840.10008.1.2.4.50": [defaultMediaType],
+      "1.2.840.10008.1.2.4.51": [defaultMediaType],
+      "1.2.840.10008.1.2.4.57": [defaultMediaType],
+      "1.2.840.10008.1.2.4.70": [defaultMediaType],
+      "1.2.840.10008.1.2.4.80": [defaultMediaType],
+      "1.2.840.10008.1.2.4.81": [defaultMediaType],
+      "1.2.840.10008.1.2.4.90": [defaultMediaType],
+      "1.2.840.10008.1.2.4.91": [defaultMediaType],
+      "1.2.840.10008.1.2.4.92": [defaultMediaType],
+      "1.2.840.10008.1.2.4.93": [defaultMediaType],
+      "1.2.840.10008.1.2.4.100": [defaultMediaType],
+      "1.2.840.10008.1.2.4.101": [defaultMediaType],
+      "1.2.840.10008.1.2.4.102": [defaultMediaType],
+      "1.2.840.10008.1.2.4.103": [defaultMediaType],
+      "1.2.840.10008.1.2.4.104": [defaultMediaType],
+      "1.2.840.10008.1.2.4.105": [defaultMediaType],
+      "1.2.840.10008.1.2.4.106": [defaultMediaType]
     };
 
     let acceptableMediaTypes = mediaTypes;
@@ -565,7 +565,7 @@ class DICOMwebClient {
     const headers = {};
     const defaultMediaType = "application/octet-stream";
     const supportedMediaTypes = {
-      "1.2.840.10008.1.2.1": defaultMediaType
+      "1.2.840.10008.1.2.1": [defaultMediaType]
     };
 
     let acceptableMediaTypes = mediaTypes;
@@ -670,9 +670,9 @@ class DICOMwebClient {
       let fieldValue = `multipart/related; type="${mediaType}"`;
 
       if (isObject(supportedMediaTypes)) {
-        // SupportedMediaTypes is a lookup table from Transfer Syntax UID to Media Type
-
-        if (!Object.values(supportedMediaTypes).includes(mediaType)) {
+        // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
+        // to one or more Media Types
+        if (!Object.values(supportedMediaTypes).flat(1).includes(mediaType)) {
           if (!mediaType.endsWith("/*") || !mediaType.endsWith("/")) {
             throw new Error(
               `Media type ${mediaType} is not supported for requested resource`
@@ -688,25 +688,27 @@ class DICOMwebClient {
               );
             }
 
-            const expectedMediaType = supportedMediaTypes[transferSyntaxUID];
+            const expectedMediaTypes = supportedMediaTypes[transferSyntaxUID];
 
-            if (expectedMediaType !== mediaType) {
+            if (!expectedMediaTypes.includes(mediaType)) {
               const actualType = DICOMwebClient._parseMediaType(mediaType)[0];
-              const expectedType = DICOMwebClient._parseMediaType(
-                expectedMediaType
-              )[0];
-              const haveSameType = actualType === expectedType;
+              expectedMediaTypes.map(expectedMediaType => {
+                  const expectedType = DICOMwebClient._parseMediaType(
+                    expectedMediaType
+                  )[0];
+                  const haveSameType = actualType === expectedType;
 
-              if (
-                haveSameType &&
-                (mediaType.endsWith("/*") || mediaType.endsWith("/"))
-              ) {
-                return;
-              }
+                  if (
+                    haveSameType &&
+                    (mediaType.endsWith("/*") || mediaType.endsWith("/"))
+                  ) {
+                    return;
+                  }
 
-              throw new Error(
-                `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`
-              );
+                  throw new Error(
+                    `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`
+                  );
+              })
             }
           }
 
