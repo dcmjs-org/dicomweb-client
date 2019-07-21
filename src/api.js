@@ -667,7 +667,7 @@ class DICOMwebClient {
     mediaTypes.forEach(item => {
       const { transferSyntaxUID, mediaType } = item;
       DICOMwebClient._assertMediaTypeIsValid(mediaType);
-      let fieldValue = `multipart/related; type="${mediaType}`;
+      let fieldValue = `multipart/related; type="${mediaType}"`;
 
       if (isObject(supportedMediaTypes)) {
         // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
@@ -723,7 +723,6 @@ class DICOMwebClient {
         );
       }
 
-      fieldValue += `"`;
       fieldValueParts.push(fieldValue);
     });
 
