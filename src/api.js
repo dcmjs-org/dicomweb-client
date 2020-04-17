@@ -72,6 +72,7 @@ class DICOMwebClient {
     }
 
     this.headers = options.headers || {};
+    this.errorInterceptor = options.errorInterceptor || function() {};
   }
 
   static _parseQueryParameters(params = {}) {
@@ -135,6 +136,8 @@ class DICOMwebClient {
             error.status = request.status;
             console.error(error);
             console.error(error.response);
+
+            this.errorInterceptor(error);
 
             reject(error);
           }
