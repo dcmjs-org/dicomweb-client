@@ -71,6 +71,8 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
+    debugger;
+
     this.headers = options.headers || {};
     this.errorInterceptor = options.errorInterceptor || function() {};
   }
@@ -87,6 +89,9 @@ class DICOMwebClient {
   }
 
   _httpRequest(url, method, headers, options = {}) {
+
+    const {errorInterceptor} = this;
+
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
@@ -137,7 +142,7 @@ class DICOMwebClient {
             console.error(error);
             console.error(error.response);
 
-            this.errorInterceptor(error);
+            errorInterceptor(error);
 
             reject(error);
           }
