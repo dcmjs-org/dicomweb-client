@@ -71,8 +71,6 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
-    debugger;
-
     this.headers = options.headers || {};
     this.errorInterceptor = options.errorInterceptor || function() {};
   }
