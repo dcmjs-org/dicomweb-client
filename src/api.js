@@ -71,7 +71,11 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
+    // Headers to pass to requests.
     this.headers = options.headers || {};
+
+    // Optional error interceptor callback to handle any failed request.
+    this.errorInterceptor = options.errorInterceptor || function() {};
   }
 
   static _parseQueryParameters(params = {}) {
@@ -86,6 +90,9 @@ class DICOMwebClient {
   }
 
   _httpRequest(url, method, headers, options = {}) {
+
+    const {errorInterceptor} = this;
+
     return new Promise((resolve, reject) => {
       const request = new XMLHttpRequest();
       request.open(method, url, true);
@@ -135,6 +142,8 @@ class DICOMwebClient {
             error.status = request.status;
             console.error(error);
             console.error(error.response);
+
+            errorInterceptor(error);
 
             reject(error);
           }
