@@ -71,7 +71,10 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
+    // Headers to pass to requests.
     this.headers = options.headers || {};
+
+    // Optional error interceptor callback to handle any failed request.
     this.errorInterceptor = options.errorInterceptor || function() {};
   }
 
