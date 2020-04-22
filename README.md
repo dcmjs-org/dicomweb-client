@@ -52,12 +52,7 @@ client.searchForStudies().then(studies => {
 
 ## For maintainers
 
-Publish a new minor version
-```bash
-npm version minor
-npm publish
-git push --tags
-```
+Use `semantic` commit messages to generate releases and change log entries: [Semantic Release: How does it work?](https://semantic-release.gitbook.io/semantic-release/#how-does-it-work)
 
 ## Citation
 
