@@ -32,7 +32,11 @@ const MEDIATYPES = {
 class DICOMwebClient {
   /**
    * @constructor
-   * @param {Object} options (choices: "url", "username", "password", "headers")
+   * @param {Object} options
+   * @param {String} options.url - URL of the DICOMweb RESTful Service endpoint
+   * @param {String} options.username - Username
+   * @param {String} options.password - Password
+   * @param {Object} options.headers - HTTP headers
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -89,6 +93,16 @@ class DICOMwebClient {
     return queryString;
   }
 
+  /**
+   * Performs an HTTP request.
+   *
+   * @param {String} url
+   * @param {String} method
+   * @param {Object} headers
+   * @param {Object} options
+   * @return {*}
+   * @private
+   */
   _httpRequest(url, method, headers, options = {}) {
 
     const {errorInterceptor} = this;
@@ -157,18 +171,6 @@ class DICOMwebClient {
         }
       }
 
-      // request.onprogress = function (event) {
-      //   const loaded = progress.loaded;
-      //   let total;
-      //   let percentComplete;
-      //   if (progress.lengthComputable) {
-      //     total = progress.total;
-      //     percentComplete = Math.round((loaded / total) * 100);
-      //   j
-      //   // console.log('download progress: ', percentComplete, ' %');
-      //   return(percentComplete);
-      // };
-
       if ("data" in options) {
         request.send(options.data);
       } else {
@@ -177,6 +179,16 @@ class DICOMwebClient {
     });
   }
 
+  /**
+   * Performs an HTTP GET request.
+   *
+   * @param {String} url
+   * @param {Object} headers
+   * @param {Object} responseType
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
   _httpGet(url, headers, responseType, progressCallback) {
     return this._httpRequest(url, "get", headers, {
       responseType,
@@ -184,6 +196,16 @@ class DICOMwebClient {
     });
   }
 
+  /**
+   * Performs an HTTP GET request that accepts a message with application/json
+   * media type.
+   *
+   * @param {String} url
+   * @param {Object} params
+   * @param {Function} progressCallback
+   * @return {*}
+   * @private
+   */
   _httpGetApplicationJson(url, params = {}, progressCallback) {
     let urlWithQueryParams = url;
 
@@ -203,10 +225,10 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs an HTTP GET request that accepts a message with
-   "application/pdf" media type.
+   * Performs an HTTP GET request that accepts a message with application/pdf
+   * media type.
+   *
    * @param {String} url
-   * @param {Object[]} mediaTypes
    * @param {Object} params
    * @param {Function} progressCallback
    * @return {*}
@@ -387,15 +409,15 @@ class DICOMwebClient {
   /**
    * Performs an HTTP GET request that accepts a multipart message with an image media type.
    *
-   * @param {String} url unique resource locator
-   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   * @param {String} url - Unique resource locator
+   * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
-   * @param {Array} byteRange start and end of byte range
-   * @param {Object} params additional HTTP GET query parameters
-   * @param {Boolean} rendered whether resource should be requested using rendered media types
+   * @param {Array} byteRange - Start and end of byte range
+   * @param {Object} params - Additional HTTP GET query parameters
+   * @param {Boolean} rendered - Whether resource should be requested using rendered media types
    * @param {Function} progressCallback
    * @private
-   * @returns {Array} content of HTTP message body parts
+   * @returns {Promise<Array>} Content of HTTP message body parts
    */
   _httpGetMultipartImage(
     url,
@@ -447,15 +469,15 @@ class DICOMwebClient {
   /**
    * Performs an HTTP GET request that accepts a multipart message with a video media type.
    *
-   * @param {String} url unique resource locator
-   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   * @param {String} url - Unique resource locator
+   * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
-   * @param {Array} byteRange start and end of byte range
-   * @param {Object} params additional HTTP GET query parameters
-   * @param {Boolean} rendered whether resource should be requested using rendered media types
+   * @param {Array} byteRange - Start and end of byte range
+   * @param {Object} params - Additional HTTP GET query parameters
+   * @param {Boolean} rendered - Whether resource should be requested using rendered media types
    * @param {Function} progressCallback
    * @private
-   * @returns {Array} content of HTTP message body parts
+   * @returns {Promise<Array>} Content of HTTP message body parts
    */
   _httpGetMultipartVideo(
     url,
@@ -502,15 +524,15 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs a HTTP GET request that accepts a multipart message with "application/dicom" media type
+   * Performs an HTTP GET request that accepts a multipart message with a application/dicom media type.
    *
-   * @param {String} url unique resource locator
-   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   * @param {String} url - Unique resource locator
+   * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
-   * @param {Object} params additional HTTP GET query parameters
+   * @param {Object} params - Additional HTTP GET query parameters
    * @param {Function} progressCallback
    * @private
-   * @returns {Array} content of HTTP message body parts
+   * @returns {Promise<Array>} Content of HTTP message body parts
    */
   _httpGetMultipartApplicationDicom(url, mediaTypes, params, progressCallback) {
     const headers = {};
@@ -553,16 +575,16 @@ class DICOMwebClient {
   }
 
   /**
-   * Performs a HTTP GET request that accepts a multipart message with "application/octet-stream" media type
+   * Performs an HTTP GET request that accepts a multipart message with a application/octet-stream media type.
    *
-   * @param {String} url unique resource locator
-   * @param {Object[]} mediaTypes acceptable media types and optionally the UIDs of the
+   * @param {String} url - Unique resource locator
+   * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
    * @param {Array} byteRange start and end of byte range
-   * @param {Object} params additional HTTP GET query parameters
+   * @param {Object} params - Additional HTTP GET query parameters
    * @param {Function} progressCallback
    * @private
-   * @returns {Array} content of HTTP message body parts
+   * @returns {Promise<Array>} Content of HTTP message body parts
    */
   _httpGetMultipartApplicationOctetStream(
     url,
@@ -596,6 +618,16 @@ class DICOMwebClient {
     );
   }
 
+  /**
+   * Performs an HTTP POST request.
+   *
+   * @param {String} url - Unique resource locator
+   * @param {Object} headers - HTTP header fields
+   * @param {Array} data - Data that should be stored
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Promise} Response
+   */
   _httpPost(url, headers, data, progressCallback) {
     return this._httpRequest(url, "post", headers, {
       data,
@@ -603,6 +635,16 @@ class DICOMwebClient {
     });
   }
 
+  /**
+   * Performs an HTTP POST request with content-type application/dicom+json.
+   *
+   * @param {String} url - Unique resource locator
+   * @param {Object} headers - HTTP header fields
+   * @param {Array} data - Data that should be stored
+   * @param {Function} progressCallback
+   * @private
+   * @returns {Promise} Response
+   */
   _httpPostApplicationJson(url, data, progressCallback) {
     const headers = { "Content-Type": MEDIATYPES.DICOM_JSON };
     return this._httpPost(url, headers, data, progressCallback);
@@ -611,8 +653,9 @@ class DICOMwebClient {
   /**
    * Parses media type and extracts its type and subtype.
    *
-   * @param mediaType e.g. image/jpeg
+   * @param {String} mediaType - HTTP media type (e.g. image/jpeg)
    * @private
+   * @returns {String[]} Media type and subtype
    */
   static _parseMediaType(mediaType) {
     DICOMwebClient._assertMediaTypeIsValid(mediaType);
@@ -623,8 +666,8 @@ class DICOMwebClient {
   /**
    * Builds an accept header field value for HTTP GET request messages.
    *
-   * @param {Object[]} mediaTypes Acceptable media types
-   * @param {Object[]} supportedMediaTypes Supported media types
+   * @param {Object[]} mediaTypes - Acceptable media types
+   * @param {Object[]} supportedMediaTypes - Supported media types
    * @return {*}
    * @private
    */
@@ -653,8 +696,8 @@ class DICOMwebClient {
      * Builds an accept header field value for HTTP GET multipart request
      messages.
      *
-     * @param {Object[]} mediaTypes Acceptable media types
-     * @param {Object[]} supportedMediaTypes Supported media types
+     * @param {Object[]} mediaTypes - Acceptable media types
+     * @param {Object[]} supportedMediaTypes - Supported media types
      * @private
      */
   static _buildMultipartAcceptHeaderFieldValue(
@@ -741,8 +784,9 @@ class DICOMwebClient {
   /**
    * Builds a range header field value for HTTP GET request messages.
    *
-   * @param {Array} byteRange start and end of byte range
-   * @returns {String} range header field value
+   * @param {Array} byteRange - Start and end of byte range
+   * @returns {String} Range header field value
+   * @private
    */
   static _buildRangeHeaderFieldValue(byteRange = []) {
     if (byteRange.length === 1) {
@@ -760,9 +804,11 @@ class DICOMwebClient {
    one type is specified. For example, ``("image/jpeg", "image/jp2")``
    will pass, but ``("image/jpeg", "video/mpeg2")`` will raise an
    exception.
-   * @param {String[]} acceptable media types and optionally the UIDs of the
-   corresponding transfer syntaxes
    *
+   * @param {String[]} mediaTypes - Acceptable media types and optionally the UIDs of the
+   corresponding transfer syntaxes
+   * @private
+   * @returns {Array} Common media type
    */
   static _getCommonMediaType(mediaTypes) {
     if (!mediaTypes || !mediaTypes.length) {
@@ -793,8 +839,10 @@ class DICOMwebClient {
 
   /**
    * Searches for DICOM studies.
-   * @param {Object} options options object
-   * @return {Array} study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
+   *
+   * @param {Object} options
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @return {Object[]} Study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
   searchForStudies(options = {}) {
     console.log("search for studies");
@@ -807,8 +855,10 @@ class DICOMwebClient {
 
   /**
    * Retrieves metadata for a DICOM study.
-   * @param {Object} options options object
-   * @returns {Array} metadata elements in DICOM JSON format for each instance
+   *
+   * @param {Object} options
+   * @param {Object} studyInstanceUID - Study Instance UID
+   * @returns {Object[]} Metadata elements in DICOM JSON format for each instance
                       belonging to the study
    */
   retrieveStudyMetadata(options) {
@@ -824,8 +874,11 @@ class DICOMwebClient {
 
   /**
    * Searches for DICOM series.
-   * @param {Object} options options object
-   * @returns {Array} series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
+   *
+   * @param {Object} options
+   * @param {Object} [options.studyInstanceUID] - Study Instance UID
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {Object[]} Series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
    */
   searchForSeries(options = {}) {
     let url = this.qidoURL;
@@ -842,8 +895,11 @@ class DICOMwebClient {
 
   /**
    * Retrieves metadata for a DICOM series.
-   * @param {Object} options options object
-   * @returns {Array} metadata elements in DICOM JSON format for each instance
+   *
+   * @param {Object} options
+   * @param {Object} options.studyInstanceUID - Study Instance UID
+   * @param {Object} options.seriesInstanceUID - Series Instance UID
+   * @returns {Object[]} Metadata elements in DICOM JSON format for each instance
                       belonging to the series
    */
   retrieveSeriesMetadata(options) {
@@ -866,9 +922,13 @@ class DICOMwebClient {
   }
 
   /**
-   * Searches for DICOM instances.
-   * @param {Object} options options object
-   * @returns {Array} instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
+   * Searches for DICOM Instances.
+   *
+   * @param {Object} options
+   * @param {Object} [options.studyInstanceUID] - Study Instance UID
+   * @param {Object} [options.seriesInstanceUID] - Series Instance UID
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {Object[]} Instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
   searchForInstances(options = {}) {
     let url = this.qidoURL;
@@ -895,7 +955,11 @@ class DICOMwebClient {
   }
 
   /** Returns a WADO-URI URL for an instance
-   * @param {Object} options options object
+   *
+   * @param {Object} options
+   * @param {Object} options.studyInstanceUID - Study Instance UID
+   * @param {Object} options.seriesInstanceUID - Series Instance UID
+   * @param {Object} options.sopInstanceUID - SOP Instance UID
    * @returns {String} WADO-URI URL
    */
   buildInstanceWadoURIUrl(options) {
@@ -926,7 +990,7 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves metadata for a DICOM instance.
+   * Retrieves metadata for a DICOM Instance.
    *
    * @param {Object} options object
    * @returns {Object} metadata elements in DICOM JSON format
@@ -956,7 +1020,7 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves frames for a DICOM instance.
+   * Retrieves frames for a DICOM Instance.
    * @param {Object} options options object
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
@@ -1014,10 +1078,15 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves an individual, server-side rendered DICOM instance.
+   * Retrieves an individual, server-side rendered DICOM Instance.
    *
-   * @param {Object} options options object
-   * @returns {Array} frame items as byte arrays of the pixel data element
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {ArrayBuffer} Rendered DICOM Instance
    */
   retrieveInstanceRendered(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1040,23 +1109,26 @@ class DICOMwebClient {
       options.seriesInstanceUID
     }/instances/${options.sopInstanceUID}/rendered`;
 
-    const { mediaTypes, params } = options;
+    const { mediaTypes, queryParams } = options;
     const headers = {};
 
     if (!mediaTypes) {
       const responseType = "arraybuffer";
+      if (queryParams) {
+        url += DICOMwebClient._parseQueryParameters(queryParams);
+      }
       return this._httpGet(url, headers, responseType);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, params);
+      return this._httpGetImage(url, mediaTypes, queryParams);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, params);
+      return this._httpGetVideo(url, mediaTypes, queryParams);
     } else if (commonMediaType.startsWith("text")) {
-      return this._httpGetText(url, mediaTypes, params);
+      return this._httpGetText(url, mediaTypes, queryParams);
     } else if (commonMediaType === MEDIATYPES.PDF) {
-      return this._httpGetApplicationPdf(url, params);
+      return this._httpGetApplicationPdf(url, queryParams);
     }
 
     throw new Error(
@@ -1065,9 +1137,68 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves rendered frames for a DICOM instance.
-   * @param {Object} options options object
-   * @returns {Array} frame items as byte arrays of the pixel data element
+   * Retrieves a thumbnail of an DICOM Instance.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {ArrayBuffer} Thumbnail
+   */
+  retrieveInstanceThumbnail(options) {
+    if (!("studyInstanceUID" in options)) {
+      throw new Error(
+        "Study Instance UID is required for retrieval of rendered instance"
+      );
+    }
+    if (!("seriesInstanceUID" in options)) {
+      throw new Error(
+        "Series Instance UID is required for retrieval of rendered instance"
+      );
+    }
+    if (!("sopInstanceUID" in options)) {
+      throw new Error(
+        "SOP Instance UID is required for retrieval of rendered instance"
+      );
+    }
+
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/instances/${options.sopInstanceUID}/thumbnail`;
+
+    const { mediaTypes, queryParams } = options;
+    const headers = {};
+
+    if (!mediaTypes) {
+      const responseType = "arraybuffer";
+      if (queryParams) {
+        url += DICOMwebClient._parseQueryParameters(queryParams);
+      }
+      return this._httpGet(url, headers, responseType);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType.startsWith("image")) {
+      return this._httpGetImage(url, mediaTypes, queryParams);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of rendered instance.`
+    );
+  }
+
+  /**
+   * Retrieves rendered frames for a DICOM Instance.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {String} options.frameNumbers - One-based indices of Frame Items
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
   retrieveInstanceFramesRendered(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1102,19 +1233,22 @@ class DICOMwebClient {
       options.sopInstanceUID
     }/frames/${options.frameNumbers.toString()}/rendered`;
 
-    const { mediaTypes } = options;
+    const { mediaTypes, queryParams } = options;
     const headers = {};
 
     if (!mediaTypes) {
       const responseType = "arraybuffer";
+      if (queryParams) {
+        url += DICOMwebClient._parseQueryParameters(queryParams);
+      }
       return this._httpGet(url, headers, responseType);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes);
+      return this._httpGetImage(url, mediaTypes, queryParams);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes);
+      return this._httpGetVideo(url, mediaTypes, queryParams);
     }
 
     throw new Error(
@@ -1123,8 +1257,77 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves a DICOM instance.
-   * @param {Object} options options object
+   * Retrieves thumbnail of frames for a DICOM Instance.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {String} options.frameNumbers - One-based indices of Frame Items
+   * @param {Object} [options.queryParams] - HTTP query parameters
+   * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
+   */
+  retrieveInstanceFramesThumbnail(options) {
+    if (!("studyInstanceUID" in options)) {
+      throw new Error(
+        "Study Instance UID is required for retrieval of rendered instance frames"
+      );
+    }
+    if (!("seriesInstanceUID" in options)) {
+      throw new Error(
+        "Series Instance UID is required for retrieval of rendered instance frames"
+      );
+    }
+    if (!("sopInstanceUID" in options)) {
+      throw new Error(
+        "SOP Instance UID is required for retrieval of rendered instance frames"
+      );
+    }
+    if (!("frameNumbers" in options)) {
+      throw new Error(
+        "frame numbers are required for retrieval of rendered instance frames"
+      );
+    }
+
+    console.debug(
+      `retrieve rendered frames ${options.frameNumbers.toString()} of instance ${
+        options.sopInstanceUID
+      }`
+    );
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
+      options.seriesInstanceUID
+    }/instances/${
+      options.sopInstanceUID
+    }/frames/${options.frameNumbers.toString()}/thumbnail`;
+
+    const { mediaTypes, queryParams } = options;
+    const headers = {};
+
+    if (!mediaTypes) {
+      const responseType = "arraybuffer";
+      if (queryParams) {
+        url += DICOMwebClient._parseQueryParameters(queryParams);
+      }
+      return this._httpGet(url, headers, responseType);
+    }
+
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    if (commonMediaType.startsWith("image")) {
+      return this._httpGetImage(url, mediaTypes, queryParams);
+    }
+
+    throw new Error(
+      `Media type ${commonMediaType} is not supported for retrieval of rendered frame.`
+    );
+  }
+
+  /**
+   * Retrieves a DICOM Instance.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
    * @returns {ArrayBuffer} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
@@ -1152,14 +1355,6 @@ class DICOMwebClient {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes).then(
         getFirstResult
       );
-    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes).then(
-        getFirstResult
-      );
-    } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes).then(getFirstResultIfLengthGtOne);
-    } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetMultipartVideo(url, mediaTypes).then(getFirstResultIfLengthGtOne);
     }
 
     throw new Error(
@@ -1168,9 +1363,12 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves a set of DICOM instance for a series.
-   * @param {Object} options options object
-   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * Retrieves all DICOM Instances of a Series.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @returns {ArrayBuffer[]} DICOM Instances
    */
   retrieveSeries(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1193,12 +1391,6 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes);
-    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
-    } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes);
-    } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetMultipartVideo(url, mediaTypes);
     }
 
     throw new Error(
@@ -1207,9 +1399,11 @@ class DICOMwebClient {
   }
 
   /**
-   * Retrieves a set of DICOM instance for a study.
-   * @param {Object} options options object
-   * @returns {ArrayBuffer[]} Array of DICOM Part 10 files as Arraybuffers
+   * Retrieves all DICOM Instances of a Study.
+   *
+   * @param {Object} options
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @returns {ArrayBuffer[]} DICOM Instances
    */
   retrieveStudy(options) {
     if (!("studyInstanceUID" in options)) {
@@ -1227,12 +1421,6 @@ class DICOMwebClient {
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(url, mediaTypes);
-    } else if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
-    } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes);
-    } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetMultipartVideo(url, mediaTypes);
     }
 
     throw new Error(
@@ -1247,8 +1435,9 @@ class DICOMwebClient {
    *
    * See http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.5.5.html
    *
-   * @param {Object} options options object
-   * @return {Promise}
+   * @param {Object} options
+   * @param {String} BulkDataURI - URI for retrieval of bulkdata
+   * @return {Promise<ArrayBuffer>}
    */
   retrieveBulkData(options) {
     if (!("BulkDataURI" in options)) {
@@ -1284,9 +1473,12 @@ class DICOMwebClient {
   }
 
   /**
-   * Stores DICOM instances.
+   * Stores DICOM Instances.
    *
-   * @param {Object} options options object
+   * @param {Object} options
+   * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
+   * @param {String} [options.studyInstanceUID] - Study Instance UID
+   * @returns {Promise} Response message
    */
   storeInstances(options) {
     if (!("datasets" in options)) {
