@@ -1492,7 +1492,7 @@ class DICOMwebClient {
 
     const { data, boundary } = multipartEncode(options.datasets);
     const headers = {
-      "Content-Type": `multipart/related; type=application/dicom; boundary=${boundary}`
+      "Content-Type": `multipart/related; type="application/dicom"; boundary="${boundary}"`
     };
 
     return this._httpPost(url, headers, data, options.progressCallback);
