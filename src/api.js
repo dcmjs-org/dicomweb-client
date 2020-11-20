@@ -34,6 +34,9 @@ class DICOMwebClient {
    * @constructor
    * @param {Object} options
    * @param {String} options.url - URL of the DICOMweb RESTful Service endpoint
+   * @param {String} options.qidoURLPrefix - URL path prefix for QIDO-RS
+   * @param {String} options.wadoURLPrefix - URL path prefix for WADO-RS
+   * @param {String} options.stowURLPrefix - URL path prefix for STOW-RS
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
@@ -993,6 +996,9 @@ class DICOMwebClient {
    * Retrieves metadata for a DICOM Instance.
    *
    * @param {Object} options object
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
    * @returns {Object} metadata elements in DICOM JSON format
    */
   retrieveInstanceMetadata(options) {
@@ -1022,6 +1028,10 @@ class DICOMwebClient {
   /**
    * Retrieves frames for a DICOM Instance.
    * @param {Object} options options object
+   * @param {String} options.studyInstanceUID - Study Instance UID
+   * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
   retrieveInstanceFrames(options) {
@@ -1197,6 +1207,7 @@ class DICOMwebClient {
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {String} options.frameNumbers - One-based indices of Frame Items
+   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
