@@ -864,14 +864,14 @@ class DICOMwebClient {
    */
   searchForStudies(options = {}) {
     console.log("search for studies");
-    let withCredentials
+    let withCredentials = false;
     let url = `${this.qidoURL}/studies`;
     if ("queryParams" in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -893,10 +893,10 @@ class DICOMwebClient {
     }
     console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`;
-    let withCredentials;
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -920,10 +920,10 @@ class DICOMwebClient {
     if ("queryParams" in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    let withCredentials;
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -954,10 +954,10 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
     }/metadata`;
-    let withCredentials;
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -974,7 +974,7 @@ class DICOMwebClient {
    */
   searchForInstances(options = {}) {
     let url = this.qidoURL;
-    let withCredentials;
+    let withCredentials = false;
     if ("studyInstanceUID" in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ("seriesInstanceUID" in options) {
@@ -996,7 +996,7 @@ class DICOMwebClient {
     }
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -1063,10 +1063,10 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
     }/instances/${options.sopInstanceUID}/metadata`;
-    let withCredentials;
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpGetApplicationJson(url, {}, false, withCredentials);
@@ -1110,10 +1110,10 @@ class DICOMwebClient {
     }/frames/${options.frameNumbers.toString()}`;
 
     const { mediaTypes } = options;
-    let withCredentials;
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     
@@ -1170,10 +1170,10 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1234,10 +1234,10 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1304,10 +1304,10 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1376,10 +1376,10 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1424,10 +1424,10 @@ class DICOMwebClient {
     }/instances/${options.sopInstanceUID}`;
 
     const { mediaTypes } = options;
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1467,10 +1467,10 @@ class DICOMwebClient {
     }`;
 
     const { mediaTypes } = options;
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1502,10 +1502,10 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}`;
 
     const { mediaTypes } = options;
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1540,10 +1540,10 @@ class DICOMwebClient {
 
     const url = options.BulkDataURI;
     const { mediaTypes, byteRange } = options;
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     if (!mediaTypes) {
@@ -1595,10 +1595,10 @@ class DICOMwebClient {
     const headers = {
       "Content-Type": `multipart/related; type="application/dicom"; boundary="${boundary}"`
     };
-    let withCredentials
+    let withCredentials = false;
     if ("withCredentials" in options) {
       if(options.withCredentials) {
-        withCredentials = options.withCredentials
+        withCredentials = options.withCredentials;
       }
     }
     return this._httpPost(url, headers, data, options.progressCallback, withCredentials);
