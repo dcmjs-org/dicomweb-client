@@ -37,6 +37,7 @@ class DICOMwebClient {
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
+   * @param {Array} options.enhancers - Enhancers
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -75,6 +76,10 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
+    if ("enhancers" in options) {
+      this.enhancers = options.enhancers;
+    }
+
     // Headers to pass to requests.
     this.headers = options.headers || {};
 
@@ -108,7 +113,7 @@ class DICOMwebClient {
     const {errorInterceptor} = this;
 
     return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
+      let request = new XMLHttpRequest();
       request.open(method, url, true);
       if ("responseType" in options) {
         request.responseType = options.responseType;
@@ -171,6 +176,12 @@ class DICOMwebClient {
         }
       }
 
+      if ("enhancers" in options) { 
+        const pipe = functions => args => functions.reduce((arg, fn) => fn(arg), args);
+        const pipedRequest = pipe(options.enhancers);
+        request = pipedRequest(request);
+      }
+
       if ("data" in options) {
         request.send(options.data);
       } else {
@@ -192,7 +203,8 @@ class DICOMwebClient {
   _httpGet(url, headers, responseType, progressCallback) {
     return this._httpRequest(url, "get", headers, {
       responseType,
-      progressCallback
+      progressCallback,
+      enhancers: this.enhancers
     });
   }
 
@@ -631,7 +643,8 @@ class DICOMwebClient {
   _httpPost(url, headers, data, progressCallback) {
     return this._httpRequest(url, "post", headers, {
       data,
-      progressCallback
+      progressCallback,
+      enhancers: this.enhancers
     });
   }
 
