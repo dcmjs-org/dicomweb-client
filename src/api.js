@@ -27,6 +27,15 @@ const MEDIATYPES = {
 };
 
 /**
+ * A callback with the request instance and metadata information
+ * of the currently request being executed that should necessarily
+ * return the given request optionally modified.
+ * @typedef {function} RequestInterceptor
+ * @param {XMLHttpRequest} request - The original XMLHttpRequest instance.
+ * @param {object} metadata - The metadata used by the request.
+ */
+
+/**
  * Class for interacting with DICOMweb RESTful services.
  */
 class DICOMwebClient {
@@ -37,7 +46,7 @@ class DICOMwebClient {
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
-   * @param {Array} options.enhancers - Enhancers
+   * @param {Array.<RequestInterceptor>} options.requestInterceptors - Request interceptors.
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -76,8 +85,8 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
-    if ("enhancers" in options) {
-      this.enhancers = options.enhancers;
+    if ("requestInterceptors" in options) {
+      this.requestInterceptors = options.requestInterceptors;
     }
 
     // Headers to pass to requests.
@@ -105,12 +114,13 @@ class DICOMwebClient {
    * @param {String} method
    * @param {Object} headers
    * @param {Object} options
+   * @param {Array.<RequestInterceptor>} options.requestInterceptors - Request interceptors.
    * @return {*}
    * @private
    */
   _httpRequest(url, method, headers, options = {}) {
 
-    const {errorInterceptor} = this;
+    const { errorInterceptor, requestInterceptors } = this;
 
     return new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
@@ -176,10 +186,10 @@ class DICOMwebClient {
         }
       }
 
-      if ("enhancers" in options) { 
+      if (requestInterceptors) { 
         const metadata = { method, url };
-        const pipe = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
-        const pipedRequest = pipe(options.enhancers);
+        const pipeRequestInterceptors = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
+        const pipedRequest = pipeRequestInterceptors(requestInterceptors);
         request = pipedRequest(request);
       }
 
@@ -202,9 +212,7 @@ class DICOMwebClient {
    * @private
    */
   _httpGet(url, headers, responseType, progressCallback) {
-    const options = { responseType, progressCallback };
-    if (this.enhancers) options.enhancers = this.enhancers;
-    return this._httpRequest(url, "get", headers, options);
+    return this._httpRequest(url, "get", headers, { responseType, progressCallback });
   }
 
   /**
@@ -640,9 +648,7 @@ class DICOMwebClient {
    * @returns {Promise} Response
    */
   _httpPost(url, headers, data, progressCallback) {
-    const options = { data, progressCallback };
-    if (this.enhancers) options.enhancers = this.enhancers;
-    return this._httpRequest(url, "post", headers, options);
+    return this._httpRequest(url, "post", headers, { data, progressCallback });
   }
 
   /**
