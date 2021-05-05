@@ -177,7 +177,8 @@ class DICOMwebClient {
       }
 
       if ("enhancers" in options) { 
-        const pipe = functions => args => functions.reduce((arg, fn) => fn(arg), args);
+        const metadata = { method, url };
+        const pipe = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
         const pipedRequest = pipe(options.enhancers);
         request = pipedRequest(request);
       }
@@ -201,11 +202,9 @@ class DICOMwebClient {
    * @private
    */
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, "get", headers, {
-      responseType,
-      progressCallback,
-      enhancers: this.enhancers
-    });
+    const options = { responseType, progressCallback };
+    if (this.enhancers) options.enhancers = this.enhancers;
+    return this._httpRequest(url, "get", headers, options);
   }
 
   /**
@@ -641,11 +640,9 @@ class DICOMwebClient {
    * @returns {Promise} Response
    */
   _httpPost(url, headers, data, progressCallback) {
-    return this._httpRequest(url, "post", headers, {
-      data,
-      progressCallback,
-      enhancers: this.enhancers
-    });
+    const options = { data, progressCallback };
+    if (this.enhancers) options.enhancers = this.enhancers;
+    return this._httpRequest(url, "post", headers, options);
   }
 
   /**
