@@ -187,6 +187,7 @@ class DICOMwebClient {
       }
 
       if (requestInterceptors) { 
+        console.debug('yes')
         const metadata = { method, url };
         const pipeRequestInterceptors = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
         const pipedRequest = pipeRequestInterceptors(requestInterceptors);
@@ -212,7 +213,10 @@ class DICOMwebClient {
    * @private
    */
   _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, "get", headers, { responseType, progressCallback });
+    return this._httpRequest(url, "get", headers, { 
+      responseType, 
+      progressCallback 
+    });
   }
 
   /**
@@ -648,7 +652,10 @@ class DICOMwebClient {
    * @returns {Promise} Response
    */
   _httpPost(url, headers, data, progressCallback) {
-    return this._httpRequest(url, "post", headers, { data, progressCallback });
+    return this._httpRequest(url, "post", headers, { 
+      data, 
+      progressCallback 
+    });
   }
 
   /**
