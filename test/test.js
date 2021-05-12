@@ -148,22 +148,40 @@ describe('dicomweb.api.DICOMwebClient', function() {
   }, 15000);
 
   describe('Request hooks', function() {
-    let requestHook1Spy, requestHook2Spy;
+    let requestHook1Spy, requestHook2Spy, url, metadataUrl, request;
 
-    beforeAll(function() {
-      requestHook1Spy = createSpy('requestHook1Spy').and.callFake((request, metadata) => request);
-      requestHook2Spy = createSpy('requestHook2Spy').and.callFake((request, metadata) => request);
+    beforeEach(function() {
+      request = new XMLHttpRequest();
+      url = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs';
+      metadataUrl = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata';
+      requestHook1Spy = createSpy('requestHook1Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
+      requestHook2Spy = createSpy('requestHook2Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
     });
 
-    it('request hooks should be called', async function() {
-      const url = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs';
-      const metadataUrl = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata';
+    it('invalid request hooks should be notified and ignored', async function() { 
+      /** Spy with invalid request hook signature */
+      requestHook2Spy = createSpy('requestHook2Spy', function (request) { return request }).and.callFake((request, metadata) => request);
       const dwc = new DICOMwebClient.api.DICOMwebClient({ 
         url, 
         requestHooks: [requestHook1Spy, requestHook2Spy] 
       });
       const metadata = { url: metadataUrl, method: 'get' };
-      const request = new XMLHttpRequest();
+      request.open('GET', metadata.url);
+      await dwc.retrieveInstanceMetadata({
+        studyInstanceUID: '999.999.3859744',
+        seriesInstanceUID: '999.999.94827453',
+        sopInstanceUID: '999.999.133.1996.1.1800.1.6.25',
+      });
+      expect(requestHook1Spy).not.toHaveBeenCalledWith(request, metadata);
+      expect(requestHook2Spy).not.toHaveBeenCalledWith(request, metadata);
+    })
+
+    it('valid request hooks should be called', async function() {
+      const dwc = new DICOMwebClient.api.DICOMwebClient({ 
+        url, 
+        requestHooks: [requestHook1Spy, requestHook2Spy] 
+      });
+      const metadata = { url: metadataUrl, method: 'get' };
       request.open('GET', metadata.url);
       await dwc.retrieveInstanceMetadata({
         studyInstanceUID: '999.999.3859744',

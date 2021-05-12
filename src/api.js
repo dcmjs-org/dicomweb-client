@@ -8,6 +8,18 @@ function isEmptyObject(obj) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
+function validRequestHooks(requestHooks) {
+  const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => 
+    typeof requestHook === 'function' && requestHook.length === 2
+  );
+
+  if (!isValid) {
+    console.warn('Request hooks should have the following signature: function requestHook(request, metadata) { return request; }');
+  }
+
+  return isValid;
+}
+
 const getFirstResult = result => result[0];
 const getFirstResultIfLengthGtOne = result => {
   if (result.length > 1) {
@@ -186,10 +198,10 @@ class DICOMwebClient {
         }
       }
 
-      if (requestHooks) { 
+      if (requestHooks && validRequestHooks(requestHooks)) { 
         const metadata = { method, url };
-        const pipeRequstHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
-        const pipedRequest = pipeRequstHooks(requestHooks);
+        const pipeRequestHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
+        const pipedRequest = pipeRequestHooks(requestHooks);
         request = pipedRequest(request);
       }
 
