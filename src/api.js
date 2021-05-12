@@ -205,6 +205,13 @@ class DICOMwebClient {
         request = pipedRequest(request);
       }
 
+      // Add withCredentials to request if needed
+      if ("withCredentials" in options) {
+        if (options.withCredentials) {
+          request.withCredentials = true;
+        }
+      }
+
       if ("data" in options) {
         request.send(options.data);
       } else {
@@ -223,10 +230,11 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGet(url, headers, responseType, progressCallback) {
-    return this._httpRequest(url, "get", headers, { 
-      responseType, 
-      progressCallback 
+  _httpGet(url, headers, responseType, progressCallback, withCredentials) {
+    return this._httpRequest(url, "get", headers, {
+      responseType,
+      progressCallback,
+      withCredentials
     });
   }
 
@@ -240,7 +248,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationJson(url, params = {}, progressCallback) {
+  _httpGetApplicationJson(url, params = {}, progressCallback, withCredentials) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -254,7 +262,8 @@ class DICOMwebClient {
       urlWithQueryParams,
       headers,
       responseType,
-      progressCallback
+      progressCallback,
+      withCredentials
     );
   }
 
@@ -268,7 +277,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationPdf(url, params = {}, progressCallback) {
+  _httpGetApplicationPdf(url, params = {}, progressCallback, withCredentials) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -282,7 +291,8 @@ class DICOMwebClient {
       urlWithQueryParams,
       headers,
       responseType,
-      progressCallback
+      progressCallback,
+      withCredentials
     );
   }
 
@@ -297,7 +307,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetImage(url, mediaTypes, params = {}, progressCallback) {
+  _httpGetImage(url, mediaTypes, params = {}, progressCallback, withCredentials) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -325,7 +335,8 @@ class DICOMwebClient {
       urlWithQueryParams,
       headers,
       responseType,
-      progressCallback
+      progressCallback,
+      withCredentials
     );
   }
 
@@ -340,7 +351,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetText(url, mediaTypes, params = {}, progressCallback) {
+  _httpGetText(url, mediaTypes, params = {}, progressCallback, withCredentials) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -368,7 +379,8 @@ class DICOMwebClient {
       urlWithQueryParams,
       headers,
       responseType,
-      progressCallback
+      progressCallback,
+      withCredentials
     );
   }
 
@@ -383,7 +395,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetVideo(url, mediaTypes, params = {}, progressCallback) {
+  _httpGetVideo(url, mediaTypes, params = {}, progressCallback, withCredentials) {
     let urlWithQueryParams = url;
 
     if (typeof params === "object") {
@@ -410,7 +422,8 @@ class DICOMwebClient {
       urlWithQueryParams,
       headers,
       responseType,
-      progressCallback
+      progressCallback,
+      withCredentials
     );
   }
 
@@ -459,7 +472,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback
+    progressCallback,
+    withCredentials
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -495,7 +509,7 @@ class DICOMwebClient {
       supportedMediaTypes
     );
 
-    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+    return this._httpGet(url, headers, "arraybuffer", progressCallback, withCredentials).then(
       multipartDecode
     );
   }
@@ -519,7 +533,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback
+    progressCallback,
+    withCredentials
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -552,7 +567,7 @@ class DICOMwebClient {
       supportedMediaTypes
     );
 
-    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+    return this._httpGet(url, headers, "arraybuffer", progressCallback, withCredentials).then(
       multipartDecode
     );
   }
@@ -568,7 +583,7 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartApplicationDicom(url, mediaTypes, params, progressCallback) {
+  _httpGetMultipartApplicationDicom(url, mediaTypes, params, progressCallback, withCredentials) {
     const headers = {};
     const defaultMediaType = "application/dicom";
     const supportedMediaTypes = {
@@ -603,7 +618,7 @@ class DICOMwebClient {
       supportedMediaTypes
     );
 
-    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+    return this._httpGet(url, headers, "arraybuffer", progressCallback, withCredentials).then(
       multipartDecode
     );
   }
@@ -625,7 +640,8 @@ class DICOMwebClient {
     mediaTypes,
     byteRange,
     params,
-    progressCallback
+    progressCallback,
+    withCredentials
   ) {
     const headers = {};
     const defaultMediaType = "application/octet-stream";
@@ -647,7 +663,7 @@ class DICOMwebClient {
       supportedMediaTypes
     );
 
-    return this._httpGet(url, headers, "arraybuffer", progressCallback).then(
+    return this._httpGet(url, headers, "arraybuffer", progressCallback, withCredentials).then(
       multipartDecode
     );
   }
@@ -662,10 +678,11 @@ class DICOMwebClient {
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback) {
-    return this._httpRequest(url, "post", headers, { 
-      data, 
-      progressCallback 
+  _httpPost(url, headers, data, progressCallback, withCredentials) {
+    return this._httpRequest(url, "post", headers, {
+      data,
+      progressCallback,
+      withCredentials
     });
   }
 
@@ -679,9 +696,9 @@ class DICOMwebClient {
    * @private
    * @returns {Promise} Response
    */
-  _httpPostApplicationJson(url, data, progressCallback) {
+  _httpPostApplicationJson(url, data, progressCallback, withCredentials) {
     const headers = { "Content-Type": MEDIATYPES.DICOM_JSON };
-    return this._httpPost(url, headers, data, progressCallback);
+    return this._httpPost(url, headers, data, progressCallback, withCredentials);
   }
 
   /**
@@ -880,11 +897,17 @@ class DICOMwebClient {
    */
   searchForStudies(options = {}) {
     console.log("search for studies");
+    let withCredentials = false;
     let url = `${this.qidoURL}/studies`;
     if ("queryParams" in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return this._httpGetApplicationJson(url);
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /**
@@ -903,7 +926,13 @@ class DICOMwebClient {
     }
     console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`;
-    return this._httpGetApplicationJson(url);
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /**
@@ -924,7 +953,13 @@ class DICOMwebClient {
     if ("queryParams" in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return this._httpGetApplicationJson(url);
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /**
@@ -952,7 +987,13 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
     }/metadata`;
-    return this._httpGetApplicationJson(url);
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /**
@@ -966,6 +1007,7 @@ class DICOMwebClient {
    */
   searchForInstances(options = {}) {
     let url = this.qidoURL;
+    let withCredentials = false;
     if ("studyInstanceUID" in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ("seriesInstanceUID" in options) {
@@ -985,7 +1027,12 @@ class DICOMwebClient {
     if ("queryParams" in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    return this._httpGetApplicationJson(url);
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /** Returns a WADO-URI URL for an instance
@@ -1049,8 +1096,13 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
     }/instances/${options.sopInstanceUID}/metadata`;
-
-    return this._httpGetApplicationJson(url);
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpGetApplicationJson(url, {}, false, withCredentials);
   }
 
   /**
@@ -1091,19 +1143,25 @@ class DICOMwebClient {
     }/frames/${options.frameNumbers.toString()}`;
 
     const { mediaTypes } = options;
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationOctetStream(url);
+      return this._httpGetMultipartApplicationOctetStream(url, false, false, false, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
 
     if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes);
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes, false, false, false, withCredentials);
     } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes);
+      return this._httpGetMultipartImage(url, mediaTypes, false, false, false, false, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetMultipartVideo(url, mediaTypes);
+      return this._httpGetMultipartVideo(url, mediaTypes, false, false, false, false, withCredentials);
     }
 
     throw new Error(
@@ -1145,24 +1203,29 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType);
+      return this._httpGet(url, headers, responseType, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams);
+      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams);
+      return this._httpGetVideo(url, mediaTypes, queryParams, false, withCredentials);
     } else if (commonMediaType.startsWith("text")) {
-      return this._httpGetText(url, mediaTypes, queryParams);
+      return this._httpGetText(url, mediaTypes, queryParams, false, withCredentials);
     } else if (commonMediaType === MEDIATYPES.PDF) {
-      return this._httpGetApplicationPdf(url, queryParams);
+      return this._httpGetApplicationPdf(url, queryParams, false, withCredentials);
     }
 
     throw new Error(
@@ -1204,18 +1267,23 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType);
+      return this._httpGet(url, headers, responseType, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams);
+      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
     }
 
     throw new Error(
@@ -1269,20 +1337,25 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType);
+      return this._httpGet(url, headers, responseType, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams);
+      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams);
+      return this._httpGetVideo(url, mediaTypes, queryParams, false, withCredentials);
     }
 
     throw new Error(
@@ -1336,18 +1409,23 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType);
+      return this._httpGet(url, headers, responseType, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams);
+      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
     }
 
     throw new Error(
@@ -1379,14 +1457,19 @@ class DICOMwebClient {
     }/instances/${options.sopInstanceUID}`;
 
     const { mediaTypes } = options;
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url).then(getFirstResult);
+      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials).then(getFirstResult);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes).then(
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials).then(
         getFirstResult
       );
     }
@@ -1417,14 +1500,19 @@ class DICOMwebClient {
     }`;
 
     const { mediaTypes } = options;
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url);
+      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes);
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials);
     }
 
     throw new Error(
@@ -1447,14 +1535,19 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}`;
 
     const { mediaTypes } = options;
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url);
+      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes);
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials);
     }
 
     throw new Error(
@@ -1480,12 +1573,18 @@ class DICOMwebClient {
 
     const url = options.BulkDataURI;
     const { mediaTypes, byteRange } = options;
-
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
         url,
         mediaTypes,
-        byteRange
+        byteRange,
+        false, false, withCredentials
       );
     }
 
@@ -1495,10 +1594,11 @@ class DICOMwebClient {
       return this._httpGetMultipartApplicationOctetStream(
         url,
         mediaTypes,
-        byteRange
+        byteRange,
+        false, false, withCredentials
       );
     } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes, byteRange);
+      return this._httpGetMultipartImage(url, mediaTypes, byteRange, false, false, false, withCredentials);
     }
 
     throw new Error(
@@ -1528,8 +1628,13 @@ class DICOMwebClient {
     const headers = {
       "Content-Type": `multipart/related; type="application/dicom"; boundary="${boundary}"`
     };
-
-    return this._httpPost(url, headers, data, options.progressCallback);
+    let withCredentials = false;
+    if ("withCredentials" in options) {
+      if(options.withCredentials) {
+        withCredentials = options.withCredentials;
+      }
+    }
+    return this._httpPost(url, headers, data, options.progressCallback, withCredentials);
   }
 }
 
