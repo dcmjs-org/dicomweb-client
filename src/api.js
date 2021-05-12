@@ -30,7 +30,7 @@ const MEDIATYPES = {
  * A callback with the request instance and metadata information
  * of the currently request being executed that should necessarily
  * return the given request optionally modified.
- * @typedef {function} RequestInterceptor
+ * @typedef {function} RequestHook
  * @param {XMLHttpRequest} request - The original XMLHttpRequest instance.
  * @param {object} metadata - The metadata used by the request.
  */
@@ -46,7 +46,7 @@ class DICOMwebClient {
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
-   * @param {Array.<RequestInterceptor>} options.requestInterceptors - Request interceptors.
+   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -85,8 +85,8 @@ class DICOMwebClient {
       this.stowURL = this.baseURL;
     }
 
-    if ("requestInterceptors" in options) {
-      this.requestInterceptors = options.requestInterceptors;
+    if ("requestHooks" in options) {
+      this.requestHooks = options.requestHooks;
     }
 
     // Headers to pass to requests.
@@ -114,13 +114,13 @@ class DICOMwebClient {
    * @param {String} method
    * @param {Object} headers
    * @param {Object} options
-   * @param {Array.<RequestInterceptor>} options.requestInterceptors - Request interceptors.
+   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
    * @return {*}
    * @private
    */
   _httpRequest(url, method, headers, options = {}) {
 
-    const { errorInterceptor, requestInterceptors } = this;
+    const { errorInterceptor, requestHooks } = this;
 
     return new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
@@ -186,11 +186,10 @@ class DICOMwebClient {
         }
       }
 
-      if (requestInterceptors) { 
-        console.debug('yes')
+      if (requestHooks) { 
         const metadata = { method, url };
-        const pipeRequestInterceptors = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
-        const pipedRequest = pipeRequestInterceptors(requestInterceptors);
+        const pipeRequstHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
+        const pipedRequest = pipeRequstHooks(requestHooks);
         request = pipedRequest(request);
       }
 

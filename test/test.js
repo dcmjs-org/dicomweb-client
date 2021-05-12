@@ -147,20 +147,20 @@ describe('dicomweb.api.DICOMwebClient', function() {
     expect(bulkData[0] instanceof ArrayBuffer).toBe(true);
   }, 15000);
 
-  describe('Request interceptors', function() {
-    let requestInterceptor1Spy, requestInterceptor2Spy;
+  describe('Request hooks', function() {
+    let requestHook1Spy, requestHook2Spy;
 
     beforeAll(function() {
-      requestInterceptor1Spy = createSpy('requestInterceptor1Spy').and.callFake((request, metadata) => request);
-      requestInterceptor2Spy = createSpy('requestInterceptor2Spy').and.callFake((request, metadata) => request);
+      requestHook1Spy = createSpy('requestHook1Spy').and.callFake((request, metadata) => request);
+      requestHook2Spy = createSpy('requestHook2Spy').and.callFake((request, metadata) => request);
     });
 
-    it('request interceptors should be called', async function() {
+    it('request hooks should be called', async function() {
       const url = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs';
       const metadataUrl = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata';
       const dwc = new DICOMwebClient.api.DICOMwebClient({ 
         url, 
-        requestInterceptors: [requestInterceptor1Spy, requestInterceptor2Spy] 
+        requestHooks: [requestHook1Spy, requestHook2Spy] 
       });
       const metadata = { url: metadataUrl, method: 'get' };
       const request = new XMLHttpRequest();
@@ -170,8 +170,8 @@ describe('dicomweb.api.DICOMwebClient', function() {
         seriesInstanceUID: '999.999.94827453',
         sopInstanceUID: '999.999.133.1996.1.1800.1.6.25',
       });
-      expect(requestInterceptor1Spy).toHaveBeenCalledWith(request, metadata);
-      expect(requestInterceptor2Spy).toHaveBeenCalledWith(request, metadata);
+      expect(requestHook1Spy).toHaveBeenCalledWith(request, metadata);
+      expect(requestHook2Spy).toHaveBeenCalledWith(request, metadata);
     });
   });
 });
