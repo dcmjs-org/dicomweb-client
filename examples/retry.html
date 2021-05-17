@@ -6,10 +6,26 @@
     <body>
         <div class="container">
             <h1>
-                Example
+                Example: Request Hooks
             </h1>
             <hr>
-            <a href='/retry'>Request hooks</a>
+            <pre>
+              const options = {
+                url: "https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs",
+                requestHooks: [
+                  (request, metadata) => {
+                    const requestMetadata = document.createElement('div');
+                    requestMetadata.innerHTML = `Method: ${metadata.method} URL: ${metadata.url}`;
+                    document.getElementById('requests').append(requestMetadata);
+                    return request;
+                  }
+                ],
+              };
+            </pre>
+            <hr>
+            <h3>Requests:</h3>
+            <h5>(Logged using request hooks)</h5>
+            <pre id='requests'></pre>
             <hr>
             <div class="row">
                 <div id='contents' class="col-xs-12">
@@ -30,7 +46,15 @@
     <script>
         const dwc = DICOMwebClient.api.DICOMwebClient;
         const options = {
-            url: "https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs"
+            url: "https://server.dcmjs.org/dcm4chee-arc/aets/DCM4CHEE/rs",
+            requestHooks: [
+              (request, metadata) => {
+                const requestMetadata = document.createElement('div');
+                requestMetadata.innerHTML = `Method: ${metadata.method} URL: ${metadata.url}`;
+                document.getElementById('requests').append(requestMetadata);
+                return request;
+              }
+          ],
         };
 
         const dicomweb = new dwc(options)
@@ -40,7 +64,6 @@
         promise.then(studyMetadata => {
             const div = document.getElementById('contents');
             div.innerText = JSON.stringify(studyMetadata, null, 2);
-            
             console.log(studyMetadata);
         }, error => {
             throw new Error(error);
