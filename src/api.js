@@ -59,6 +59,7 @@ class DICOMwebClient {
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
    * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
+   * @param {Object} options.verbose - print to console request warnings and errors, default true
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -106,6 +107,27 @@ class DICOMwebClient {
 
     // Optional error interceptor callback to handle any failed request.
     this.errorInterceptor = options.errorInterceptor || function() {};
+
+    // Verbose - print to console request warnings and errors, default true
+    this.verbose = options.verbose === false ? false : true;
+  }
+
+  /**
+   * Sets verbose flag.
+   *
+   * @param {Boolean} verbose
+   */
+  setVerbose(verbose) {
+    this.verbose = verbose
+  }
+
+  /**
+   * Gets verbose flag.
+   *
+   * @return {Boolean} verbose
+   */
+  getVerbose() {
+    return this.verbose;
   }
 
   static _parseQueryParameters(params = {}) {
@@ -165,24 +187,30 @@ class DICOMwebClient {
       };
 
       // Handle response message
-      request.onreadystatechange = function onreadystatechange() {
+      request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === 200) {
             resolve(request.response);
           } else if (request.status === 202) {
-            console.warn("some resources already existed: ", request);
+            if (this.verbose) {
+              console.warn("some resources already existed: ", request);
+            }
             resolve(request.response);
           } else if (request.status === 204) {
-            console.warn("empty response for request: ", request);
+            if (this.verbose) {
+              console.warn("empty response for request: ", request);
+            }
             resolve([]);
           } else {
-            console.error("request failed: ", request);
             const error = new Error("request failed");
             error.request = request;
             error.response = request.response;
             error.status = request.status;
-            console.error(error);
-            console.error(error.response);
+            if (this.verbose) {
+              console.error("request failed: ", request);
+              console.error(error);
+              console.error(error.response);
+            }
 
             errorInterceptor(error);
 
