@@ -8,9 +8,11 @@ function isEmptyObject(obj) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
-function validRequestHooks(requestHooks) {
+function areValidRequestHooks(requestHooks) {
   const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => 
-    typeof requestHook === 'function' && requestHook.length === 2
+    typeof requestHook === 'function' 
+      && requestHook.length === 2 
+      && requestHook(new XMLHttpRequest()) instanceof XMLHttpRequest
   );
 
   if (!isValid) {
@@ -226,7 +228,7 @@ class DICOMwebClient {
         }
       }
 
-      if (requestHooks && validRequestHooks(requestHooks)) { 
+      if (requestHooks && areValidRequestHooks(requestHooks)) { 
         const metadata = { method, url };
         const pipeRequestHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
         const pipedRequest = pipeRequestHooks(requestHooks);
