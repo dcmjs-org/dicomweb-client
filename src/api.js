@@ -8,6 +8,20 @@ function isEmptyObject(obj) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
+function areValidRequestHooks(requestHooks) {
+  const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => 
+    typeof requestHook === 'function' 
+      && requestHook.length === 2 
+      && requestHook(new XMLHttpRequest()) instanceof XMLHttpRequest
+  );
+
+  if (!isValid) {
+    console.warn('Request hooks should have the following signature: function requestHook(request, metadata) { return request; }');
+  }
+
+  return isValid;
+}
+
 const getFirstResult = result => result[0];
 const getFirstResultIfLengthGtOne = result => {
   if (result.length > 1) {
@@ -27,6 +41,15 @@ const MEDIATYPES = {
 };
 
 /**
+ * A callback with the request instance and metadata information
+ * of the currently request being executed that should necessarily
+ * return the given request optionally modified.
+ * @typedef {function} RequestHook
+ * @param {XMLHttpRequest} request - The original XMLHttpRequest instance.
+ * @param {object} metadata - The metadata used by the request.
+ */
+
+/**
  * Class for interacting with DICOMweb RESTful services.
  */
 class DICOMwebClient {
@@ -37,6 +60,7 @@ class DICOMwebClient {
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
+   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
    * @param {Object} options.verbose - print to console request warnings and errors, default true
    */
   constructor(options) {
@@ -74,6 +98,10 @@ class DICOMwebClient {
       this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`;
     } else {
       this.stowURL = this.baseURL;
+    }
+
+    if ("requestHooks" in options) {
+      this.requestHooks = options.requestHooks;
     }
 
     // Headers to pass to requests.
@@ -122,15 +150,16 @@ class DICOMwebClient {
    * @param {String} method
    * @param {Object} headers
    * @param {Object} options
+   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
    * @return {*}
    * @private
    */
   _httpRequest(url, method, headers, options = {}) {
 
-    const {errorInterceptor} = this;
+    const { errorInterceptor, requestHooks } = this;
 
     return new Promise((resolve, reject) => {
-      const request = new XMLHttpRequest();
+      let request = new XMLHttpRequest();
       request.open(method, url, true);
       if ("responseType" in options) {
         request.responseType = options.responseType;
@@ -199,13 +228,19 @@ class DICOMwebClient {
         }
       }
 
+      if (requestHooks && areValidRequestHooks(requestHooks)) { 
+        const metadata = { method, url };
+        const pipeRequestHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
+        const pipedRequest = pipeRequestHooks(requestHooks);
+        request = pipedRequest(request);
+      }
+
       // Add withCredentials to request if needed
       if ("withCredentials" in options) {
         if (options.withCredentials) {
           request.withCredentials = true;
         }
       }
-
 
       if ("data" in options) {
         request.send(options.data);

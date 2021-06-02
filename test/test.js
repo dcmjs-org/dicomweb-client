@@ -1,4 +1,4 @@
-const { expect } = chai;
+const { createSpy } = jasmine;
 
 function getTestDataInstance(url) {
   return new Promise((resolve, reject) => {
@@ -6,7 +6,7 @@ function getTestDataInstance(url) {
     xhr.open("GET", url, true);
     xhr.responseType = "arraybuffer";
 
-    xhr.onload = function() {
+    xhr.onload = function()  {
       const arrayBuffer = this.response;
       if (arrayBuffer) {
         resolve(arrayBuffer);
@@ -19,25 +19,22 @@ function getTestDataInstance(url) {
   });
 }
 
-describe('dicomweb.api.DICOMwebClient', function () {
+describe('dicomweb.api.DICOMwebClient', function() {
   const dwc = new DICOMwebClient.api.DICOMwebClient({
     url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
     retrieveRendered: false
   });
 
-  it('should have correct constructor name', function() {
-    expect(dwc.constructor.name).to.equal('DICOMwebClient');
+  it('should have correct constructor name', function()  {
+    expect(dwc.constructor.name).toEqual('DICOMwebClient');
   });
 
-  it('should find zero studies', async function() {
-    const studies = await dwc.searchForStudies();
-
-    expect(studies).to.have.length(0);
+  it('should find zero studies', async function()  {
+    const studies = await dwc.searchForStudies({ queryParams: { PatientID: 11235813 } });
+    expect(studies.length).toBe(0);
   });
 
-  it('should store one instance', async function() {
-    this.timeout(5000);
-
+  it('should store one instance', async function()  {
     // This is the HTTP server run by the Karma test
     // runner
     const url = 'http://localhost:9876/base/testData/sample.dcm';
@@ -48,16 +45,14 @@ describe('dicomweb.api.DICOMwebClient', function () {
     };
 
     await dwc.storeInstances(options);
-  });
+  }, 5000);
 
-  it('should find one study', async function() {
+  it('should find one study', async function()  {
     const studies = await dwc.searchForStudies();
-    expect(studies).to.have.length(1);
+    expect(studies.length).toBe(4);
   });
 
-  it('should store two instances', async function() {
-    this.timeout(10000);
-
+  it('should store two instances', async function()  {
     // This is the HTTP server run by the Karma test
     // runner
     const url1 = 'http://localhost:9876/base/testData/sample2.dcm';
@@ -77,15 +72,15 @@ describe('dicomweb.api.DICOMwebClient', function () {
     };
 
     await dwc.storeInstances(options);
-  });
+  }, 10000);
 
-  it('should find four studes', async function() {
+  it('should find four studes', async function()  {
     const studies = await dwc.searchForStudies();
 
-    expect(studies).to.have.length(4);
+    expect(studies.length).toBe(4);
   });
 
-  it('should retrieve a single frame of an instance', async function() {
+  it('should retrieve a single frame of an instance', async function()  {
     // from sample.dcm
     const options = {
       studyInstanceUID: '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969',
@@ -97,7 +92,7 @@ describe('dicomweb.api.DICOMwebClient', function () {
     const frames = dwc.retrieveInstance(options);
   });
 
-  it('should retrieve a single instance', async function() {
+  it('should retrieve a single instance', async function()  {
     // from sample.dcm
     const options = {
       studyInstanceUID: '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969',
@@ -107,10 +102,10 @@ describe('dicomweb.api.DICOMwebClient', function () {
 
     const instance = await dwc.retrieveInstance(options);
 
-    expect(instance).to.be.an('arraybuffer');
+    expect(instance instanceof ArrayBuffer).toBe(true);
   });
 
-  it('should retrieve an entire series as an array of instances', async function() {
+  it('should retrieve an entire series as an array of instances', async function()  {
     const options = {
       studyInstanceUID: '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969',
       seriesInstanceUID: '1.3.6.1.4.1.14519.5.2.1.2744.7002.117357550898198415937979788256',
@@ -118,21 +113,20 @@ describe('dicomweb.api.DICOMwebClient', function () {
 
     const instances = await dwc.retrieveSeries(options);
 
-    expect(instances).to.have.length(1);
+    expect(instances.length).toBe(1);
   });
 
-  it('should retrieve an entire study as an array of instances', async function() {
+  it('should retrieve an entire study as an array of instances', async function()  {
     const options = {
       studyInstanceUID: '1.3.6.1.4.1.14519.5.2.1.2744.7002.271803936741289691489150315969',
     };
 
     const instances = await dwc.retrieveStudy(options);
 
-    expect(instances).to.have.length(1);
+    expect(instances.length).toBe(1);
   });
 
-  it('should retrieve bulk data', async function() {
-    this.timeout(15000)
+  it('should retrieve bulk data', async function()  {
     const options = {
       studyInstanceUID: '999.999.3859744',
       seriesInstanceUID: '999.999.94827453',
@@ -148,8 +142,54 @@ describe('dicomweb.api.DICOMwebClient', function () {
 
     const bulkData = await dwc.retrieveBulkData(bulkDataOptions);
 
-    expect(bulkData).to.be.an('array');
-    expect(bulkData).to.to.have.length(1);
-    expect(bulkData[0]).to.be.an('arraybuffer');
+    expect(bulkData instanceof Array).toBe(true);
+    expect(bulkData.length).toBe(1);
+    expect(bulkData[0] instanceof ArrayBuffer).toBe(true);
+  }, 15000);
+
+  describe('Request hooks', function() {
+    let requestHook1Spy, requestHook2Spy, url, metadataUrl, request;
+
+    beforeEach(function() {
+      request = new XMLHttpRequest();
+      url = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs';
+      metadataUrl = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata';
+      requestHook1Spy = createSpy('requestHook1Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
+      requestHook2Spy = createSpy('requestHook2Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
+    });
+
+    it('invalid request hooks should be notified and ignored', async function() { 
+      /** Spy with invalid request hook signature */
+      requestHook2Spy = createSpy('requestHook2Spy', function (request) { return request }).and.callFake((request, metadata) => request);
+      const dwc = new DICOMwebClient.api.DICOMwebClient({ 
+        url, 
+        requestHooks: [requestHook1Spy, requestHook2Spy] 
+      });
+      const metadata = { url: metadataUrl, method: 'get' };
+      request.open('GET', metadata.url);
+      await dwc.retrieveInstanceMetadata({
+        studyInstanceUID: '999.999.3859744',
+        seriesInstanceUID: '999.999.94827453',
+        sopInstanceUID: '999.999.133.1996.1.1800.1.6.25',
+      });
+      expect(requestHook1Spy).not.toHaveBeenCalledWith(request, metadata);
+      expect(requestHook2Spy).not.toHaveBeenCalledWith(request, metadata);
+    })
+
+    it('valid request hooks should be called', async function() {
+      const dwc = new DICOMwebClient.api.DICOMwebClient({ 
+        url, 
+        requestHooks: [requestHook1Spy, requestHook2Spy] 
+      });
+      const metadata = { url: metadataUrl, method: 'get' };
+      request.open('GET', metadata.url);
+      await dwc.retrieveInstanceMetadata({
+        studyInstanceUID: '999.999.3859744',
+        seriesInstanceUID: '999.999.94827453',
+        sopInstanceUID: '999.999.133.1996.1.1800.1.6.25',
+      });
+      expect(requestHook1Spy).toHaveBeenCalledWith(request, metadata);
+      expect(requestHook2Spy).toHaveBeenCalledWith(request, metadata);
+    });
   });
 });
