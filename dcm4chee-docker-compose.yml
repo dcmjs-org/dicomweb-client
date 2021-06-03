@@ -31,10 +31,6 @@ services:
         max-size: "10m"
     ports:
       - "8008:8080"
-      # - "8443:8443"
-      # - "9990:9990"
-      # - "11112:11112"
-      # - "2575:2575"
     env_file: dcm4chee-docker-compose.env
     environment:
       WILDFLY_CHOWN: /opt/wildfly/standalone /storage
