@@ -12,7 +12,6 @@ function areValidRequestHooks(requestHooks) {
   const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => 
     typeof requestHook === 'function' 
       && requestHook.length === 2 
-      && requestHook(new XMLHttpRequest()) instanceof XMLHttpRequest
   );
 
   if (!isValid) {
