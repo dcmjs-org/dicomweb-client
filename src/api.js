@@ -156,12 +156,13 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpRequest(url, method, headers, options = {}) {
+  _httpRequest(url, method, headers = {}, options = {}) {
 
     const { errorInterceptor, requestHooks } = this;
 
     return new Promise((resolve, reject) => {
       let request = new XMLHttpRequest();
+
       request.open(method, url, true);
       if ("responseType" in options) {
         request.responseType = options.responseType;
@@ -231,7 +232,8 @@ class DICOMwebClient {
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) { 
-        const metadata = { method, url };
+        const headers = Object.assign({}, headers, this.headers);
+        const metadata = { method, url, headers };
         const pipeRequestHooks = functions => (args) => functions.reduce((args, fn) => fn(args, metadata), args);
         const pipedRequest = pipeRequestHooks(requestHooks);
         request = pipedRequest(request);
