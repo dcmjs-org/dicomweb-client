@@ -1191,18 +1191,23 @@ class DICOMwebClient {
       }
     }
     
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationOctetStream(url, false, false, false, false, withCredentials);
+      return this._httpGetMultipartApplicationOctetStream(url, false, false, false, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
 
     if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes, false, false, false, withCredentials);
+      return this._httpGetMultipartApplicationOctetStream(url, mediaTypes, false, false, progressCallback, withCredentials);
     } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes, false, false, false, false, withCredentials);
+      return this._httpGetMultipartImage(url, mediaTypes, false, false, false, progressCallback, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetMultipartVideo(url, mediaTypes, false, false, false, false, withCredentials);
+      return this._httpGetMultipartVideo(url, mediaTypes, false, false, false, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1250,23 +1255,29 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType, false, withCredentials);
+      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetVideo(url, mediaTypes, queryParams, progressCallback, withCredentials);
     } else if (commonMediaType.startsWith("text")) {
-      return this._httpGetText(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetText(url, mediaTypes, queryParams, progressCallback, withCredentials);
     } else if (commonMediaType === MEDIATYPES.PDF) {
-      return this._httpGetApplicationPdf(url, queryParams, false, withCredentials);
+      return this._httpGetApplicationPdf(url, queryParams, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1314,17 +1325,23 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType, false, withCredentials);
+      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1385,6 +1402,11 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
@@ -1395,9 +1417,9 @@ class DICOMwebClient {
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetVideo(url, mediaTypes, queryParams, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1457,17 +1479,23 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
       const responseType = "arraybuffer";
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType, false, withCredentials);
+      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, false, withCredentials);
+      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1505,13 +1533,19 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials).then(getFirstResult);
+      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials).then(getFirstResult);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials).then(
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials).then(
         getFirstResult
       );
     }
@@ -1548,13 +1582,19 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials);
+      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials);
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1583,13 +1623,19 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+    
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, false, withCredentials);
+      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, false, withCredentials);
+      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials);
     }
 
     throw new Error(
@@ -1621,6 +1667,12 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
+
+    let progressCallback = false;
+    if ("progressCallback" in options) {
+      progressCallback = options.progressCallback;
+    }
+
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
         url,
@@ -1637,10 +1689,10 @@ class DICOMwebClient {
         url,
         mediaTypes,
         byteRange,
-        false, false, withCredentials
+        false, progressCallback, withCredentials
       );
     } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes, byteRange, false, false, false, withCredentials);
+      return this._httpGetMultipartImage(url, mediaTypes, byteRange, false, false, progressCallback, withCredentials);
     }
 
     throw new Error(
