@@ -61,3 +61,6 @@ yarn.lock
 .env
 
 .idea
+
+# docker files created by the docker containers for testing
+tmp
