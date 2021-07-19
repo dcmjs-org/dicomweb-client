@@ -72,7 +72,7 @@ describe('dicomweb.api.DICOMwebClient', function() {
     };
 
     await dwc.storeInstances(options);
-  }, 10000);
+  }, 20000);
 
   it('should find four studes', async function()  {
     const studies = await dwc.searchForStudies();
@@ -165,7 +165,7 @@ describe('dicomweb.api.DICOMwebClient', function() {
         url, 
         requestHooks: [requestHook1Spy, requestHook2Spy] 
       });
-      const metadata = { url: metadataUrl, method: 'get' };
+      const metadata = { url: metadataUrl, method: 'get', headers: {} };
       request.open('GET', metadata.url);
       await dwc.retrieveInstanceMetadata({
         studyInstanceUID: '999.999.3859744',
@@ -181,7 +181,7 @@ describe('dicomweb.api.DICOMwebClient', function() {
         url, 
         requestHooks: [requestHook1Spy, requestHook2Spy] 
       });
-      const metadata = { url: metadataUrl, method: 'get' };
+      const metadata = { url: metadataUrl, method: 'get', headers: {}  };
       request.open('GET', metadata.url);
       await dwc.retrieveInstanceMetadata({
         studyInstanceUID: '999.999.3859744',
