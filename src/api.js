@@ -10,12 +10,15 @@ function isEmptyObject(obj) {
 
 function areValidRequestHooks(requestHooks) {
   const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => 
-    typeof requestHook === 'function' 
-      && requestHook.length === 2 
+    typeof requestHook === 'function'
+      && requestHook.length === 2
   );
 
   if (!isValid) {
-    console.warn('Request hooks should have the following signature: function requestHook(request, metadata) { return request; }');
+    console.warn(
+      'Request hooks should have the following signature: ' +
+      'function requestHook(request, metadata) { return request; }'
+    );
   }
 
   return isValid;
@@ -1324,17 +1327,26 @@ class DICOMwebClient {
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetImage(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetVideo(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     } else if (commonMediaType.startsWith("text")) {
-      return this._httpGetText(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetText(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     } else if (commonMediaType === MEDIATYPES.PDF) {
-      return this._httpGetApplicationPdf(url, queryParams, progressCallback, withCredentials);
+      return this._httpGetApplicationPdf(
+        url, queryParams, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of rendered instance.`
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered instance.'
     );
   }
 
@@ -1389,16 +1401,21 @@ class DICOMwebClient {
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
+      return this._httpGet(
+        url, headers, responseType, progressCallback, withCredentials
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetImage(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of rendered instance.`
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered instance.'
     );
   }
 
@@ -1470,13 +1487,18 @@ class DICOMwebClient {
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetImage(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     } else if (commonMediaType.startsWith("video")) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetVideo(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of rendered frame.`
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered frame.'
     );
   }
 
@@ -1543,16 +1565,21 @@ class DICOMwebClient {
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
+      return this._httpGet(
+        url, headers, responseType, progressCallback, withCredentials
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith("image")) {
-      return this._httpGetImage(url, mediaTypes, queryParams, progressCallback, withCredentials);
+      return this._httpGetImage(
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of rendered frame.`
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered frame.'
     );
   }
 
@@ -1593,14 +1620,16 @@ class DICOMwebClient {
     }
 
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials).then(getFirstResult);
+      return this._httpGetMultipartApplicationDicom(
+        url, false, false, progressCallback, withCredentials
+      ).then(getFirstResult);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials).then(
-        getFirstResult
-      );
+      return this._httpGetMultipartApplicationDicom(
+        url, mediaTypes, false, progressCallback, withCredentials
+      ).then(getFirstResult);
     }
 
     throw new Error(
@@ -1642,12 +1671,16 @@ class DICOMwebClient {
     }
 
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials);
+      return this._httpGetMultipartApplicationDicom(
+        url, false, false, progressCallback, withCredentials
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials);
+      return this._httpGetMultipartApplicationDicom(
+        url, mediaTypes, false, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
@@ -1681,14 +1714,18 @@ class DICOMwebClient {
     if ("progressCallback" in options) {
       progressCallback = options.progressCallback;
     }
-    
+
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, progressCallback, withCredentials);
+      return this._httpGetMultipartApplicationDicom(
+        url, false, false, progressCallback, withCredentials
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType === MEDIATYPES.DICOM) {
-      return this._httpGetMultipartApplicationDicom(url, mediaTypes, false, progressCallback, withCredentials);
+      return this._httpGetMultipartApplicationDicom(
+        url, mediaTypes, false, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
@@ -1745,7 +1782,9 @@ class DICOMwebClient {
         false, progressCallback, withCredentials
       );
     } else if (commonMediaType.startsWith("image")) {
-      return this._httpGetMultipartImage(url, mediaTypes, byteRange, false, false, progressCallback, withCredentials);
+      return this._httpGetMultipartImage(
+        url, mediaTypes, byteRange, false, false, progressCallback, withCredentials
+      );
     }
 
     throw new Error(
@@ -1781,7 +1820,9 @@ class DICOMwebClient {
         withCredentials = options.withCredentials;
       }
     }
-    return this._httpPost(url, headers, data, options.progressCallback, withCredentials);
+    return this._httpPost(
+      url, headers, data, options.progressCallback, withCredentials
+    );
   }
 }
 
