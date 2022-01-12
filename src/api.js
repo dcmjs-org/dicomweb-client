@@ -1252,7 +1252,7 @@ class DICOMwebClient {
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
 
-    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
+    if (commonMediaType.startsWith("application")) {
       return this._httpGetMultipartApplicationOctetStream(
         url, mediaTypes, false, false, progressCallback, withCredentials
       );
@@ -1742,7 +1742,7 @@ class DICOMwebClient {
    *
    * @param {Object} options
    * @param {String} BulkDataURI - URI for retrieval of bulkdata
-   * @return {Promise<ArrayBuffer>}
+   * @returns {Promise<Array>} Bulkdata parts
    */
   retrieveBulkData(options) {
     if (!("BulkDataURI" in options)) {
