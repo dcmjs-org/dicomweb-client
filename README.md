@@ -49,6 +49,11 @@ client.searchForStudies().then(studies => {
 });
 ```
 
+## Configuration Options
+The API can be configured with a number of custom configuration options to control the requests.  These are:
+* url to retrieve from for the base requests
+* singlepart, either true or a set of parts from `bulkdata,image,video` to request as single part responses
+* headers to add to the retrieve
 
 ## For maintainers
 
