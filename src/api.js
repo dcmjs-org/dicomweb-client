@@ -1708,6 +1708,25 @@ class DICOMwebClient {
   }
 
   /**
+   * Generate an absolute URI from a relative URI.
+   * If the URI contains : then it is already absolute, return it.
+   * If the URI starts with /, then just add it after the wadoURL
+   * Otherwise, assume the URL is relative to the wadoURL, and add studies/STUDYUID to it.
+   * @param {string} studyUid to use in the full URL
+   * @param {string} uri to convert to full URL
+   * @returns a URL to the requested resource.
+   */
+  _handleRelativeURI(studyUid, uri) {
+    if (!uri || uri.indexOf(':') !== -1) {
+      return uri;
+    }
+    if (uri[0] === '/') {
+      return this.wadoURL + uri;
+    }
+    return `${this.wadoURL}/studies/${studyUid}/${uri}`;
+  }
+
+  /**
    * Retrieves and parses BulkData from a BulkDataURI location.
    * Decodes the multipart encoded data and returns the resulting data
    * as an ArrayBuffer.
@@ -1715,15 +1734,17 @@ class DICOMwebClient {
    * See http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.5.5.html
    *
    * @param {Object} options
-   * @param {String} BulkDataURI - URI for retrieval of bulkdata
+   * @param {string} options.BulkDataURI to retrieve
    * @returns {Promise<Array>} Bulkdata parts
    */
   retrieveBulkData(options) {
     if (!('BulkDataURI' in options)) {
       throw new Error('BulkDataURI is required.');
     }
+    const { StudyInstanceUID, BulkDataURI } = options;
 
-    const url = options.BulkDataURI;
+    // Allow relative URI's, assume it is relative to the studyUID directory
+    const url = this._handleRelativeURI(StudyInstanceUID, BulkDataURI);
     const { mediaTypes, byteRange } = options;
     const { withCredentials = false } = options;
     const { progressCallback = false } = options;
