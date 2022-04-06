@@ -9,7 +9,7 @@
  */
 function uint8ArrayToString(arr, offset = 0, limit) {
   const itemLimit = limit || arr.length - offset;
-  let str = "";
+  let str = '';
   for (let i = offset; i < offset + itemLimit; i++) {
     str += String.fromCharCode(arr[i]);
   }
@@ -35,10 +35,10 @@ function stringToUint8Array(str) {
  * @returns {String} boundary
  */
 function identifyBoundary(header) {
-  const parts = header.split("\r\n");
+  const parts = header.split('\r\n');
 
   for (let i = 0; i < parts.length; i++) {
-    if (parts[i].substr(0, 2) === "--") {
+    if (parts[i].substr(0, 2) === '--') {
       return parts[i];
     }
   }
@@ -132,7 +132,7 @@ function guid() {
 function multipartEncode(
   datasets,
   boundary = guid(),
-  contentType = "application/dicom"
+  contentType = 'application/dicom',
 ) {
   const contentTypeString = `Content-Type: ${contentType}`;
   const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`;
@@ -145,7 +145,7 @@ function multipartEncode(
   let length = 0;
 
   // Calculate the total length for the final array
-  const contentArrays = datasets.map(datasetBuffer => {
+  const contentArrays = datasets.map((datasetBuffer) => {
     const contentArray = new Uint8Array(datasetBuffer);
     const contentLength = contentArray.length;
 
@@ -162,7 +162,7 @@ function multipartEncode(
 
   // Write each dataset into the multipart array
   let position = 0;
-  contentArrays.forEach(contentArray => {
+  contentArrays.forEach((contentArray) => {
     multipartArray.set(headerArray, position);
     multipartArray.set(contentArray, position + headerLength);
 
@@ -173,7 +173,7 @@ function multipartEncode(
 
   return {
     data: multipartArray.buffer,
-    boundary
+    boundary,
   };
 }
 
@@ -192,16 +192,16 @@ function multipartDecode(response) {
   const maxSearchLength = 1000;
 
   // First look for the multipart mime header
-  const separator = stringToUint8Array("\r\n\r\n");
+  const separator = stringToUint8Array('\r\n\r\n');
   const headerIndex = findToken(message, separator, 0, maxSearchLength);
   if (headerIndex === -1) {
-    throw new Error("Response message has no multipart mime header");
+    throw new Error('Response message has no multipart mime header');
   }
 
   const header = uint8ArrayToString(message, 0, headerIndex);
   const boundaryString = identifyBoundary(header);
   if (!boundaryString) {
-    throw new Error("Header of response message does not specify boundary");
+    throw new Error('Header of response message does not specify boundary');
   }
 
   const boundary = stringToUint8Array(boundaryString);
@@ -227,10 +227,10 @@ function multipartDecode(response) {
       message,
       separator,
       offset,
-      maxSearchLength
+      maxSearchLength,
     );
     if (headerTokenIndex === -1) {
-      throw new Error("Response message part has no mime header");
+      throw new Error('Response message part has no mime header');
     }
     offset = headerTokenIndex + separator.length;
 
@@ -257,5 +257,5 @@ export {
   stringToUint8Array,
   multipartEncode,
   multipartDecode,
-  guid
+  guid,
 };

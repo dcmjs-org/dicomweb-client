@@ -1,21 +1,21 @@
-import { DICOMwebClient } from "./api.js";
+import { DICOMwebClient } from './api.js';
 import {
   getStudyInstanceUIDFromUri,
   getSeriesInstanceUIDFromUri,
   getSOPInstanceUIDFromUri,
-  getFrameNumbersFromUri
-} from "./utils.js";
+  getFrameNumbersFromUri,
+} from './utils.js';
 
 const api = {
-  DICOMwebClient
+  DICOMwebClient,
 };
 const utils = {
   getStudyInstanceUIDFromUri,
   getSeriesInstanceUIDFromUri,
   getSOPInstanceUIDFromUri,
-  getFrameNumbersFromUri
+  getFrameNumbersFromUri,
 };
 
-export { default as version } from "./version.js";
+export { default as version } from './version.js';
 
 export { api, utils };
