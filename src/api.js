@@ -896,8 +896,13 @@ class DICOMwebClient {
 
     mediaTypes.forEach((item) => {
       const { mediaType } = item;
-      const type = DICOMwebClient._parseMediaType(mediaType)[0];
-      types.add(`${type}/`);
+      if (mediaType.startsWith("application")) {
+        types.add(mediaType);
+      } else {
+        const type = DICOMwebClient._parseMediaType(mediaType)[0];
+
+        types.add(`${type}/`);
+      }
     });
 
     return Array.from(types);
