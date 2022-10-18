@@ -50,14 +50,14 @@ class DICOMwebClient {
    * @constructor
    * @param {Object} options
    * @param {String} options.url - URL of the DICOMweb RESTful Service endpoint
-   * @param {String} options.qidoURLPrefix - URL path prefix for QIDO-RS
-   * @param {String} options.wadoURLPrefix - URL path prefix for WADO-RS
-   * @param {String} options.stowURLPrefix - URL path prefix for STOW-RS
-   * @param {String} options.username - Username
-   * @param {String} options.password - Password
-   * @param {Object} options.headers - HTTP headers
-   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
-   * @param {Object} options.verbose - print to console request warnings and errors, default true
+   * @param {String=} options.qidoURLPrefix - URL path prefix for QIDO-RS
+   * @param {String=} options.wadoURLPrefix - URL path prefix for WADO-RS
+   * @param {String=} options.stowURLPrefix - URL path prefix for STOW-RS
+   * @param {String=} options.username - Username
+   * @param {String=} options.password - Password
+   * @param {Object=} options.headers - HTTP headers
+   * @param {Array.<RequestHook>=} options.requestHooks - Request hooks.
+   * @param {Object=} options.verbose - print to console request warnings and errors, default true
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -1626,6 +1626,7 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @param {String} options.seriesInstanceUID - Series Instance UID
+   * @param {Function} options.progressCallback
    * @returns {ArrayBuffer[]} DICOM Instances
    */
   retrieveSeries(options) {
