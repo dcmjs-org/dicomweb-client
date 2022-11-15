@@ -56,6 +56,12 @@ class DICOMwebClient {
    * @param {String} options.username - Username
    * @param {String} options.password - Password
    * @param {Object} options.headers - HTTP headers
+   * @param {Boolean} options.quoteAcceptParameterValues - Whether parameter values in the accept header field of in
+   * multipart/related request messages should be quoted. According to DICOM Part 3.18, the quotes are required and
+   * some origin servers fail if they are not provided. However, the original RFC 2387 does not require the quotes.
+   * Most servers can handle no quotation accept header and including the quotation for them will trigger a preflight
+   * request and becomes a performance issue (a preflight request is sent out for each request = 2 times the amount
+   * of requests over the network) An in length discussion can be read here https://github.com/dcmjs-org/dicomweb-client/issues/57)
    * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
    * @param {Object} options.verbose - print to console request warnings and errors, default true
    */
@@ -100,6 +106,12 @@ class DICOMwebClient {
       this.requestHooks = options.requestHooks;
     }
 
+    this.quoteAcceptParameterValues = true;
+    if ('quoteAcceptParameterValues' in options) {
+      console.log(`use quote for Accept Parameter Values is set to ${options.quoteAcceptParameterValues}`);
+      this.quoteAcceptParameterValues = options.quoteAcceptParameterValues;
+    }
+    
     // Headers to pass to requests.
     this.headers = options.headers || {};
 
@@ -799,7 +811,14 @@ class DICOMwebClient {
     mediaTypes.forEach((item) => {
       const { transferSyntaxUID, mediaType } = item;
       DICOMwebClient._assertMediaTypeIsValid(mediaType);
-      let fieldValue = `multipart/related; type="${mediaType}"`;
+
+      let fieldValue;
+      if (this.quoteAcceptParameterValues) {
+        fieldValue = `multipart/related; type="${mediaType}"`;
+      } else {
+        fieldValue = `multipart/related; type=${mediaType}`;
+      }
+
 
       if (isObject(supportedMediaTypes)) {
         // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
@@ -1776,9 +1795,18 @@ class DICOMwebClient {
     }
 
     const { data, boundary } = multipartEncode(options.datasets);
+    
+    let contentType;
+    if (this.quoteAcceptParameterValues) {
+      contentType = `multipart/related; type="application/dicom"; boundary="${boundary}"`;
+    } else {
+      contentType = `multipart/related; type=application/dicom; boundary="${boundary}"`;
+    }
+
     const headers = {
-      'Content-Type': `multipart/related; type="application/dicom"; boundary="${boundary}"`,
+      'Content-Type': contentType,
     };
+
     const { withCredentials = false } = options;
     return this._httpPost(
       url, headers, data, options.progressCallback, withCredentials,
