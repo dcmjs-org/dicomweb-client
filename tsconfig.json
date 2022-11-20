@@ -4,7 +4,7 @@
     "allowJs": true,
     "declaration": true,
     "emitDeclarationOnly": true,
-    "outDir": "build",
+    "outDir": "types",
     "declarationMap": true
   }
 }
