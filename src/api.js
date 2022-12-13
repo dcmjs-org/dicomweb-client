@@ -1,28 +1,28 @@
-import { multipartEncode, multipartDecode } from './message.js';
+import { multipartEncode, multipartDecode } from './message.js'
 
-function isObject(obj) {
-  return typeof obj === 'object' && obj !== null;
+function isObject (obj) {
+  return typeof obj === 'object' && obj !== null
 }
 
-function isEmptyObject(obj) {
-  return Object.keys(obj).length === 0 && obj.constructor === Object;
+function isEmptyObject (obj) {
+  return Object.keys(obj).length === 0 && obj.constructor === Object
 }
 
-function areValidRequestHooks(requestHooks) {
-  const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => typeof requestHook === 'function'
-      && requestHook.length === 2);
+function areValidRequestHooks (requestHooks) {
+  const isValid = Array.isArray(requestHooks) && requestHooks.every(requestHook => typeof requestHook === 'function' &&
+      requestHook.length === 2)
 
   if (!isValid) {
     console.warn(
-      'Request hooks should have the following signature: '
-      + 'function requestHook(request, metadata) { return request; }',
-    );
+      'Request hooks should have the following signature: ' +
+      'function requestHook(request, metadata) { return request; }'
+    )
   }
 
-  return isValid;
+  return isValid
 }
 
-const getFirstResult = result => result[0];
+const getFirstResult = result => result[0]
 
 const MEDIATYPES = {
   DICOM: 'application/dicom',
@@ -30,9 +30,8 @@ const MEDIATYPES = {
   OCTET_STREAM: 'application/octet-stream',
   PDF: 'application/pdf',
   JPEG: 'image/jpeg',
-  PNG: 'image/png',
-};
-
+  PNG: 'image/png'
+}
 
 /**
  * @typedef { import("../types/types").InstanceMetadata } InstanceMetadata
@@ -64,55 +63,55 @@ class DICOMwebClient {
    * @param {Array.<RequestHook>=} options.requestHooks - Request hooks.
    * @param {Object=} options.verbose - print to console request warnings and errors, default true
    */
-  constructor(options) {
-    this.baseURL = options.url;
+  constructor (options) {
+    this.baseURL = options.url
     if (!this.baseURL) {
-      console.error('no DICOMweb base url provided - calls will fail');
+      console.error('no DICOMweb base url provided - calls will fail')
     }
 
     if ('username' in options) {
-      this.username = options.username;
+      this.username = options.username
       if (!('password' in options)) {
         console.error(
-          'no password provided to authenticate with DICOMweb service',
-        );
+          'no password provided to authenticate with DICOMweb service'
+        )
       }
-      this.password = options.password;
+      this.password = options.password
     }
 
     if ('qidoURLPrefix' in options) {
-      console.log(`use URL prefix for QIDO-RS: ${options.qidoURLPrefix}`);
-      this.qidoURL = `${this.baseURL}/${options.qidoURLPrefix}`;
+      console.log(`use URL prefix for QIDO-RS: ${options.qidoURLPrefix}`)
+      this.qidoURL = `${this.baseURL}/${options.qidoURLPrefix}`
     } else {
-      this.qidoURL = this.baseURL;
+      this.qidoURL = this.baseURL
     }
 
     if ('wadoURLPrefix' in options) {
-      console.log(`use URL prefix for WADO-RS: ${options.wadoURLPrefix}`);
-      this.wadoURL = `${this.baseURL}/${options.wadoURLPrefix}`;
+      console.log(`use URL prefix for WADO-RS: ${options.wadoURLPrefix}`)
+      this.wadoURL = `${this.baseURL}/${options.wadoURLPrefix}`
     } else {
-      this.wadoURL = this.baseURL;
+      this.wadoURL = this.baseURL
     }
 
     if ('stowURLPrefix' in options) {
-      console.log(`use URL prefix for STOW-RS: ${options.stowURLPrefix}`);
-      this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`;
+      console.log(`use URL prefix for STOW-RS: ${options.stowURLPrefix}`)
+      this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`
     } else {
-      this.stowURL = this.baseURL;
+      this.stowURL = this.baseURL
     }
 
     if ('requestHooks' in options) {
-      this.requestHooks = options.requestHooks;
+      this.requestHooks = options.requestHooks
     }
 
     // Headers to pass to requests.
-    this.headers = options.headers || {};
+    this.headers = options.headers || {}
 
     // Optional error interceptor callback to handle any failed request.
-    this.errorInterceptor = options.errorInterceptor || (() => undefined);
+    this.errorInterceptor = options.errorInterceptor || function () {}
 
     // Verbose - print to console request warnings and errors, default true
-    this.verbose = options.verbose !== false;
+    this.verbose = options.verbose !== false
   }
 
   /**
@@ -120,8 +119,8 @@ class DICOMwebClient {
    *
    * @param {Boolean} verbose
    */
-  setVerbose(verbose) {
-    this.verbose = verbose;
+  setVerbose (verbose) {
+    this.verbose = verbose
   }
 
   /**
@@ -129,19 +128,19 @@ class DICOMwebClient {
    *
    * @return {Boolean} verbose
    */
-  getVerbose() {
-    return this.verbose;
+  getVerbose () {
+    return this.verbose
   }
 
-  static _parseQueryParameters(params = {}) {
-    let queryString = '?';
+  static _parseQueryParameters (params = {}) {
+    let queryString = '?'
     Object.keys(params).forEach((key, index) => {
       if (index !== 0) {
-        queryString += '&';
+        queryString += '&'
       }
-      queryString += `${key}=${encodeURIComponent(params[key])}`;
-    });
-    return queryString;
+      queryString += `${key}=${encodeURIComponent(params[key])}`
+    })
+    return queryString
   }
 
   /**
@@ -155,101 +154,101 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpRequest(url, method, headers = {}, options = {}) {
-    const { errorInterceptor, requestHooks } = this;
+  _httpRequest (url, method, headers = {}, options = {}) {
+    const { errorInterceptor, requestHooks } = this
 
     return new Promise((resolve, reject) => {
-      let request = new XMLHttpRequest();
+      let request = new XMLHttpRequest() // eslint-disable-line no-undef
 
-      request.open(method, url, true);
+      request.open(method, url, true)
       if ('responseType' in options) {
-        request.responseType = options.responseType;
+        request.responseType = options.responseType
       }
 
       if (typeof headers === 'object') {
         Object.keys(headers).forEach((key) => {
-          request.setRequestHeader(key, headers[key]);
-        });
+          request.setRequestHeader(key, headers[key])
+        })
       }
 
       // now add custom headers from the user
       // (e.g. access tokens)
-      const userHeaders = this.headers;
+      const userHeaders = this.headers
       Object.keys(userHeaders).forEach((key) => {
-        request.setRequestHeader(key, userHeaders[key]);
-      });
+        request.setRequestHeader(key, userHeaders[key])
+      })
 
       // Event triggered when upload starts
-      request.onloadstart = function onloadstart() {
+      request.onloadstart = function onloadstart () {
         // console.log('upload started: ', url)
-      };
+      }
 
       // Event triggered when upload ends
-      request.onloadend = function onloadend() {
+      request.onloadend = function onloadend () {
         // console.log('upload finished')
-      };
+      }
 
       // Handle response message
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === 200) {
-            resolve(request.response);
+            resolve(request.response)
           } else if (request.status === 202) {
             if (this.verbose) {
-              console.warn('some resources already existed: ', request);
+              console.warn('some resources already existed: ', request)
             }
-            resolve(request.response);
+            resolve(request.response)
           } else if (request.status === 204) {
             if (this.verbose) {
-              console.warn('empty response for request: ', request);
+              console.warn('empty response for request: ', request)
             }
-            resolve([]);
+            resolve([])
           } else {
-            const error = new Error('request failed');
-            error.request = request;
-            error.response = request.response;
-            error.status = request.status;
+            const error = new Error('request failed')
+            error.request = request
+            error.response = request.response
+            error.status = request.status
             if (this.verbose) {
-              console.error('request failed: ', request);
-              console.error(error);
-              console.error(error.response);
+              console.error('request failed: ', request)
+              console.error(error)
+              console.error(error.response)
             }
 
-            errorInterceptor(error);
+            errorInterceptor(error)
 
-            reject(error);
+            reject(error)
           }
         }
-      };
+      }
 
       // Event triggered while download progresses
       if ('progressCallback' in options) {
         if (typeof options.progressCallback === 'function') {
-          request.onprogress = options.progressCallback;
+          request.onprogress = options.progressCallback
         }
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
-        const combinedHeaders = Object.assign({}, headers, this.headers);
-        const metadata = { method, url, headers: combinedHeaders };
-        const pipeRequestHooks = functions => args => functions.reduce((props, fn) => fn(props, metadata), args);
-        const pipedRequest = pipeRequestHooks(requestHooks);
-        request = pipedRequest(request);
+        const headers = Object.assign({}, this.headers)
+        const metadata = { method, url, headers }
+        const pipeRequestHooks = functions => args => functions.reduce((args, fn) => fn(args, metadata), args)
+        const pipedRequest = pipeRequestHooks(requestHooks)
+        request = pipedRequest(request)
       }
 
       // Add withCredentials to request if needed
       if ('withCredentials' in options) {
         if (options.withCredentials) {
-          request.withCredentials = true;
+          request.withCredentials = true
         }
       }
 
       if ('data' in options) {
-        request.send(options.data);
+        request.send(options.data)
       } else {
-        request.send();
+        request.send()
       }
-    });
+    })
   }
 
   /**
@@ -262,12 +261,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGet(url, headers, responseType, progressCallback, withCredentials) {
+  _httpGet (url, headers, responseType, progressCallback, withCredentials) {
     return this._httpRequest(url, 'get', headers, {
       responseType,
       progressCallback,
-      withCredentials,
-    });
+      withCredentials
+    })
   }
 
   /**
@@ -280,23 +279,23 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationJson(url, params = {}, progressCallback, withCredentials) {
-    let urlWithQueryParams = url;
+  _httpGetApplicationJson (url, params = {}, progressCallback, withCredentials) {
+    let urlWithQueryParams = url
 
     if (typeof params === 'object') {
       if (!isEmptyObject(params)) {
-        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params)
       }
     }
-    const headers = { Accept: MEDIATYPES.DICOM_JSON };
-    const responseType = 'json';
+    const headers = { Accept: MEDIATYPES.DICOM_JSON }
+    const responseType = 'json'
     return this._httpGet(
       urlWithQueryParams,
       headers,
       responseType,
       progressCallback,
-      withCredentials,
-    );
+      withCredentials
+    )
   }
 
   /**
@@ -309,23 +308,23 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationPdf(url, params = {}, progressCallback, withCredentials) {
-    let urlWithQueryParams = url;
+  _httpGetApplicationPdf (url, params = {}, progressCallback, withCredentials) {
+    let urlWithQueryParams = url
 
     if (typeof params === 'object') {
       if (!isEmptyObject(params)) {
-        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params)
       }
     }
-    const headers = { Accept: MEDIATYPES.PDF };
-    const responseType = 'json';
+    const headers = { Accept: MEDIATYPES.PDF }
+    const responseType = 'json'
     return this._httpGet(
       urlWithQueryParams,
       headers,
       responseType,
       progressCallback,
-      withCredentials,
-    );
+      withCredentials
+    )
   }
 
   /**
@@ -339,12 +338,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetImage(url, mediaTypes, params = {}, progressCallback, withCredentials) {
-    let urlWithQueryParams = url;
+  _httpGetImage (url, mediaTypes, params = {}, progressCallback, withCredentials) {
+    let urlWithQueryParams = url
 
     if (typeof params === 'object') {
       if (!isEmptyObject(params)) {
-        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params)
       }
     }
 
@@ -354,22 +353,22 @@ class DICOMwebClient {
       'image/jpeg',
       'image/jp2',
       'image/gif',
-      'image/png',
-    ];
+      'image/png'
+    ]
 
     const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
       mediaTypes,
-      supportedMediaTypes,
-    );
-    const headers = { Accept: acceptHeaderFieldValue };
-    const responseType = 'arraybuffer';
+      supportedMediaTypes
+    )
+    const headers = { Accept: acceptHeaderFieldValue }
+    const responseType = 'arraybuffer'
     return this._httpGet(
       urlWithQueryParams,
       headers,
       responseType,
       progressCallback,
-      withCredentials,
-    );
+      withCredentials
+    )
   }
 
   /**
@@ -383,12 +382,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetText(url, mediaTypes, params = {}, progressCallback, withCredentials) {
-    let urlWithQueryParams = url;
+  _httpGetText (url, mediaTypes, params = {}, progressCallback, withCredentials) {
+    let urlWithQueryParams = url
 
     if (typeof params === 'object') {
       if (!isEmptyObject(params)) {
-        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params)
       }
     }
 
@@ -398,22 +397,22 @@ class DICOMwebClient {
       'text/html',
       'text/plain',
       'text/rtf',
-      'text/xml',
-    ];
+      'text/xml'
+    ]
 
     const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
       mediaTypes,
-      supportedMediaTypes,
-    );
-    const headers = { Accept: acceptHeaderFieldValue };
-    const responseType = 'arraybuffer';
+      supportedMediaTypes
+    )
+    const headers = { Accept: acceptHeaderFieldValue }
+    const responseType = 'arraybuffer'
     return this._httpGet(
       urlWithQueryParams,
       headers,
       responseType,
       progressCallback,
-      withCredentials,
-    );
+      withCredentials
+    )
   }
 
   /**
@@ -427,12 +426,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetVideo(url, mediaTypes, params = {}, progressCallback, withCredentials) {
-    let urlWithQueryParams = url;
+  _httpGetVideo (url, mediaTypes, params = {}, progressCallback, withCredentials) {
+    let urlWithQueryParams = url
 
     if (typeof params === 'object') {
       if (!isEmptyObject(params)) {
-        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params);
+        urlWithQueryParams += DICOMwebClient._parseQueryParameters(params)
       }
     }
 
@@ -441,22 +440,22 @@ class DICOMwebClient {
       'video/*',
       'video/mpeg',
       'video/mp4',
-      'video/H265',
-    ];
+      'video/H265'
+    ]
 
     const acceptHeaderFieldValue = DICOMwebClient._buildAcceptHeaderFieldValue(
       mediaTypes,
-      supportedMediaTypes,
-    );
-    const headers = { Accept: acceptHeaderFieldValue };
-    const responseType = 'arraybuffer';
+      supportedMediaTypes
+    )
+    const headers = { Accept: acceptHeaderFieldValue }
+    const responseType = 'arraybuffer'
     return this._httpGet(
       urlWithQueryParams,
       headers,
       responseType,
       progressCallback,
-      withCredentials,
-    );
+      withCredentials
+    )
   }
 
   /**
@@ -464,24 +463,24 @@ class DICOMwebClient {
    *
    * @params {String} mediaType media type
    */
-  static _assertMediaTypeIsValid(mediaType) {
+  static _assertMediaTypeIsValid (mediaType) {
     if (!mediaType) {
-      throw new Error(`Not a valid media type: ${mediaType}`);
+      throw new Error(`Not a valid media type: ${mediaType}`)
     }
 
-    const sepIndex = mediaType.indexOf('/');
+    const sepIndex = mediaType.indexOf('/')
     if (sepIndex === -1) {
-      throw new Error(`Not a valid media type: ${mediaType}`);
+      throw new Error(`Not a valid media type: ${mediaType}`)
     }
 
-    const mediaTypeType = mediaType.slice(0, sepIndex);
-    const types = ['application', 'image', 'text', 'video'];
+    const mediaTypeType = mediaType.slice(0, sepIndex)
+    const types = ['application', 'image', 'text', 'video', '*']
     if (!types.includes(mediaTypeType)) {
-      throw new Error(`Not a valid media type: ${mediaType}`);
+      throw new Error(`Not a valid media type: ${mediaType}`)
     }
 
     if (mediaType.slice(sepIndex + 1).includes('/')) {
-      throw new Error(`Not a valid media type: ${mediaType}`);
+      throw new Error(`Not a valid media type: ${mediaType}`)
     }
   }
 
@@ -498,24 +497,24 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartImage(
+  _httpGetMultipartImage (
     url,
     mediaTypes,
     byteRange,
     params,
     rendered = false,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
-    const headers = {};
-    let supportedMediaTypes;
+    const headers = {}
+    let supportedMediaTypes
     if (rendered) {
       supportedMediaTypes = [
         'image/jpeg',
         'image/gif',
         'image/png',
-        'image/jp2',
-      ];
+        'image/jp2'
+      ]
     } else {
       supportedMediaTypes = {
         '1.2.840.10008.1.2.5': ['image/x-dicom-rle'],
@@ -528,22 +527,22 @@ class DICOMwebClient {
         '1.2.840.10008.1.2.4.90': ['image/jp2'],
         '1.2.840.10008.1.2.4.91': ['image/jp2'],
         '1.2.840.10008.1.2.4.92': ['image/jpx'],
-        '1.2.840.10008.1.2.4.93': ['image/jpx'],
-      };
+        '1.2.840.10008.1.2.4.93': ['image/jpx']
+      }
 
       if (byteRange) {
-        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange)
       }
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
       mediaTypes,
-      supportedMediaTypes,
-    );
+      supportedMediaTypes
+    )
 
     return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials).then(
-      multipartDecode,
-    );
+      multipartDecode
+    )
   }
 
   /**
@@ -559,25 +558,25 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartVideo(
+  _httpGetMultipartVideo (
     url,
     mediaTypes,
     byteRange,
     params,
     rendered = false,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
-    const headers = {};
-    let supportedMediaTypes;
+    const headers = {}
+    let supportedMediaTypes
     if (rendered) {
       supportedMediaTypes = [
         'video/',
         'video/*',
         'video/mpeg2',
         'video/mp4',
-        'video/H265',
-      ];
+        'video/H265'
+      ]
     } else {
       supportedMediaTypes = {
         '1.2.840.10008.1.2.4.100': ['video/mpeg2'],
@@ -586,22 +585,22 @@ class DICOMwebClient {
         '1.2.840.10008.1.2.4.103': ['video/mp4'],
         '1.2.840.10008.1.2.4.104': ['video/mp4'],
         '1.2.840.10008.1.2.4.105': ['video/mp4'],
-        '1.2.840.10008.1.2.4.106': ['video/mp4'],
-      };
+        '1.2.840.10008.1.2.4.106': ['video/mp4']
+      }
 
       if (byteRange) {
-        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+        headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange)
       }
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
       mediaTypes,
-      supportedMediaTypes,
-    );
+      supportedMediaTypes
+    )
 
     return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials).then(
-      multipartDecode,
-    );
+      multipartDecode
+    )
   }
 
   /**
@@ -616,9 +615,9 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartApplicationDicom(url, mediaTypes, params, progressCallback, withCredentials) {
-    const headers = {};
-    const defaultMediaType = 'application/dicom';
+  _httpGetMultipartApplicationDicom (url, mediaTypes, params, progressCallback, withCredentials) {
+    const headers = {}
+    const defaultMediaType = 'application/dicom'
     const supportedMediaTypes = {
       '1.2.840.10008.1.2.1': [defaultMediaType],
       '1.2.840.10008.1.2.5': [defaultMediaType],
@@ -638,22 +637,22 @@ class DICOMwebClient {
       '1.2.840.10008.1.2.4.103': [defaultMediaType],
       '1.2.840.10008.1.2.4.104': [defaultMediaType],
       '1.2.840.10008.1.2.4.105': [defaultMediaType],
-      '1.2.840.10008.1.2.4.106': [defaultMediaType],
-    };
+      '1.2.840.10008.1.2.4.106': [defaultMediaType]
+    }
 
-    let acceptableMediaTypes = mediaTypes;
+    let acceptableMediaTypes = mediaTypes
     if (!mediaTypes) {
-      acceptableMediaTypes = [{ mediaType: defaultMediaType }];
+      acceptableMediaTypes = [{ mediaType: defaultMediaType }]
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
       acceptableMediaTypes,
-      supportedMediaTypes,
-    );
+      supportedMediaTypes
+    )
 
     return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials).then(
-      multipartDecode,
-    );
+      multipartDecode
+    )
   }
 
   /**
@@ -669,37 +668,37 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartApplicationOctetStream(
+  _httpGetMultipartApplicationOctetStream (
     url,
     mediaTypes,
     byteRange,
     params,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
-    const headers = {};
-    const defaultMediaType = 'application/octet-stream';
+    const headers = {}
+    const defaultMediaType = 'application/octet-stream'
     const supportedMediaTypes = {
-      '1.2.840.10008.1.2.1': [defaultMediaType],
-    };
+      '1.2.840.10008.1.2.1': [defaultMediaType]
+    }
 
-    let acceptableMediaTypes = mediaTypes;
+    let acceptableMediaTypes = mediaTypes
     if (!mediaTypes) {
-      acceptableMediaTypes = [{ mediaType: defaultMediaType }];
+      acceptableMediaTypes = [{ mediaType: defaultMediaType }]
     }
 
     if (byteRange) {
-      headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange);
+      headers.Range = DICOMwebClient._buildRangeHeaderFieldValue(byteRange)
     }
 
     headers.Accept = DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
       acceptableMediaTypes,
-      supportedMediaTypes,
-    );
+      supportedMediaTypes
+    )
 
-    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials).then(
-      multipartDecode,
-    );
+    return this._httpGet(
+      url, headers, 'arraybuffer', progressCallback, withCredentials
+    ).then(multipartDecode)
   }
 
   /**
@@ -712,12 +711,12 @@ class DICOMwebClient {
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback, withCredentials) {
+  _httpPost (url, headers, data, progressCallback, withCredentials) {
     return this._httpRequest(url, 'post', headers, {
       data,
       progressCallback,
-      withCredentials,
-    });
+      withCredentials
+    })
   }
 
   /**
@@ -730,9 +729,9 @@ class DICOMwebClient {
    * @private
    * @returns {Promise} Response
    */
-  _httpPostApplicationJson(url, data, progressCallback, withCredentials) {
-    const headers = { 'Content-Type': MEDIATYPES.DICOM_JSON };
-    return this._httpPost(url, headers, data, progressCallback, withCredentials);
+  _httpPostApplicationJson (url, data, progressCallback, withCredentials) {
+    const headers = { 'Content-Type': MEDIATYPES.DICOM_JSON }
+    return this._httpPost(url, headers, data, progressCallback, withCredentials)
   }
 
   /**
@@ -742,10 +741,10 @@ class DICOMwebClient {
    * @private
    * @returns {String[]} Media type and subtype
    */
-  static _parseMediaType(mediaType) {
-    DICOMwebClient._assertMediaTypeIsValid(mediaType);
+  static _parseMediaType (mediaType) {
+    DICOMwebClient._assertMediaTypeIsValid(mediaType)
 
-    return mediaType.split('/');
+    return mediaType.split('/')
   }
 
   /**
@@ -756,25 +755,25 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  static _buildAcceptHeaderFieldValue(mediaTypes, supportedMediaTypes) {
+  static _buildAcceptHeaderFieldValue (mediaTypes, supportedMediaTypes) {
     if (!Array.isArray(mediaTypes)) {
-      throw new Error('Acceptable media types must be provided as an Array');
+      throw new Error('Acceptable media types must be provided as an Array')
     }
 
     const fieldValueParts = mediaTypes.map((item) => {
-      const { mediaType } = item;
+      const { mediaType } = item
 
-      DICOMwebClient._assertMediaTypeIsValid(mediaType);
+      DICOMwebClient._assertMediaTypeIsValid(mediaType)
       if (!supportedMediaTypes.includes(mediaType)) {
         throw new Error(
-          `Media type ${mediaType} is not supported for requested resource`,
-        );
+          `Media type ${mediaType} is not supported for requested resource.`
+        )
       }
 
-      return mediaType;
-    });
+      return mediaType
+    })
 
-    return fieldValueParts.join(', ');
+    return fieldValueParts.join(', ')
   }
 
   /**
@@ -785,35 +784,37 @@ class DICOMwebClient {
      * @param {Object[]} supportedMediaTypes - Supported media types
      * @private
      */
-  static _buildMultipartAcceptHeaderFieldValue(
+  static _buildMultipartAcceptHeaderFieldValue (
     mediaTypes,
-    supportedMediaTypes,
+    supportedMediaTypes
   ) {
     if (!Array.isArray(mediaTypes)) {
-      throw new Error('Acceptable media types must be provided as an Array');
+      throw new Error('Acceptable media types must be provided as an Array')
     }
 
     if (!Array.isArray(supportedMediaTypes) && !isObject(supportedMediaTypes)) {
       throw new Error(
-        'Supported media types must be provided as an Array or an Object',
-      );
+        'Supported media types must be provided as an Array or an Object'
+      )
     }
 
-    const fieldValueParts = [];
+    const fieldValueParts = []
 
     mediaTypes.forEach((item) => {
-      const { transferSyntaxUID, mediaType } = item;
-      DICOMwebClient._assertMediaTypeIsValid(mediaType);
-      let fieldValue = `multipart/related; type="${mediaType}"`;
+      const { transferSyntaxUID, mediaType } = item
+      DICOMwebClient._assertMediaTypeIsValid(mediaType)
+      let fieldValue = `multipart/related; type="${mediaType}"`
 
       if (isObject(supportedMediaTypes)) {
         // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
         // to one or more Media Types
         if (!Object.values(supportedMediaTypes).flat(1).includes(mediaType)) {
-          if (!mediaType.endsWith('/*') || !mediaType.endsWith('/')) {
+          console.log('DEBUG [DICOMWEB-CLIENT]: ', mediaType)
+          if (!(mediaType.endsWith('/*') || mediaType.endsWith('/'))) {
             throw new Error(
-              `Media type ${mediaType} is not supported for requested resource`,
-            );
+              `Media type "${mediaType}" is not supported ` +
+              'for requested resource!!!'
+            )
           }
         }
 
@@ -821,49 +822,50 @@ class DICOMwebClient {
           if (transferSyntaxUID !== '*') {
             if (!Object.keys(supportedMediaTypes).includes(transferSyntaxUID)) {
               throw new Error(
-                `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`,
-              );
+                `Transfer syntax "${transferSyntaxUID}" is not supported ` +
+                'for requested resource.'
+              )
             }
 
-            const expectedMediaTypes = supportedMediaTypes[transferSyntaxUID];
+            const expectedMediaTypes = supportedMediaTypes[transferSyntaxUID]
 
             if (!expectedMediaTypes.includes(mediaType)) {
-              const actualType = DICOMwebClient._parseMediaType(mediaType)[0];
-              expectedMediaTypes.map((expectedMediaType) => {
+              const actualType = DICOMwebClient._parseMediaType(mediaType)[0]
+              expectedMediaTypes.forEach((expectedMediaType) => {
                 const expectedType = DICOMwebClient._parseMediaType(
-                  expectedMediaType,
-                )[0];
-                const haveSameType = actualType === expectedType;
-
+                  expectedMediaType
+                )[0]
+                const haveSameType = actualType === expectedType
                 if (
-                  haveSameType
-                    && (mediaType.endsWith('/*') || mediaType.endsWith('/'))
+                  !(
+                    haveSameType &&
+                    (mediaType.endsWith('/*') || mediaType.endsWith('/'))
+                  )
                 ) {
-                  return;
+                  throw new Error(
+                    `Transfer syntax "${transferSyntaxUID}" is not supported ` +
+                    'for requested resource.'
+                  )
                 }
-
-                throw new Error(
-                  `Transfer syntax ${transferSyntaxUID} is not supported for requested resource`,
-                );
-              });
+              })
             }
           }
 
-          fieldValue += `; transfer-syntax=${transferSyntaxUID}`;
+          fieldValue += `; transfer-syntax=${transferSyntaxUID}`
         }
       } else if (
-        Array.isArray(supportedMediaTypes)
-        && !supportedMediaTypes.includes(mediaType)
+        Array.isArray(supportedMediaTypes) &&
+        !supportedMediaTypes.includes(mediaType)
       ) {
         throw new Error(
-          `Media type ${mediaType} is not supported for requested resource`,
-        );
+          `Media type ${mediaType} is not supported for requested resource.`
+        )
       }
 
-      fieldValueParts.push(fieldValue);
-    });
+      fieldValueParts.push(fieldValue)
+    })
 
-    return fieldValueParts.join(', ');
+    return fieldValueParts.join(', ')
   }
 
   /**
@@ -873,15 +875,15 @@ class DICOMwebClient {
    * @returns {String} Range header field value
    * @private
    */
-  static _buildRangeHeaderFieldValue(byteRange = []) {
+  static _buildRangeHeaderFieldValue (byteRange = []) {
     if (byteRange.length === 1) {
-      return `bytes=${byteRange[0]}-`;
+      return `bytes=${byteRange[0]}-`
     }
     if (byteRange.length === 2) {
-      return `bytes=${byteRange[0]}-${byteRange[1]}`;
+      return `bytes=${byteRange[0]}-${byteRange[1]}`
     }
 
-    return 'bytes=0-';
+    return 'bytes=0-'
   }
 
   /**
@@ -892,20 +894,20 @@ class DICOMwebClient {
    * @private
    * @returns {String[]} Types that are shared among acceptable media types
    */
-  static _getSharedMediaTypes(mediaTypes) {
-    const types = new Set();
+  static _getSharedMediaTypes (mediaTypes) {
+    const types = new Set()
 
     if (!mediaTypes || !mediaTypes.length) {
-      return types;
+      return types
     }
 
     mediaTypes.forEach((item) => {
-      const { mediaType } = item;
-      const type = DICOMwebClient._parseMediaType(mediaType)[0];
-      types.add(`${type}/`);
-    });
+      const { mediaType } = item
+      const type = DICOMwebClient._parseMediaType(mediaType)[0]
+      types.add(`${type}/`)
+    })
 
-    return Array.from(types);
+    return Array.from(types)
   }
 
   /**
@@ -919,19 +921,19 @@ class DICOMwebClient {
    * @private
    * @returns {String[]} Common media type
    */
-  static _getCommonMediaType(mediaTypes) {
+  static _getCommonMediaType (mediaTypes) {
     if (!mediaTypes || !mediaTypes.length) {
-      throw new Error('No acceptable media types provided');
+      throw new Error('No acceptable media types provided')
     }
 
-    const sharedMediaTypes = DICOMwebClient._getSharedMediaTypes(mediaTypes);
+    const sharedMediaTypes = DICOMwebClient._getSharedMediaTypes(mediaTypes)
     if (sharedMediaTypes.length === 0) {
-      throw new Error('No common acceptable media type could be identified.');
+      throw new Error('No common acceptable media type could be identified.')
     } else if (sharedMediaTypes.length > 1) {
-      throw new Error('Acceptable media types must have the same type.');
+      throw new Error('Acceptable media types must have the same type.')
     }
 
-    return sharedMediaTypes[0];
+    return sharedMediaTypes[0]
   }
 
   /**
@@ -941,19 +943,19 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @return {Object[]} Study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
-  searchForStudies(options = {}) {
-    console.log('search for studies');
-    let withCredentials = false;
-    let url = `${this.qidoURL}/studies`;
+  searchForStudies (options = {}) {
+    console.log('search for studies')
+    let withCredentials = false
+    let url = `${this.qidoURL}/studies`
     if ('queryParams' in options) {
-      url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams)
     }
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /**
@@ -964,21 +966,21 @@ class DICOMwebClient {
    * @returns {Promise<InstanceMetadata[]>} Metadata elements in DICOM JSON format for each instance
                       belonging to the study
    */
-  retrieveStudyMetadata(options) {
+  retrieveStudyMetadata (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of study metadata',
-      );
+        'Study Instance UID is required for retrieval of study metadata'
+      )
     }
-    console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`;
-    let withCredentials = false;
+    console.log(`retrieve metadata of study ${options.studyInstanceUID}`)
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /**
@@ -989,23 +991,23 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {Object[]} Series representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2a)
    */
-  searchForSeries(options = {}) {
-    let url = this.qidoURL;
+  searchForSeries (options = {}) {
+    let url = this.qidoURL
     if ('studyInstanceUID' in options) {
-      console.log(`search series of study ${options.studyInstanceUID}`);
-      url += `/studies/${options.studyInstanceUID}`;
+      console.log(`search series of study ${options.studyInstanceUID}`)
+      url += `/studies/${options.studyInstanceUID}`
     }
-    url += '/series';
+    url += '/series'
     if ('queryParams' in options) {
-      url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams)
     }
-    let withCredentials = false;
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /**
@@ -1017,29 +1019,29 @@ class DICOMwebClient {
    * @returns {Promise<InstanceMetadata[]>} Metadata elements in DICOM JSON format for each instance
                       belonging to the series
    */
-  retrieveSeriesMetadata(options) {
+  retrieveSeriesMetadata (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of series metadata',
-      );
+        'Study Instance UID is required for retrieval of series metadata'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of series metadata',
-      );
+        'Series Instance UID is required for retrieval of series metadata'
+      )
     }
 
-    console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
+    console.log(`retrieve metadata of series ${options.seriesInstanceUID}`)
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
-    }/metadata`;
-    let withCredentials = false;
+    }/metadata`
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /**
@@ -1051,34 +1053,34 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {Object[]} Instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
-  searchForInstances(options = {}) {
-    let url = this.qidoURL;
-    let withCredentials = false;
+  searchForInstances (options = {}) {
+    let url = this.qidoURL
+    let withCredentials = false
     if ('studyInstanceUID' in options) {
-      url += `/studies/${options.studyInstanceUID}`;
+      url += `/studies/${options.studyInstanceUID}`
       if ('seriesInstanceUID' in options) {
         console.log(
-          `search for instances of series ${options.seriesInstanceUID}`,
-        );
-        url += `/series/${options.seriesInstanceUID}`;
+          `search for instances of series ${options.seriesInstanceUID}`
+        )
+        url += `/series/${options.seriesInstanceUID}`
       } else {
         console.log(
-          `search for instances of study ${options.studyInstanceUID}`,
-        );
+          `search for instances of study ${options.studyInstanceUID}`
+        )
       }
     } else {
-      console.log('search for instances');
+      console.log('search for instances')
     }
-    url += '/instances';
+    url += '/instances'
     if ('queryParams' in options) {
-      url += DICOMwebClient._parseQueryParameters(options.queryParams);
+      url += DICOMwebClient._parseQueryParameters(options.queryParams)
     }
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /** Returns a WADO-URI URL for an instance
@@ -1089,31 +1091,31 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @returns {String} WADO-URI URL
    */
-  buildInstanceWadoURIUrl(options) {
+  buildInstanceWadoURIUrl (options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required.');
+      throw new Error('Study Instance UID is required.')
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required.');
+      throw new Error('Series Instance UID is required.')
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required.');
+      throw new Error('SOP Instance UID is required.')
     }
 
-    const contentType = options.contentType || MEDIATYPES.DICOM;
-    const transferSyntax = options.transferSyntax || '*';
-    const params = [];
+    const contentType = options.contentType || MEDIATYPES.DICOM
+    const transferSyntax = options.transferSyntax || '*'
+    const params = []
 
-    params.push('requestType=WADO');
-    params.push(`studyUID=${options.studyInstanceUID}`);
-    params.push(`seriesUID=${options.seriesInstanceUID}`);
-    params.push(`objectUID=${options.sopInstanceUID}`);
-    params.push(`contentType=${contentType}`);
-    params.push(`transferSyntax=${transferSyntax}`);
+    params.push('requestType=WADO')
+    params.push(`studyUID=${options.studyInstanceUID}`)
+    params.push(`seriesUID=${options.seriesInstanceUID}`)
+    params.push(`objectUID=${options.sopInstanceUID}`)
+    params.push(`contentType=${contentType}`)
+    params.push(`transferSyntax=${transferSyntax}`)
 
-    const paramString = params.join('&');
+    const paramString = params.join('&')
 
-    return `${this.wadoURL}?${paramString}`;
+    return `${this.wadoURL}?${paramString}`
   }
 
   /**
@@ -1125,33 +1127,33 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @returns {Promise<InstanceMetadata>} metadata elements in DICOM JSON format
    */
-  retrieveInstanceMetadata(options) {
+  retrieveInstanceMetadata (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of instance metadata',
-      );
+        'Study Instance UID is required for retrieval of instance metadata'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of instance metadata',
-      );
+        'Series Instance UID is required for retrieval of instance metadata'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of instance metadata',
-      );
+        'SOP Instance UID is required for retrieval of instance metadata'
+      )
     }
-    console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
+    console.log(`retrieve metadata of instance ${options.sopInstanceUID}`)
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
-    }/instances/${options.sopInstanceUID}/metadata`;
-    let withCredentials = false;
+    }/instances/${options.sopInstanceUID}/metadata`
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, false, withCredentials)
   }
 
   /**
@@ -1163,58 +1165,58 @@ class DICOMwebClient {
    * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @returns {Array} frame items as byte arrays of the pixel data element
    */
-  retrieveInstanceFrames(options) {
+  retrieveInstanceFrames (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of instance frames',
-      );
+        'Study Instance UID is required for retrieval of instance frames'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of instance frames',
-      );
+        'Series Instance UID is required for retrieval of instance frames'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of instance frames',
-      );
+        'SOP Instance UID is required for retrieval of instance frames'
+      )
     }
     if (!('frameNumbers' in options)) {
       throw new Error(
-        'frame numbers are required for retrieval of instance frames',
-      );
+        'frame numbers are required for retrieval of instance frames'
+      )
     }
     console.log(
       `retrieve frames ${options.frameNumbers.toString()} of instance ${
         options.sopInstanceUID
-      }`,
-    );
+      }`
+    )
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
     }/instances/${
       options.sopInstanceUID
-    }/frames/${options.frameNumbers.toString()}`;
+    }/frames/${options.frameNumbers.toString()}`
 
-    const { mediaTypes } = options;
-    let withCredentials = false;
+    const { mediaTypes } = options
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
 
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
-        url, false, false, false, progressCallback, withCredentials,
-      );
+        url, false, false, false, progressCallback, withCredentials
+      )
     }
 
-    const sharedMediaTypes = DICOMwebClient._getSharedMediaTypes(mediaTypes);
+    const sharedMediaTypes = DICOMwebClient._getSharedMediaTypes(mediaTypes)
     if (sharedMediaTypes.length > 1) {
       /**
        * Enable request of frames that are stored either compressed
@@ -1233,39 +1235,49 @@ class DICOMwebClient {
         '1.2.840.10008.1.2.4.90': ['image/jp2'],
         '1.2.840.10008.1.2.4.91': ['image/jp2'],
         '1.2.840.10008.1.2.4.92': ['image/jpx'],
-        '1.2.840.10008.1.2.4.93': ['image/jpx'],
-      };
+        '1.2.840.10008.1.2.4.93': ['image/jpx']
+      }
 
       const headers = {
         Accept: DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
           mediaTypes,
-          supportedMediaTypes,
-        ),
-      };
+          supportedMediaTypes
+        )
+      }
       return this._httpGet(
-        url, headers, 'arraybuffer', progressCallback, withCredentials,
-      ).then(multipartDecode);
+        url, headers, 'arraybuffer', progressCallback, withCredentials
+      ).then(multipartDecode)
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
 
-    if (commonMediaType.startsWith('application')) {
+    if (commonMediaType.startsWith('*')) {
+      const headers = {
+        Accept: DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+          [{ mediaType: '*/*' }],
+          ['*/*']
+        )
+      }
+      return this._httpGet(
+        url, headers, 'arraybuffer', progressCallback, withCredentials
+      ).then(multipartDecode)
+    } if (commonMediaType.startsWith('application')) {
       return this._httpGetMultipartApplicationOctetStream(
-        url, mediaTypes, false, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, false, false, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('image')) {
       return this._httpGetMultipartImage(
-        url, mediaTypes, false, false, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, false, false, false, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('video')) {
       return this._httpGetMultipartVideo(
-        url, mediaTypes, false, false, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, false, false, false, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of frames.`,
-    );
+      `Media type "${commonMediaType}" is not supported for retrieval of frames.`
+    )
   }
 
   /**
@@ -1279,72 +1291,75 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {Promise<ArrayBuffer>} Rendered DICOM Instance
    */
-  retrieveInstanceRendered(options) {
+  retrieveInstanceRendered (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of rendered instance',
-      );
+        'Study Instance UID is required for retrieval of rendered instance'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of rendered instance',
-      );
+        'Series Instance UID is required for retrieval of rendered instance'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of rendered instance',
-      );
+        'SOP Instance UID is required for retrieval of rendered instance'
+      )
     }
 
-    let url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
-      options.seriesInstanceUID
-    }/instances/${options.sopInstanceUID}/rendered`;
-
-    const { mediaTypes, queryParams } = options;
-    const headers = {};
-    let withCredentials = false;
+    let url = (
+      this.wadoURL +
+      `/studies/${options.studyInstanceUID}` +
+      `/series/${options.seriesInstanceUID}` +
+      `/instances/${options.sopInstanceUID}` +
+      '/rendered'
+    )
+    const { mediaTypes, queryParams } = options
+    const headers = {}
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
 
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
-      const responseType = 'arraybuffer';
+      const responseType = 'arraybuffer'
       if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+        url += DICOMwebClient._parseQueryParameters(queryParams)
       }
-      return this._httpGet(url, headers, responseType, progressCallback, withCredentials);
+      return this._httpGet(url, headers, responseType, progressCallback, withCredentials)
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType.startsWith('image')) {
       return this._httpGetImage(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('video')) {
       return this._httpGetVideo(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('text')) {
       return this._httpGetText(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     } if (commonMediaType === MEDIATYPES.PDF) {
       return this._httpGetApplicationPdf(
-        url, queryParams, progressCallback, withCredentials,
-      );
+        url, queryParams, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported `
-      + 'for retrieval of rendered instance.',
-    );
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered instance.'
+    )
   }
 
   /**
@@ -1358,62 +1373,66 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer} Thumbnail
    */
-  retrieveInstanceThumbnail(options) {
+  retrieveInstanceThumbnail (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of rendered instance',
-      );
+        'Study Instance UID is required for retrieval of rendered instance'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of rendered instance',
-      );
+        'Series Instance UID is required for retrieval of rendered instance'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of rendered instance',
-      );
+        'SOP Instance UID is required for retrieval of rendered instance'
+      )
     }
 
-    let url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
-      options.seriesInstanceUID
-    }/instances/${options.sopInstanceUID}/thumbnail`;
+    let url = (
+      this.wadoURL +
+      `/studies/${options.studyInstanceUID}` +
+      `/series/${options.seriesInstanceUID}` +
+      `/instances/${options.sopInstanceUID}` +
+      '/thumbnail'
+    )
 
-    const { mediaTypes, queryParams } = options;
-    const headers = {};
-    let withCredentials = false;
+    const { mediaTypes, queryParams } = options
+    const headers = {}
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
 
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
-      const responseType = 'arraybuffer';
+      const responseType = 'arraybuffer'
       if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+        url += DICOMwebClient._parseQueryParameters(queryParams)
       }
       return this._httpGet(
-        url, headers, responseType, progressCallback, withCredentials,
-      );
+        url, headers, responseType, progressCallback, withCredentials
+      )
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType.startsWith('image')) {
       return this._httpGetImage(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported `
-      + 'for retrieval of rendered instance.',
-    );
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered instance.'
+    )
   }
 
   /**
@@ -1428,75 +1447,77 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
-  retrieveInstanceFramesRendered(options) {
+  retrieveInstanceFramesRendered (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of rendered instance frames',
-      );
+        'Study Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of rendered instance frames',
-      );
+        'Series Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of rendered instance frames',
-      );
+        'SOP Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('frameNumbers' in options)) {
       throw new Error(
-        'frame numbers are required for retrieval of rendered instance frames',
-      );
+        'frame numbers are required for retrieval of rendered instance frames'
+      )
     }
 
     console.debug(
-      `retrieve rendered frames ${options.frameNumbers.toString()} of instance ${
-        options.sopInstanceUID
-      }`,
-    );
-    let url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
-      options.seriesInstanceUID
-    }/instances/${
-      options.sopInstanceUID
-    }/frames/${options.frameNumbers.toString()}/rendered`;
+      `retrieve rendered frames ${options.frameNumbers.toString()} ` +
+      `of instance ${options.sopInstanceUID}`
+    )
+    let url = (
+      this.wadoURL +
+      `/studies/${options.studyInstanceUID}` +
+      `/series/${options.seriesInstanceUID}` +
+      `/instances/${options.sopInstanceUID}` +
+      `/frames/${options.frameNumbers.toString()}` +
+      '/rendered'
+    )
 
-    const { mediaTypes, queryParams } = options;
-    const headers = {};
-    let withCredentials = false;
+    const { mediaTypes, queryParams } = options
+    const headers = {}
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
-      const responseType = 'arraybuffer';
+      const responseType = 'arraybuffer'
       if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+        url += DICOMwebClient._parseQueryParameters(queryParams)
       }
-      return this._httpGet(url, headers, responseType, false, withCredentials);
+      return this._httpGet(url, headers, responseType, false, withCredentials)
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType.startsWith('image')) {
       return this._httpGetImage(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('video')) {
       return this._httpGetVideo(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported `
-      + 'for retrieval of rendered frame.',
-    );
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered frame.'
+    )
   }
 
   /**
@@ -1510,74 +1531,76 @@ class DICOMwebClient {
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
-  retrieveInstanceFramesThumbnail(options) {
+  retrieveInstanceFramesThumbnail (options) {
     if (!('studyInstanceUID' in options)) {
       throw new Error(
-        'Study Instance UID is required for retrieval of rendered instance frames',
-      );
+        'Study Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('seriesInstanceUID' in options)) {
       throw new Error(
-        'Series Instance UID is required for retrieval of rendered instance frames',
-      );
+        'Series Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('sopInstanceUID' in options)) {
       throw new Error(
-        'SOP Instance UID is required for retrieval of rendered instance frames',
-      );
+        'SOP Instance UID is required for retrieval of rendered instance frames'
+      )
     }
     if (!('frameNumbers' in options)) {
       throw new Error(
-        'frame numbers are required for retrieval of rendered instance frames',
-      );
+        'frame numbers are required for retrieval of rendered instance frames'
+      )
     }
 
     console.debug(
-      `retrieve rendered frames ${options.frameNumbers.toString()} of instance ${
-        options.sopInstanceUID
-      }`,
-    );
-    let url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
-      options.seriesInstanceUID
-    }/instances/${
-      options.sopInstanceUID
-    }/frames/${options.frameNumbers.toString()}/thumbnail`;
+      `retrieve rendered frames ${options.frameNumbers.toString()} ` +
+      `of instance ${options.sopInstanceUID}`
+    )
+    let url = (
+      this.wadoURL +
+      `/studies/${options.studyInstanceUID}` +
+      `/series/${options.seriesInstanceUID}` +
+      `/instances/${options.sopInstanceUID}` +
+      `/frames/${options.frameNumbers.toString()}` +
+      '/thumbnail'
+    )
 
-    const { mediaTypes, queryParams } = options;
-    const headers = {};
-    let withCredentials = false;
+    const { mediaTypes, queryParams } = options
+    const headers = {}
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
 
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
-      const responseType = 'arraybuffer';
+      const responseType = 'arraybuffer'
       if (queryParams) {
-        url += DICOMwebClient._parseQueryParameters(queryParams);
+        url += DICOMwebClient._parseQueryParameters(queryParams)
       }
       return this._httpGet(
-        url, headers, responseType, progressCallback, withCredentials,
-      );
+        url, headers, responseType, progressCallback, withCredentials
+      )
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType.startsWith('image')) {
       return this._httpGetImage(
-        url, mediaTypes, queryParams, progressCallback, withCredentials,
-      );
+        url, mediaTypes, queryParams, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported `
-      + 'for retrieval of rendered frame.',
-    );
+      `Media type ${commonMediaType} is not supported ` +
+      'for retrieval of rendered frame.'
+    )
   }
 
   /**
@@ -1589,40 +1612,49 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @returns {Promise<ArrayBuffer>} DICOM Part 10 file as Arraybuffer
    */
-  retrieveInstance(options) {
+  retrieveInstance (options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required');
+      throw new Error('Study Instance UID is required')
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required');
+      throw new Error('Series Instance UID is required')
     }
     if (!('sopInstanceUID' in options)) {
-      throw new Error('SOP Instance UID is required');
+      throw new Error('SOP Instance UID is required')
     }
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
-    }/instances/${options.sopInstanceUID}`;
+    }/instances/${options.sopInstanceUID}`
 
-    const { mediaTypes } = options;
-    const { withCredentials = false } = options;
-    const { progressCallback = false } = options;
+    const { mediaTypes } = options
+    let withCredentials = false
+    if ('withCredentials' in options) {
+      if (options.withCredentials) {
+        withCredentials = options.withCredentials
+      }
+    }
+
+    let progressCallback = false
+    if ('progressCallback' in options) {
+      progressCallback = options.progressCallback
+    }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationDicom(
-        url, false, false, progressCallback, withCredentials,
-      ).then(getFirstResult);
+        url, false, false, progressCallback, withCredentials
+      ).then(getFirstResult)
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(
-        url, mediaTypes, false, progressCallback, withCredentials,
-      ).then(getFirstResult);
+        url, mediaTypes, false, progressCallback, withCredentials
+      ).then(getFirstResult)
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of instance.`,
-    );
+      `Media type ${commonMediaType} is not supported for retrieval of instance.`
+    )
   }
 
   /**
@@ -1634,47 +1666,47 @@ class DICOMwebClient {
    * @param {Function} options.progressCallback
    * @returns {Promise<ArrayBuffer[]>} DICOM Instances
    */
-  retrieveSeries(options) {
+  retrieveSeries (options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required');
+      throw new Error('Study Instance UID is required')
     }
     if (!('seriesInstanceUID' in options)) {
-      throw new Error('Series Instance UID is required');
+      throw new Error('Series Instance UID is required')
     }
 
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${
       options.seriesInstanceUID
-    }`;
+    }`
 
-    const { mediaTypes } = options;
-    let withCredentials = false;
+    const { mediaTypes } = options
+    let withCredentials = false
     if ('withCredentials' in options) {
       if (options.withCredentials) {
-        withCredentials = options.withCredentials;
+        withCredentials = options.withCredentials
       }
     }
 
-    let progressCallback = false;
+    let progressCallback = false
     if ('progressCallback' in options) {
-      progressCallback = options.progressCallback;
+      progressCallback = options.progressCallback
     }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationDicom(
-        url, false, false, progressCallback, withCredentials,
-      );
+        url, false, false, progressCallback, withCredentials
+      )
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(
-        url, mediaTypes, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, false, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of series.`,
-    );
+      `Media type ${commonMediaType} is not supported for retrieval of series.`
+    )
   }
 
   /**
@@ -1684,33 +1716,42 @@ class DICOMwebClient {
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @returns {ArrayBuffer[]} DICOM Instances
    */
-  retrieveStudy(options) {
+  retrieveStudy (options) {
     if (!('studyInstanceUID' in options)) {
-      throw new Error('Study Instance UID is required');
+      throw new Error('Study Instance UID is required')
     }
 
-    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}`;
+    const url = `${this.wadoURL}/studies/${options.studyInstanceUID}`
 
-    const { mediaTypes } = options;
-    const { withCredentials = false } = options;
-    const { progressCallback = false } = options;
+    const { mediaTypes } = options
+    let withCredentials = false
+    if ('withCredentials' in options) {
+      if (options.withCredentials) {
+        withCredentials = options.withCredentials
+      }
+    }
+
+    let progressCallback = false
+    if ('progressCallback' in options) {
+      progressCallback = options.progressCallback
+    }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationDicom(
-        url, false, false, progressCallback, withCredentials,
-      );
+        url, false, false, progressCallback, withCredentials
+      )
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
     if (commonMediaType === MEDIATYPES.DICOM) {
       return this._httpGetMultipartApplicationDicom(
-        url, mediaTypes, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, false, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of study.`,
-    );
+      `Media type ${commonMediaType} is not supported for retrieval of study.`
+    )
   }
 
   /**
@@ -1724,43 +1765,52 @@ class DICOMwebClient {
    * @param {String} BulkDataURI - URI for retrieval of bulkdata
    * @returns {Promise<Array>} Bulkdata parts
    */
-  retrieveBulkData(options) {
+  retrieveBulkData (options) {
     if (!('BulkDataURI' in options)) {
-      throw new Error('BulkDataURI is required.');
+      throw new Error('BulkDataURI is required.')
     }
 
-    const url = options.BulkDataURI;
-    const { mediaTypes, byteRange } = options;
-    const { withCredentials = false } = options;
-    const { progressCallback = false } = options;
+    const url = options.BulkDataURI
+    const { mediaTypes, byteRange } = options
+    let withCredentials = false
+    if ('withCredentials' in options) {
+      if (options.withCredentials) {
+        withCredentials = options.withCredentials
+      }
+    }
+
+    let progressCallback = false
+    if ('progressCallback' in options) {
+      progressCallback = options.progressCallback
+    }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
         url,
         mediaTypes,
         byteRange,
-        false, false, withCredentials,
-      );
+        false, false, withCredentials
+      )
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes)
 
     if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
       return this._httpGetMultipartApplicationOctetStream(
         url,
         mediaTypes,
         byteRange,
-        false, progressCallback, withCredentials,
-      );
+        false, progressCallback, withCredentials
+      )
     } if (commonMediaType.startsWith('image')) {
       return this._httpGetMultipartImage(
-        url, mediaTypes, byteRange, false, false, progressCallback, withCredentials,
-      );
+        url, mediaTypes, byteRange, false, false, progressCallback, withCredentials
+      )
     }
 
     throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of bulk data.`,
-    );
+      `Media type ${commonMediaType} is not supported for retrieval of bulk data.`
+    )
   }
 
   /**
@@ -1771,26 +1821,31 @@ class DICOMwebClient {
    * @param {String} [options.studyInstanceUID] - Study Instance UID
    * @returns {Promise} Response message
    */
-  storeInstances(options) {
+  storeInstances (options) {
     if (!('datasets' in options)) {
-      throw new Error('datasets are required for storing');
+      throw new Error('datasets are required for storing')
     }
 
-    let url = `${this.stowURL}/studies`;
+    let url = `${this.stowURL}/studies`
     if ('studyInstanceUID' in options) {
-      url += `/${options.studyInstanceUID}`;
+      url += `/${options.studyInstanceUID}`
     }
 
-    const { data, boundary } = multipartEncode(options.datasets);
+    const { data, boundary } = multipartEncode(options.datasets)
     const headers = {
-      'Content-Type': `multipart/related; type="application/dicom"; boundary="${boundary}"`,
-    };
-    const { withCredentials = false } = options;
+      'Content-Type': `multipart/related; type="application/dicom"; boundary="${boundary}"`
+    }
+    let withCredentials = false
+    if ('withCredentials' in options) {
+      if (options.withCredentials) {
+        withCredentials = options.withCredentials
+      }
+    }
     return this._httpPost(
-      url, headers, data, options.progressCallback, withCredentials,
-    );
+      url, headers, data, options.progressCallback, withCredentials
+    )
   }
 }
 
-export { DICOMwebClient };
-export default DICOMwebClient;
+export { DICOMwebClient }
+export default DICOMwebClient

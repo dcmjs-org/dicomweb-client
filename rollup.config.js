@@ -1,13 +1,14 @@
-import babel from 'rollup-plugin-babel';
+import babel from 'rollup-plugin-babel'
 import pkg from './package.json'
 
 export default {
   input: 'src/dicomweb-client.js',
-  output: [{
+  output: [
+    {
       file: pkg.main,
       format: 'umd',
       name: 'DICOMwebClient',
-      sourcemap: true,
+      sourcemap: true
     },
     {
       file: pkg.module,
@@ -15,11 +16,11 @@ export default {
       sourcemap: true,
       exports: 'named'
     }
-  ], 
+  ],
   plugins: [
-	babel({
-	  runtimeHelpers: true,
-	  exclude: 'node_modules/**',
-  	})
+    babel({
+      runtimeHelpers: true,
+      exclude: 'node_modules/**'
+    })
   ]
-};
+}

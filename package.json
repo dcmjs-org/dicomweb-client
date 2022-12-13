@@ -1,18 +1,20 @@
 {
   "name": "dicomweb-client",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
   "module": "build/dicomweb-client.es.js",
   "types": "types/dicomweb-client.d.ts",
   "scripts": {
-    "test": "./test_ci.sh",
-    "test:watch": "./test.sh",
+    "test": "./test.sh",
+    "test:watch": "./test.sh -w",
     "start": "rollup -c",
     "build": "rollup -c && npx tsc",
     "watch": "rollup -c -w",
     "version": "node -p -e \"'export default \\'' + require('./package.json').version + '\\';'\" > src/version.js",
-    "lint": "eslint -c .eslintrc.js --fix src && prettier --write src/**/*.js"
+    "fmt": "standard 'src/**/*.js' --fix",
+    "lint": "standard 'src/**/*.js'",
+    "clean": "rm -rf ./build ./node_modules"
   },
   "repository": {
     "type": "git",
@@ -35,15 +37,13 @@
   "devDependencies": {
     "@babel/core": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
-    "eslint": "^5.16.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-import": "^2.16.0",
     "karma": "^6.4.1",
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-jasmine": "^4.0.1",
     "prettier": "^1.16.4",
     "puppeteer": "^1.18.1",
+    "standard": "^17.0.0",
     "rollup": "^0.63.2",
     "rollup-plugin-babel": "^4.0.3",
     "typescript": "^4.8.4"

@@ -7,13 +7,13 @@
                    (defaults to length of array)
  * @returns {String}
  */
-function uint8ArrayToString(arr, offset = 0, limit) {
-  const itemLimit = limit || arr.length - offset;
-  let str = '';
+function uint8ArrayToString (arr, offset = 0, limit) {
+  const itemLimit = limit || arr.length - offset
+  let str = ''
   for (let i = offset; i < offset + itemLimit; i++) {
-    str += String.fromCharCode(arr[i]);
+    str += String.fromCharCode(arr[i])
   }
-  return str;
+  return str
 }
 
 /**
@@ -21,12 +21,12 @@ function uint8ArrayToString(arr, offset = 0, limit) {
  * @param {String} str string that should be converted
  * @returns {Uint8Array}
  */
-function stringToUint8Array(str) {
-  const arr = new Uint8Array(str.length);
+function stringToUint8Array (str) {
+  const arr = new Uint8Array(str.length)
   for (let i = 0, j = str.length; i < j; i++) {
-    arr[i] = str.charCodeAt(i);
+    arr[i] = str.charCodeAt(i)
   }
-  return arr;
+  return arr
 }
 
 /**
@@ -34,16 +34,16 @@ function stringToUint8Array(str) {
  * @param {String} header message header
  * @returns {String} boundary
  */
-function identifyBoundary(header) {
-  const parts = header.split('\r\n');
+function identifyBoundary (header) {
+  const parts = header.split('\r\n')
 
   for (let i = 0; i < parts.length; i++) {
     if (parts[i].substr(0, 2) === '--') {
-      return parts[i];
+      return parts[i]
     }
   }
 
-  return null;
+  return null
 }
 
 /**
@@ -53,20 +53,20 @@ function identifyBoundary(header) {
  * @param {Number} offset offset in message content from where search should start
  * @returns {Boolean} whether message contains token at offset
  */
-function containsToken(message, token, offset = 0) {
+function containsToken (message, token, offset = 0) {
   if (offset + token.length > message.length) {
-    return false;
+    return false
   }
 
-  let index = offset;
+  let index = offset
   for (let i = 0; i < token.length; i++) {
     if (token[i] !== message[index]) {
-      return false;
+      return false
     }
 
-    index += 1;
+    index += 1
   }
-  return true;
+  return true
 }
 
 /**
@@ -76,10 +76,10 @@ function containsToken(message, token, offset = 0) {
  * @param {String} offset message body offset from where search should start
  * @returns {Boolean} whether message has a part at given offset or not
  */
-function findToken(message, token, offset = 0, maxSearchLength) {
-  let searchLength = message.length;
+function findToken (message, token, offset = 0, maxSearchLength) {
+  let searchLength = message.length
   if (maxSearchLength) {
-    searchLength = Math.min(offset + maxSearchLength, message.length);
+    searchLength = Math.min(offset + maxSearchLength, message.length)
   }
 
   for (let i = offset; i < searchLength; i++) {
@@ -88,12 +88,12 @@ function findToken(message, token, offset = 0, maxSearchLength) {
     // this is the full token.
     if (message[i] === token[0]) {
       if (containsToken(message, token, i)) {
-        return i;
+        return i
       }
     }
   }
 
-  return -1;
+  return -1
 }
 
 /**
@@ -101,13 +101,13 @@ function findToken(message, token, offset = 0, maxSearchLength) {
  *
  * @return {string}
  */
-function guid() {
-  function s4() {
+function guid () {
+  function s4 () {
     return Math.floor((1 + Math.random()) * 0x10000)
       .toString(16)
-      .substring(1);
+      .substring(1)
   }
-  return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+  return `${s4() + s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`
 }
 
 /**
@@ -129,52 +129,52 @@ function guid() {
                                   contains both the data itself, and the boundary string
                                   used to divide it.
  */
-function multipartEncode(
+function multipartEncode (
   datasets,
   boundary = guid(),
-  contentType = 'application/dicom',
+  contentType = 'application/dicom'
 ) {
-  const contentTypeString = `Content-Type: ${contentType}`;
-  const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`;
-  const footer = `\r\n--${boundary}--`;
-  const headerArray = stringToUint8Array(header);
-  const footerArray = stringToUint8Array(footer);
-  const headerLength = headerArray.length;
-  const footerLength = footerArray.length;
+  const contentTypeString = `Content-Type: ${contentType}`
+  const header = `\r\n--${boundary}\r\n${contentTypeString}\r\n\r\n`
+  const footer = `\r\n--${boundary}--`
+  const headerArray = stringToUint8Array(header)
+  const footerArray = stringToUint8Array(footer)
+  const headerLength = headerArray.length
+  const footerLength = footerArray.length
 
-  let length = 0;
+  let length = 0
 
   // Calculate the total length for the final array
   const contentArrays = datasets.map((datasetBuffer) => {
-    const contentArray = new Uint8Array(datasetBuffer);
-    const contentLength = contentArray.length;
+    const contentArray = new Uint8Array(datasetBuffer)
+    const contentLength = contentArray.length
 
-    length += headerLength + contentLength + footerLength;
+    length += headerLength + contentLength + footerLength
 
-    return contentArray;
-  });
+    return contentArray
+  })
 
   // Allocate the array
-  const multipartArray = new Uint8Array(length);
+  const multipartArray = new Uint8Array(length)
 
   // Set the initial header
-  multipartArray.set(headerArray, 0);
+  multipartArray.set(headerArray, 0)
 
   // Write each dataset into the multipart array
-  let position = 0;
+  let position = 0
   contentArrays.forEach((contentArray) => {
-    multipartArray.set(headerArray, position);
-    multipartArray.set(contentArray, position + headerLength);
+    multipartArray.set(headerArray, position)
+    multipartArray.set(contentArray, position + headerLength)
 
-    position += headerLength + contentArray.length;
-  });
+    position += headerLength + contentArray.length
+  })
 
-  multipartArray.set(footerArray, position);
+  multipartArray.set(footerArray, position)
 
   return {
     data: multipartArray.buffer,
-    boundary,
-  };
+    boundary
+  }
 }
 
 /**
@@ -183,70 +183,70 @@ function multipartEncode(
  * @param {ArrayBuffer} response Data encoded as a 'multipart/related' message
  * @returns {Array} The content
  */
-function multipartDecode(response) {
-  const message = new Uint8Array(response);
+function multipartDecode (response) {
+  const message = new Uint8Array(response)
 
   /* Set a maximum length to search for the header boundaries, otherwise
        findToken can run for a long time
     */
-  const maxSearchLength = 1000;
+  const maxSearchLength = 1000
 
   // First look for the multipart mime header
-  const separator = stringToUint8Array('\r\n\r\n');
-  const headerIndex = findToken(message, separator, 0, maxSearchLength);
+  const separator = stringToUint8Array('\r\n\r\n')
+  const headerIndex = findToken(message, separator, 0, maxSearchLength)
   if (headerIndex === -1) {
-    throw new Error('Response message has no multipart mime header');
+    throw new Error('Response message has no multipart mime header')
   }
 
-  const header = uint8ArrayToString(message, 0, headerIndex);
-  const boundaryString = identifyBoundary(header);
+  const header = uint8ArrayToString(message, 0, headerIndex)
+  const boundaryString = identifyBoundary(header)
   if (!boundaryString) {
-    throw new Error('Header of response message does not specify boundary');
+    throw new Error('Header of response message does not specify boundary')
   }
 
-  const boundary = stringToUint8Array(boundaryString);
-  const boundaryLength = boundary.length;
-  const components = [];
+  const boundary = stringToUint8Array(boundaryString)
+  const boundaryLength = boundary.length
+  const components = []
 
-  let offset = boundaryLength;
+  let offset = boundaryLength
 
   // Loop until we cannot find any more boundaries
-  let boundaryIndex;
+  let boundaryIndex
 
   while (boundaryIndex !== -1) {
     // Search for the next boundary in the message, starting
     // from the current offset position
-    boundaryIndex = findToken(message, boundary, offset);
+    boundaryIndex = findToken(message, boundary, offset)
 
     // If no further boundaries are found, stop here.
     if (boundaryIndex === -1) {
-      break;
+      break
     }
 
     const headerTokenIndex = findToken(
       message,
       separator,
       offset,
-      maxSearchLength,
-    );
+      maxSearchLength
+    )
     if (headerTokenIndex === -1) {
-      throw new Error('Response message part has no mime header');
+      throw new Error('Response message part has no mime header')
     }
-    offset = headerTokenIndex + separator.length;
+    offset = headerTokenIndex + separator.length
 
     // Extract data from response message, excluding "\r\n"
-    const spacingLength = 2;
-    const data = response.slice(offset, boundaryIndex - spacingLength);
+    const spacingLength = 2
+    const data = response.slice(offset, boundaryIndex - spacingLength)
 
     // Add the data to the array of results
-    components.push(data);
+    components.push(data)
 
     // Move the offset to the end of the current section,
     // plus the identified boundary
-    offset = boundaryIndex + boundaryLength;
+    offset = boundaryIndex + boundaryLength
   }
 
-  return components;
+  return components
 }
 
 export {
@@ -257,5 +257,5 @@ export {
   stringToUint8Array,
   multipartEncode,
   multipartDecode,
-  guid,
-};
+  guid
+}
