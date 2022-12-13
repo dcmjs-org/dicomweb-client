@@ -33,7 +33,6 @@ const MEDIATYPES = {
   PNG: 'image/png'
 }
 
-
 /**
  * @typedef { import("../types/types").InstanceMetadata } InstanceMetadata
  */
@@ -505,7 +504,7 @@ class DICOMwebClient {
     params,
     rendered = false,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
     const headers = {}
     let supportedMediaTypes
@@ -566,7 +565,7 @@ class DICOMwebClient {
     params,
     rendered = false,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
     const headers = {}
     let supportedMediaTypes
@@ -675,7 +674,7 @@ class DICOMwebClient {
     byteRange,
     params,
     progressCallback,
-    withCredentials,
+    withCredentials
   ) {
     const headers = {}
     const defaultMediaType = 'application/octet-stream'
@@ -787,7 +786,7 @@ class DICOMwebClient {
      */
   static _buildMultipartAcceptHeaderFieldValue (
     mediaTypes,
-    supportedMediaTypes,
+    supportedMediaTypes
   ) {
     if (!Array.isArray(mediaTypes)) {
       throw new Error('Acceptable media types must be provided as an Array')
@@ -855,8 +854,8 @@ class DICOMwebClient {
           fieldValue += `; transfer-syntax=${transferSyntaxUID}`
         }
       } else if (
-        Array.isArray(supportedMediaTypes)
-        && !supportedMediaTypes.includes(mediaType)
+        Array.isArray(supportedMediaTypes) &&
+        !supportedMediaTypes.includes(mediaType)
       ) {
         throw new Error(
           `Media type ${mediaType} is not supported for requested resource.`
@@ -899,7 +898,7 @@ class DICOMwebClient {
     const types = new Set()
 
     if (!mediaTypes || !mediaTypes.length) {
-      return types;
+      return types
     }
 
     mediaTypes.forEach((item) => {
@@ -908,7 +907,7 @@ class DICOMwebClient {
       types.add(`${type}/`)
     })
 
-    return Array.from(types);
+    return Array.from(types)
   }
 
   /**
@@ -1242,9 +1241,9 @@ class DICOMwebClient {
       const headers = {
         Accept: DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
           mediaTypes,
-          supportedMediaTypes,
-        ),
-      };
+          supportedMediaTypes
+        )
+      }
       return this._httpGet(
         url, headers, 'arraybuffer', progressCallback, withCredentials
       ).then(multipartDecode)
