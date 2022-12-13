@@ -1,12 +1,12 @@
 {
   "name": "dicomweb-client",
-  "version": "0.8.4",
+  "version": "0.9.0",
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
   "module": "build/dicomweb-client.es.js",
   "scripts": {
-    "test": "./test_ci.sh",
-    "test:watch": "./test.sh",
+    "test": "./test.sh",
+    "test:watch": "./test.sh -w",
     "start": "rollup -c",
     "build": "rollup -c",
     "watch": "rollup -c -w",
