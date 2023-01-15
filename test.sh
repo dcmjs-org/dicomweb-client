@@ -47,12 +47,12 @@ echo 'Containers are running, running tests...'
 echo 'Installing and running tests'
 if [ "${watch}" -eq "1" ]
 then
+    echo 'Watching tests...'
     ./node_modules/karma/bin/karma start karma.conf.js \
         --browsers Chrome_without_security
 else
-    echo 'Watching tests...'
     ./node_modules/karma/bin/karma start karma.conf.js \
-        --browsers Chrome_without_security \
+    --browsers ChromeHeadless_without_security \
         --single-run
 fi
 

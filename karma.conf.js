@@ -14,6 +14,13 @@ module.exports = function(config) {
     frameworks: ['jasmine'],
 
 
+    client: {
+      jasmine: {
+        random: false,
+      }
+    },
+
+
     // list of files / patterns to load in the browser
     files: [
       'build/dicomweb-client.js',
@@ -58,18 +65,18 @@ module.exports = function(config) {
 
     // start these browsers
     // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    browsers: ['Chrome', 'Chrome_without_security'], // You may use 'ChromeCanary', 'Chromium' or any other supported browser
+    browsers: ['Chrome', 'Chrome_without_security', 'ChromeHeadless'], // You may use 'ChromeCanary', 'Chromium' or any other supported browser
 
     // you can define custom flags
     customLaunchers: {
       Chrome_without_security: {
         base: 'Chrome',
-        flags: ['--disable-web-security']
+        flags: ['--disable-web-security', '--no-sandbox']
       },
 
       ChromeHeadless_without_security: {
         base: 'ChromeHeadless',
-        flags: ['--disable-web-security']
+        flags: ['--disable-web-security', '--no-sandbox']
       },
     },
 
@@ -79,6 +86,6 @@ module.exports = function(config) {
 
     // Concurrency level
     // how many browser should be started simultaneous
-    concurrency: Infinity
+    concurrency: 1
   })
 }

@@ -51,7 +51,7 @@ describe('dicomweb.api.DICOMwebClient', function() {
 
   it('should find one study', async function()  {
     const studies = await dwc.searchForStudies();
-    expect(studies.length).toBe(4);
+    expect(studies.length).toBe(1);
   });
 
   it('should store two instances', async function()  {
@@ -150,12 +150,13 @@ describe('dicomweb.api.DICOMwebClient', function() {
   }, 15000);
 
   describe('Request hooks', function() {
-    let requestHook1Spy, requestHook2Spy, url, metadataUrl, request;
+    const url = `http://localhost:${port}/dcm4chee-arc/aets/DCM4CHEE/rs`;
+    const metadataURL = `${url}/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata`;
+    const metadata = { url: metadataURL, method: 'get', headers: {} };
+    let request, requestHook1Spy, requestHook2Spy;
 
     beforeEach(function() {
       request = new XMLHttpRequest();
-      baseURL = `http://localhost:${port}/dcm4chee-arc/aets/DCM4CHEE/rs`;
-      metadataURL = `${baseURL}/studies/999.999.3859744/series/999.999.94827453/instances/999.999.133.1996.1.1800.1.6.25/metadata`;
       requestHook1Spy = createSpy('requestHook1Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
       requestHook2Spy = createSpy('requestHook2Spy', function (request, metadata) { return request }).and.callFake((request, metadata) => request);
     });
@@ -164,10 +165,9 @@ describe('dicomweb.api.DICOMwebClient', function() {
       /** Spy with invalid request hook signature */
       requestHook2Spy = createSpy('requestHook2Spy', function (request) { return request }).and.callFake((request, metadata) => request);
       const dwc = new DICOMwebClient.api.DICOMwebClient({
-        baseURL,
+        url,
         requestHooks: [requestHook1Spy, requestHook2Spy]
       });
-      const metadata = { url: metadataURL, method: 'get', headers: {} };
       request.open('GET', metadata.url);
       await dwc.retrieveInstanceMetadata({
         studyInstanceUID: '999.999.3859744',
@@ -180,10 +180,9 @@ describe('dicomweb.api.DICOMwebClient', function() {
 
     it('valid request hooks should be called', async function() {
       const dwc = new DICOMwebClient.api.DICOMwebClient({ 
-        baseURL,
+        url,
         requestHooks: [requestHook1Spy, requestHook2Spy] 
       });
-      const metadata = { url: metadataURL, method: 'get', headers: {}  };
       request.open('GET', metadata.url);
       await dwc.retrieveInstanceMetadata({
         studyInstanceUID: '999.999.3859744',
