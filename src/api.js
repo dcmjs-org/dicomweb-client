@@ -152,6 +152,14 @@ class DICOMwebClient {
    * @param {Object} headers
    * @param {Object} options
    * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
+   * @param {Object} [options.uploadCallbacks] - various listeners for the XMLHttpRequest.upload object
+   * @param {Function} [options.uploadCallbacks.loadstart] - listener for upload start event
+   * @param {Function} [options.uploadCallbacks.progress] - listener for upload progress event
+   * @param {Function} [options.uploadCallbacks.abort] - listener for upload aborted event
+   * @param {Function} [options.uploadCallbacks.error] - listener for upload error event
+   * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
+   * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
+   * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
    * @return {*}
    * @private
    */
@@ -229,6 +237,11 @@ class DICOMwebClient {
         }
       }
 
+      // Events triggered while upload progresses.
+      if ('uploadCallbacks' in options) {
+        DICOMwebClient._registerUploadCallbacks(request, options.uploadCallbacks);
+      }
+
       if (requestHooks && areValidRequestHooks(requestHooks)) {
         const combinedHeaders = Object.assign({}, headers, this.headers);
         const metadata = { method, url, headers: combinedHeaders };
@@ -250,6 +263,40 @@ class DICOMwebClient {
         request.send();
       }
     });
+  }
+
+  /**
+   * Registers various callbacks for the XMLHttpRequest.upload object. A special loadend listener is added that
+   * will remove all the listeners added once the request has finished.
+   * @param {XMLHttpRequest} request - the request to register the callbacks for
+   * @param {Object} uploadCallbacks - various listeners for the XMLHttpRequest.upload object
+   * @param {Function} [uploadCallbacks.loadstart] - listener for upload start event
+   * @param {Function} [uploadCallbacks.progress] - listener for upload progress event
+   * @param {Function} [uploadCallbacks.abort] - listener for upload aborted event
+   * @param {Function} [uploadCallbacks.error] - listener for upload error event
+   * @param {Function} [uploadCallbacks.load] - listener for upload load completed successfully event
+   * @param {Function} [uploadCallbacks.timeout] - listener for upload timeout event
+   * @param {Function} [uploadCallbacks.loadend] - listener for upload finished (success or fail) event
+   */
+ static _registerUploadCallbacks(request, uploadCallbacks) {
+    const uploadCallbackEventNames = ['loadstart', 'progress', 'abort', 'error', 'load', 'timeout', 'loadend'];
+
+    for(const eventName of uploadCallbackEventNames) {
+      if(typeof uploadCallbacks[eventName] === 'function') {
+        request.upload.addEventListener(eventName, uploadCallbacks[eventName]);
+      }
+    }
+
+    const removeCallbacks = () => {
+      request.upload.removeEventListener('loadend', removeCallbacks);
+
+      for(const eventName of uploadCallbackEventNames) {
+        if(typeof uploadCallbacks[eventName] === 'function') {
+          request.upload.removeEventListener(eventName, uploadCallbacks[eventName]);
+        }
+      }
+    };
+    request.upload.addEventListener('loadend', removeCallbacks);    
   }
 
   /**
@@ -709,14 +756,24 @@ class DICOMwebClient {
    * @param {Object} headers - HTTP header fields
    * @param {Array} data - Data that should be stored
    * @param {Function} progressCallback
+   * @param {Object} [options.uploadCallbacks] - various listeners for the XMLHttpRequest.upload object
+   * @param {Function} [options.uploadCallbacks.loadstart] - listener for upload start event
+   * @param {Function} [options.uploadCallbacks.progress] - listener for upload progress event
+   * @param {Function} [options.uploadCallbacks.abort] - listener for upload aborted event
+   * @param {Function} [options.uploadCallbacks.error] - listener for upload error event
+   * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
+   * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
+   * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
+   * @param {boolean} [options.uploadCallbacks.removeCallbacksOnLoadEnd] - flag indicating if all listeners should be removed when load ends
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback, withCredentials) {
+  _httpPost(url, headers, data, progressCallback, withCredentials, uploadCallbacks = {}) {
     return this._httpRequest(url, 'post', headers, {
       data,
       progressCallback,
       withCredentials,
+      uploadCallbacks,
     });
   }
 
@@ -1769,6 +1826,14 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
    * @param {String} [options.studyInstanceUID] - Study Instance UID
+   * @param {Object} [options.uploadCallbacks] - various listeners for the XMLHttpRequest.upload object
+   * @param {Function} [options.uploadCallbacks.loadstart] - listener for upload start event
+   * @param {Function} [options.uploadCallbacks.progress] - listener for upload progress event
+   * @param {Function} [options.uploadCallbacks.abort] - listener for upload aborted event
+   * @param {Function} [options.uploadCallbacks.error] - listener for upload error event
+   * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
+   * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
+   * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
    * @returns {Promise} Response message
    */
   storeInstances(options) {
@@ -1787,7 +1852,7 @@ class DICOMwebClient {
     };
     const { withCredentials = false } = options;
     return this._httpPost(
-      url, headers, data, options.progressCallback, withCredentials,
+      url, headers, data, options.progressCallback, withCredentials, options.uploadCallbacks
     );
   }
 }
