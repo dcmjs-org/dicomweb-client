@@ -152,6 +152,7 @@ class DICOMwebClient {
    * @param {Object} headers
    * @param {Object} options
    * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
+   * @param {Object} [options.abortSignal] - an AbortController.AbortSignal object to listen for abort requests
    * @return {*}
    * @private
    */
@@ -227,6 +228,27 @@ class DICOMwebClient {
         if (typeof options.progressCallback === 'function') {
           request.onprogress = options.progressCallback;
         }
+      }
+
+      if ('abortSignal' in options && options.abortSignal) {
+        const { abortSignal } = options;
+
+        if(abortSignal.aborted) {
+          request.abort();
+          reject(new Error('The request was aborted.'));
+          return;
+        }
+
+        const abortCallback = () => request.abort();
+         
+        abortSignal.addEventListener('abort', abortCallback);
+
+        const removeAbortListener = () => {
+          abortSignal.removeEventListener('abort', abortCallback);
+          request.removeEventListener('loadend', removeAbortListener);
+        };
+
+        request.addEventListener('loadend', removeAbortListener);
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
@@ -709,14 +731,16 @@ class DICOMwebClient {
    * @param {Object} headers - HTTP header fields
    * @param {Array} data - Data that should be stored
    * @param {Function} progressCallback
+   * @param {Object} abortSignal - an AbortController.AbortSignal object to listen for abort requests
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback, withCredentials) {
+  _httpPost(url, headers, data, progressCallback, withCredentials, abortSignal) {
     return this._httpRequest(url, 'post', headers, {
       data,
       progressCallback,
       withCredentials,
+      abortSignal,
     });
   }
 
@@ -1769,6 +1793,7 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
    * @param {String} [options.studyInstanceUID] - Study Instance UID
+   * @param {Object} [options.abortSignal] - an AbortController.AbortSignal object to listen for abort requests
    * @returns {Promise} Response message
    */
   storeInstances(options) {
@@ -1787,7 +1812,7 @@ class DICOMwebClient {
     };
     const { withCredentials = false } = options;
     return this._httpPost(
-      url, headers, data, options.progressCallback, withCredentials,
+      url, headers, data, options.progressCallback, withCredentials, options.abortSignal
     );
   }
 }
