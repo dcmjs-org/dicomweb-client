@@ -160,6 +160,7 @@ class DICOMwebClient {
    * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
    * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
    * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
+   * @param {Object} [options.abortSignal] - an AbortController.AbortSignal object to listen for abort requests
    * @return {*}
    * @private
    */
@@ -240,6 +241,27 @@ class DICOMwebClient {
       // Events triggered while upload progresses.
       if ('uploadCallbacks' in options) {
         DICOMwebClient._registerUploadCallbacks(request, options.uploadCallbacks);
+      }
+
+      if ('abortSignal' in options && options.abortSignal) {
+        const { abortSignal } = options;
+
+        if(abortSignal.aborted) {
+          request.abort();
+          reject(new Error('The request was aborted.'));
+          return;
+        }
+
+        const abortCallback = () => request.abort();
+         
+        abortSignal.addEventListener('abort', abortCallback);
+
+        const removeAbortListener = () => {
+          abortSignal.removeEventListener('abort', abortCallback);
+          request.removeEventListener('loadend', removeAbortListener);
+        };
+
+        request.addEventListener('loadend', removeAbortListener);
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
@@ -756,24 +778,25 @@ class DICOMwebClient {
    * @param {Object} headers - HTTP header fields
    * @param {Array} data - Data that should be stored
    * @param {Function} progressCallback
-   * @param {Object} [options.uploadCallbacks] - various listeners for the XMLHttpRequest.upload object
-   * @param {Function} [options.uploadCallbacks.loadstart] - listener for upload start event
-   * @param {Function} [options.uploadCallbacks.progress] - listener for upload progress event
-   * @param {Function} [options.uploadCallbacks.abort] - listener for upload aborted event
-   * @param {Function} [options.uploadCallbacks.error] - listener for upload error event
-   * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
-   * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
-   * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
-   * @param {boolean} [options.uploadCallbacks.removeCallbacksOnLoadEnd] - flag indicating if all listeners should be removed when load ends
+   * @param {Object} uploadCallbacks - various listeners for the XMLHttpRequest.upload object
+   * @param {Function} [uploadCallbacks.loadstart] - listener for upload start event
+   * @param {Function} [uploadCallbacks.progress] - listener for upload progress event
+   * @param {Function} [uploadCallbacks.abort] - listener for upload aborted event
+   * @param {Function} [uploadCallbacks.error] - listener for upload error event
+   * @param {Function} [uploadCallbacks.load] - listener for upload load completed successfully event
+   * @param {Function} [uploadCallbacks.timeout] - listener for upload timeout event
+   * @param {Function} [uploadCallbacks.loadend] - listener for upload finished (success or fail) event
+   * @param {Object} abortSignal - an AbortController.AbortSignal object to listen for abort requests
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback, withCredentials, uploadCallbacks = {}) {
+  _httpPost(url, headers, data, progressCallback, withCredentials, uploadCallbacks = {}, abortSignal) {
     return this._httpRequest(url, 'post', headers, {
       data,
       progressCallback,
       withCredentials,
       uploadCallbacks,
+      abortSignal,
     });
   }
 
@@ -1834,6 +1857,7 @@ class DICOMwebClient {
    * @param {Function} [options.uploadCallbacks.load] - listener for upload load completed successfully event
    * @param {Function} [options.uploadCallbacks.timeout] - listener for upload timeout event
    * @param {Function} [options.uploadCallbacks.loadend] - listener for upload finished (success or fail) event
+   * @param {Object} [options.abortSignal] - an AbortController.AbortSignal object to listen for abort requests
    * @returns {Promise} Response message
    */
   storeInstances(options) {
@@ -1852,7 +1876,7 @@ class DICOMwebClient {
     };
     const { withCredentials = false } = options;
     return this._httpPost(
-      url, headers, data, options.progressCallback, withCredentials, options.uploadCallbacks
+      url, headers, data, options.progressCallback, withCredentials, options.uploadCallbacks, options.abortSignal
     );
   }
 }
