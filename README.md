@@ -49,6 +49,41 @@ client.searchForStudies().then(studies => {
 });
 ```
 
+An optional, custom `XMLHttpRequest` can be passed to `storeInstances` as a property of the `options` parameter. When present, instead of creating a new `XMLHttpRequest` instance, the passed instance is used instead. One use of this would be to track the progress of a DICOM store and/or cancel it. 
+
+See the js snippet below for an example of where the upload's percentage progress is output to the console.
+
+```js
+const url = 'http://localhost:8080/dicomweb';
+const client = new DICOMwebClient.api.DICOMwebClient({url});
+
+// an ArrayBuffer of the DICOM object/file
+const dataSet = ... ; 
+
+// A custom HTTP request
+const request = new XMLHttpRequest();
+
+// A callback that outputs the percentage complete to the console.
+const progressCallback = evt => {
+  if (!evt.lengthComputable) {
+    // Progress computation is not possible.
+    return;
+  }
+
+  const percentComplete = Math.round((100 * evt.loaded) / evt.total);
+  console.log("storeInstances  is " + percentComplete + "%");
+};
+
+// Add the progress callback as a listener to the request upload object.
+request.upload.addEventListener('progress', progressCallback);
+
+const storeInstancesOptions = {
+  dataSets,
+  request,
+}
+client.storeInstances(storeInstancesOptions).then( () => console.log("storeInstances completed successfully.") );
+
+```
 
 ## For maintainers
 

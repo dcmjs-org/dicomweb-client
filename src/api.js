@@ -152,6 +152,7 @@ class DICOMwebClient {
    * @param {Object} headers
    * @param {Object} options
    * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
+   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @return {*}
    * @private
    */
@@ -159,7 +160,7 @@ class DICOMwebClient {
     const { errorInterceptor, requestHooks } = this;
 
     return new Promise((resolve, reject) => {
-      let request = new XMLHttpRequest();
+      let request = options.request ? options.request : new XMLHttpRequest();
 
       request.open(method, url, true);
       if ('responseType' in options) {
@@ -709,14 +710,17 @@ class DICOMwebClient {
    * @param {Object} headers - HTTP header fields
    * @param {Array} data - Data that should be stored
    * @param {Function} progressCallback
+   * @param {Function} progressCallback
+   * @param {XMLHttpRequest} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @private
    * @returns {Promise} Response
    */
-  _httpPost(url, headers, data, progressCallback, withCredentials) {
+  _httpPost(url, headers, data, progressCallback, withCredentials, request) {
     return this._httpRequest(url, 'post', headers, {
       data,
       progressCallback,
       withCredentials,
+      request,
     });
   }
 
@@ -1769,6 +1773,7 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
    * @param {String} [options.studyInstanceUID] - Study Instance UID
+   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @returns {Promise} Response message
    */
   storeInstances(options) {
@@ -1787,7 +1792,7 @@ class DICOMwebClient {
     };
     const { withCredentials = false } = options;
     return this._httpPost(
-      url, headers, data, options.progressCallback, withCredentials,
+      url, headers, data, options.progressCallback, withCredentials, options.request
     );
   }
 }
