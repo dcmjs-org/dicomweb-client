@@ -145,7 +145,7 @@ function multipartEncode(
   let length = 0;
 
   // Calculate the total length for the final array
-  const contentArrays = datasets.map((datasetBuffer) => {
+  const contentArrays = datasets.map(datasetBuffer => {
     const contentArray = new Uint8Array(datasetBuffer);
     const contentLength = contentArray.length;
 
@@ -162,7 +162,7 @@ function multipartEncode(
 
   // Write each dataset into the multipart array
   let position = 0;
-  contentArrays.forEach((contentArray) => {
+  contentArrays.forEach(contentArray => {
     multipartArray.set(headerArray, position);
     multipartArray.set(contentArray, position + headerLength);
 
