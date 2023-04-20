@@ -1,5 +1,5 @@
 {
-  "name": "@sedghi/test-dicomweb-client",
+  "name": "dicomweb-client",
   "version": "0.8.4",
   "description": "Implementation of DICOMweb client code",
   "main": "build/dicomweb-client.js",
