@@ -82,4 +82,5 @@ export {
   getSeriesInstanceUIDFromUri,
   getSOPInstanceUIDFromUri,
   getFrameNumbersFromUri,
+  __dummyMethodToTriggerCI,
 };
