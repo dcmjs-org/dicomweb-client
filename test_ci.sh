@@ -22,5 +22,7 @@ exit_code=$?
 echo 'Shutting down Docker container'
 docker-compose -f dcm4chee-docker-compose.yml down
 
+rm -rf ./tmp
+
 # Exit with the exit code from Mochify
 exit "$exit_code"
