@@ -59,7 +59,7 @@ function getFrameNumbersFromUri(uri) {
     numbers = findSubstring(uri, '/frames/');
   }
   if (numbers === undefined) {
-    console.debug(`Frames Numbers could not be dertermined from URI"${uri}"`);
+    console.debug(`Frame Numbers could not be dertermined from URI"${uri}"`);
   }
   return numbers.split(',');
 }
