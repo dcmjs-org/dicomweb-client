@@ -53,6 +53,19 @@ function getSOPInstanceUIDFromUri(uri) {
   return uid;
 }
 
+
+function __dummyMethodToTriggerCI(uri) {
+  let numbers = findSubstring(uri, '/frames/', '/rendered');
+  if (!numbers) {
+    numbers = findSubstring(uri, '/frames/');
+  }
+  if (numbers === undefined) {
+    console.debug(`Frame Numbers could not be dertermined from URI"${uri}"`);
+  }
+  return numbers.split(',');
+}
+
+
 function getFrameNumbersFromUri(uri) {
   let numbers = findSubstring(uri, '/frames/', '/rendered');
   if (!numbers) {
