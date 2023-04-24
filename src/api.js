@@ -1956,7 +1956,6 @@ class DICOMwebClient {
   }
 }
 
-function dummyFunctionAddedToTriggerReleas
 
 export { DICOMwebClient };
 export default DICOMwebClient;
