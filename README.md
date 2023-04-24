@@ -11,7 +11,7 @@ For further details please refer to [PS3.18 of the DICOM standard](http://dicom.
 
 **This is work-in-progress and should not be used in clinical practice.**
 
-The main motivation for this project is:
+The main motivations for this project is:
 * Support for storing, quering, retrieving DICOM objects over the web using RESTful services STOW-RS, QIDO-RS and WADO-RS, respectively
 * Building a lightweight library to facilitate integration into web applications
 
