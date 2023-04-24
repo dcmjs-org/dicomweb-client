@@ -5,7 +5,7 @@ rm -rf /tmp/dcm4chee-arc/db
 echo 'Starting dcm4chee Docker container'
 docker-compose -f dcm4chee-docker-compose.yml up -d || { exit 1; }
 
-until curl localhost:8008/dcm4chee-arc/aets; do echo waiting for archive...; sleep 1; done
+until curl localhost:8008/dcm4chee-arc/aets; do echo waiting for archive...; sleep 2; done
 echo ""
 echo ""
 echo "Archive started, ready to run tests..."
@@ -22,7 +22,8 @@ exit_code=$?
 echo 'Shutting down Docker container'
 docker-compose -f dcm4chee-docker-compose.yml down
 
-rm -rf ./tmp
+# clean up temp database used by test
+sudo rm -rf ./tmp
 
 # Exit with the exit code from Mochify
 exit "$exit_code"
