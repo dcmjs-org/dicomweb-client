@@ -87,7 +87,7 @@ client.storeInstances(storeInstancesOptions).then( () => console.log("storeInsta
 
 ## For maintainers
 
-Use `semantic` commit messages to generate releases and change log entries: [Semantic Release: How does it work?](https://semantic-release.gitbook.io/semantic-release/#how-does-it-work)
+Use `semantic` commit messages to generate releases and change log entries: [Semantic Release: How does it work?](https://semantic-release.gitbook.io/semantic-release/#how-does-it-work).  Github actions are used to trigger building and uploading new npm packages.
 
 ## Citation
 
