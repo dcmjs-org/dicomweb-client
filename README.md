@@ -9,7 +9,7 @@ For further details please refer to [PS3.18 of the DICOM standard](http://dicom.
 
 ## Goal
 
-**This is work-in-progress and should not be used in clinical practice.**
+**This is work-in-progress and should not be used in clinical practice.  Use at your own risk.**
 
 The main motivations for this project is:
 * Support for storing, quering, retrieving DICOM objects over the web using RESTful services STOW-RS, QIDO-RS and WADO-RS, respectively
