@@ -70,7 +70,7 @@ class DICOMwebClient {
   constructor(options) {
     this.baseURL = options.url;
     if (!this.baseURL) {
-      console.error('no DICOMweb base url provided - calls will fail');
+      console.error('no DICOMweb base url provided - calls that require a URL will fail');
     }
 
     if ('username' in options) {
@@ -1955,6 +1955,8 @@ class DICOMwebClient {
     );
   }
 }
+
+function dummyFunctionAddedToTriggerReleas
 
 export { DICOMwebClient };
 export default DICOMwebClient;
