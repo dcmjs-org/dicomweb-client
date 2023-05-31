@@ -54,8 +54,10 @@ The API can be configured with a number of custom configuration options to contr
 * url to retrieve from for the base requests
 * singlepart, either true or a set of parts from `bulkdata,image,video` to request as single part responses
 * headers to add to the retrieve
+* `XMLHttpRequest` can be passed to `storeInstances` as a property of the `options` parameter. When present, instead of creating a new `XMLHttpRequest` instance, the passed instance is used instead. One use of this would be to track the progress of a DICOM store and/or cancel it.
 
-See the js snippet below for an example of where the upload's percentage progress is output to the console.
+An example use of `XMLHttpRequest` being passed into the store is shown in the js snippet below 
+as an example of where the upload's percentage progress is output to the console.
 
 ```js
 const url = 'http://localhost:8080/dicomweb';
