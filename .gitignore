@@ -64,3 +64,6 @@ yarn.lock
 
 # docker files created by the docker containers for testing
 tmp
+
+types/*
+!types/types.d.ts

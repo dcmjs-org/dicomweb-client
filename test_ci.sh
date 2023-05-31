@@ -5,7 +5,7 @@ rm -rf /tmp/dcm4chee-arc/db
 echo 'Starting dcm4chee Docker container'
 docker-compose -f dcm4chee-docker-compose.yml up -d || { exit 1; }
 
-until curl localhost:8008/dcm4chee-arc/aets; do echo waiting for archive...; sleep 1; done
+until curl localhost:8008/dcm4chee-arc/aets; do echo waiting for archive...; sleep 2; done
 echo ""
 echo ""
 echo "Archive started, ready to run tests..."
@@ -13,7 +13,7 @@ echo ""
 
 # at this point DICOMweb server is running and ready for testing
 echo 'Installing and running tests'
-./node_modules/karma/bin/karma start karma.conf.js --browsers ChromeHeadless_without_security --single-run
+./node_modules/karma/bin/karma start karma.conf.js --browsers ChromeHeadless_without_security --concurrency 1 --single-run 
 
 # Store the exit code from mochify
 exit_code=$?
@@ -21,6 +21,9 @@ exit_code=$?
 # now shut down the archive
 echo 'Shutting down Docker container'
 docker-compose -f dcm4chee-docker-compose.yml down
+
+# clean up temp database used by test
+sudo rm -rf ./tmp
 
 # Exit with the exit code from Mochify
 exit "$exit_code"
