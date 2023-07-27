@@ -66,6 +66,8 @@ class DICOMwebClient {
    * @param {Object=} options.headers - HTTP headers
    * @param {Array.<RequestHook>=} options.requestHooks - Request hooks.
    * @param {Object=} options.verbose - print to console request warnings and errors, default true
+   * @param {boolean|String} options.singlepart - retrieve singlepart for the named types.
+   * The available types are:  bulkdata, video, image.  true means all.
    */
   constructor(options) {
     this.baseURL = options.url;
@@ -102,6 +104,13 @@ class DICOMwebClient {
       this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`;
     } else {
       this.stowURL = this.baseURL;
+    }
+
+    if (options.singlepart) {
+      console.log('use singlepart', options.singlepart);
+      this.singlepart = options.singlepart === true ? 'bulkdata,video,image' : options.singlepart;
+    } else {
+      this.singlepart = '';
     }
 
     if ('requestHooks' in options) {
@@ -197,7 +206,16 @@ class DICOMwebClient {
       request.onreadystatechange = () => {
         if (request.readyState === 4) {
           if (request.status === 200) {
-            resolve(request.response);
+            const contentType = request.getResponseHeader('Content-Type');
+            // Automatically distinguishes between multipart and singlepart in an array buffer, and
+            // converts them into a consistent type.
+            if (contentType && contentType.indexOf('multipart') !== -1) {
+              resolve(multipartDecode(request.response));
+            } else if (request.responseType === 'arraybuffer') {
+              resolve([request.response]);
+            } else {
+              resolve(request.response);
+            }
           } else if (request.status === 202) {
             if (this.verbose) {
               console.warn('some resources already existed: ', request);
@@ -564,13 +582,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(
-      url,
-      headers,
-      'arraybuffer',
-      progressCallback,
-      withCredentials,
-    ).then(multipartDecode);
+    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
   }
 
   /**
@@ -626,13 +638,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(
-      url,
-      headers,
-      'arraybuffer',
-      progressCallback,
-      withCredentials,
-    ).then(multipartDecode);
+    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
   }
 
   /**
@@ -688,13 +694,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(
-      url,
-      headers,
-      'arraybuffer',
-      progressCallback,
-      withCredentials,
-    ).then(multipartDecode);
+    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
   }
 
   /**
@@ -738,13 +738,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(
-      url,
-      headers,
-      'arraybuffer',
-      progressCallback,
-      withCredentials,
-    ).then(multipartDecode);
+    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
   }
 
   /**
@@ -1301,13 +1295,7 @@ class DICOMwebClient {
           supportedMediaTypes,
         ),
       };
-      return this._httpGet(
-        url,
-        headers,
-        'arraybuffer',
-        progressCallback,
-        withCredentials,
-      ).then(multipartDecode);
+      return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
@@ -1868,7 +1856,9 @@ class DICOMwebClient {
    * See http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.5.5.html
    *
    * @param {Object} options
-   * @param {String} BulkDataURI - URI for retrieval of bulkdata
+   * @param {string} options.BulkDataURI to retrieve
+   * @param {Array}  options.mediaTypes to use to fetch the URI
+   * @param {string} options.byteRange to request a sub-range (only valid on single part)
    * @returns {Promise<Array>} Bulkdata parts
    */
   retrieveBulkData(options) {
@@ -1880,6 +1870,10 @@ class DICOMwebClient {
     const { mediaTypes, byteRange } = options;
     const { withCredentials = false } = options;
     const { progressCallback = false } = options;
+
+    if (this.singlepart.indexOf('bulkdata') !== -1) {
+      return this._httpGet(url, options.headers, 'arraybuffer', null, withCredentials);
+    }
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(

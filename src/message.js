@@ -184,7 +184,8 @@ function multipartEncode(
  * @returns {Array} The content
  */
 function multipartDecode(response) {
-  const message = new Uint8Array(response);
+  // Use the raw data if it is provided in an appropriate format
+  const message = ArrayBuffer.isView(response) ? response : new Uint8Array(response);
 
   /* Set a maximum length to search for the header boundaries, otherwise
        findToken can run for a long time
