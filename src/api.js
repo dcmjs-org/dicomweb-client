@@ -1338,6 +1338,12 @@ class DICOMwebClient {
     );
   }
 
+ /**
+ * Element in mediaTypes parameter
+ * @typedef {Object} MediaType
+ * @param {String} [MediaType.mediaType] - ie 'image/jpeg', 'image/png'...
+ */
+
   /**
    * Retrieves an individual, server-side rendered DICOM Instance.
    *
@@ -1345,7 +1351,7 @@ class DICOMwebClient {
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
-   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
+   * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {Promise<ArrayBuffer>} Rendered DICOM Instance
    */
@@ -1446,7 +1452,7 @@ class DICOMwebClient {
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
-   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
+   * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer} Thumbnail
    */
@@ -1522,7 +1528,7 @@ class DICOMwebClient {
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {String} options.frameNumbers - One-based indices of Frame Items
-   * @param {String[]} [options.mediaType] - Acceptable HTTP media types
+   * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
