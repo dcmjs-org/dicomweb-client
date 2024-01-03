@@ -1,4 +1,4 @@
-import { multipartEncode, multipartDecode } from './message';
+import { multipartEncode, multipartDecode } from './message.js';
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -37,6 +37,10 @@ const MEDIATYPES = {
   PNG: 'image/png',
 };
 
+/**
+ * debugLog is a function that can be called with console.log arguments, and will
+ * be conditionally displayed, only when debug logging is enabled.
+ */
 let debugLog = () => {};
 
 /**
@@ -68,6 +72,7 @@ class DICOMwebClient {
    * @param {Object=} options.headers - HTTP headers
    * @param {Array.<RequestHook>=} options.requestHooks - Request hooks.
    * @param {Object=} options.verbose - print to console request warnings and errors, default true
+   * @param {Object=} options.debug - print to the console debug level information/status updates.  See setDebug
    * @param {boolean|String} options.singlepart - retrieve singlepart for the named types.
    * The available types are:  bulkdata, video, image.  true means all.
    */
@@ -133,11 +138,23 @@ class DICOMwebClient {
 
   }
 
+  /**
+   * Allows setting the debug log information. 
+   * Note this is different from verbose in that verbose is whether to include warning/error information, defaulting to true
+   * 
+   * @param {boolean} debugLevel 
+   * @param {function} debugLogFunction to call with the debug output arguments. 
+   */
   setDebug(debugLevel = false, debugLogFunction = null) {
     this.debugLevel = !!debugLevel;
     debugLog = debugLogFunction || debugLevel ? console.log : () => {};
   }
 
+  /**
+   * Gets debug flag
+   * 
+   * @returns true if debug logging is enabled
+   */
   getDebug() {
     return this.debugLevel;
   }
@@ -842,14 +859,16 @@ class DICOMwebClient {
   }
 
   /**
-     * Builds an accept header field value for HTTP GET multipart request
-     messages.  Will throw an exception if not acceptable types were found, but
-     will only log a verbose level message for unacceptable types.
-     *
-     * @param {Object[]} mediaTypes - Acceptable media types
-     * @param {Object[]} supportedMediaTypes - Supported media types
-     * @private
-     */
+   * Builds an accept header field value for HTTP GET multipart request
+   * messages.  Will throw an exception if no media types are found which are acceptable,
+   * but will only log a verbose level message when types are specified which are
+   * not acceptable.  This allows requesting several types with having to know
+   * whether they are all acceptable or not.
+   *
+   * @param {Object[]} mediaTypes - Acceptable media types
+   * @param {Object[]} supportedMediaTypes - Supported media types
+   * @private
+   */
   static _buildMultipartAcceptHeaderFieldValue(
     mediaTypes,
     supportedMediaTypes,
