@@ -1,4 +1,4 @@
-import { multipartEncode, multipartDecode } from './message.js';
+import { multipartEncode, multipartDecode } from './message';
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -36,6 +36,8 @@ const MEDIATYPES = {
   JPEG: 'image/jpeg',
   PNG: 'image/png',
 };
+
+let debugLog = () => {};
 
 /**
  * @typedef { import("../types/types").InstanceMetadata } InstanceMetadata
@@ -86,28 +88,28 @@ class DICOMwebClient {
     }
 
     if ('qidoURLPrefix' in options) {
-      console.log(`use URL prefix for QIDO-RS: ${options.qidoURLPrefix}`);
+      debugLog(`use URL prefix for QIDO-RS: ${options.qidoURLPrefix}`);
       this.qidoURL = `${this.baseURL}/${options.qidoURLPrefix}`;
     } else {
       this.qidoURL = this.baseURL;
     }
 
     if ('wadoURLPrefix' in options) {
-      console.log(`use URL prefix for WADO-RS: ${options.wadoURLPrefix}`);
+      debugLog(`use URL prefix for WADO-RS: ${options.wadoURLPrefix}`);
       this.wadoURL = `${this.baseURL}/${options.wadoURLPrefix}`;
     } else {
       this.wadoURL = this.baseURL;
     }
 
     if ('stowURLPrefix' in options) {
-      console.log(`use URL prefix for STOW-RS: ${options.stowURLPrefix}`);
+      debugLog(`use URL prefix for STOW-RS: ${options.stowURLPrefix}`);
       this.stowURL = `${this.baseURL}/${options.stowURLPrefix}`;
     } else {
       this.stowURL = this.baseURL;
     }
 
     if (options.singlepart) {
-      console.log('use singlepart', options.singlepart);
+      debugLog('use singlepart', options.singlepart);
       this.singlepart = options.singlepart === true ? 'bulkdata,video,image' : options.singlepart;
     } else {
       this.singlepart = '';
@@ -125,8 +127,21 @@ class DICOMwebClient {
 
     // Verbose - print to console request warnings and errors, default true
     this.verbose = options.verbose !== false;
+
+    this.setDebug(options.debug);
+ 
+
   }
 
+  setDebug(debugLevel = false, debugLogFunction = null) {
+    this.debugLevel = !!debugLevel;
+    debugLog = debugLogFunction || debugLevel ? console.log : () => {};
+  }
+
+  getDebug() {
+    return this.debugLevel;
+  }
+ 
   /**
    * Sets verbose flag.
    *
@@ -194,12 +209,12 @@ class DICOMwebClient {
 
       // Event triggered when upload starts
       request.onloadstart = function onloadstart() {
-        // console.log('upload started: ', url)
+        debugLog('upload started: ', url)
       };
 
       // Event triggered when upload ends
       request.onloadend = function onloadend() {
-        // console.log('upload finished')
+        debugLog('upload finished')
       };
 
       // Handle response message
@@ -699,7 +714,8 @@ class DICOMwebClient {
 
   /**
    * Performs an HTTP GET request that accepts a multipart message
-   * with a application/octet-stream media type.
+   * with a application/octet-stream, OR any of the equivalencies for that (eg
+   * application/pdf etc)
    *
    * @param {String} url - Unique resource locator
    * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
@@ -721,7 +737,7 @@ class DICOMwebClient {
     const headers = {};
     const defaultMediaType = 'application/octet-stream';
     const supportedMediaTypes = {
-      '1.2.840.10008.1.2.1': [defaultMediaType],
+      '1.2.840.10008.1.2.1': [...Object.values(MEDIATYPES)],
     };
 
     let acceptableMediaTypes = mediaTypes;
@@ -827,7 +843,8 @@ class DICOMwebClient {
 
   /**
      * Builds an accept header field value for HTTP GET multipart request
-     messages.
+     messages.  Will throw an exception if not acceptable types were found, but
+     will only log a verbose level message for unacceptable types.
      *
      * @param {Object[]} mediaTypes - Acceptable media types
      * @param {Object[]} supportedMediaTypes - Supported media types
@@ -863,9 +880,10 @@ class DICOMwebClient {
             .includes(mediaType)
         ) {
           if (!mediaType.endsWith('/*') || !mediaType.endsWith('/')) {
-            throw new Error(
+            debugLog(
               `Media type ${mediaType} is not supported for requested resource`,
             );
+            return;
           }
         }
 
@@ -907,13 +925,20 @@ class DICOMwebClient {
         Array.isArray(supportedMediaTypes) &&
         !supportedMediaTypes.includes(mediaType)
       ) {
-        throw new Error(
-          `Media type ${mediaType} is not supported for requested resource`,
-        );
+        if( this.verbose ) {
+          console.warn(
+            `Media type ${mediaType} is not supported for requested resource`,
+          );
+        }
+        return;
       }
 
       fieldValueParts.push(fieldValue);
     });
+
+    if( !fieldValueParts.length ) {
+      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)}`);
+    }
 
     return fieldValueParts.join(', ');
   }
@@ -961,7 +986,7 @@ class DICOMwebClient {
   }
 
   /**
-   * Gets common type of acceptable media types and asserts that only
+   * Gets common base type of acceptable media types and asserts that only
    one type is specified. For example, ``("image/jpeg", "image/jp2")``
    will pass, but ``("image/jpeg", "video/mpeg2")`` will raise an
    exception.
@@ -969,7 +994,7 @@ class DICOMwebClient {
    * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
    * @private
-   * @returns {String[]} Common media type
+   * @returns {String[]} Common media type, eg `image/` for the above example.
    */
   static _getCommonMediaType(mediaTypes) {
     if (!mediaTypes || !mediaTypes.length) {
@@ -994,7 +1019,7 @@ class DICOMwebClient {
    * @return {Object[]} Study representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2)
    */
   searchForStudies(options = {}) {
-    console.log('search for studies');
+    debugLog('search for studies');
     let withCredentials = false;
     let url = `${this.qidoURL}/studies`;
     if ('queryParams' in options) {
@@ -1022,7 +1047,7 @@ class DICOMwebClient {
         'Study Instance UID is required for retrieval of study metadata',
       );
     }
-    console.log(`retrieve metadata of study ${options.studyInstanceUID}`);
+    debugLog(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`;
     let withCredentials = false;
     if ('withCredentials' in options) {
@@ -1044,7 +1069,7 @@ class DICOMwebClient {
   searchForSeries(options = {}) {
     let url = this.qidoURL;
     if ('studyInstanceUID' in options) {
-      console.log(`search series of study ${options.studyInstanceUID}`);
+      debugLog(`search series of study ${options.studyInstanceUID}`);
       url += `/studies/${options.studyInstanceUID}`;
     }
     url += '/series';
@@ -1081,7 +1106,7 @@ class DICOMwebClient {
       );
     }
 
-    console.log(`retrieve metadata of series ${options.seriesInstanceUID}`);
+    debugLog(`retrieve metadata of series ${options.seriesInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/metadata`;
     let withCredentials = false;
     if ('withCredentials' in options) {
@@ -1107,17 +1132,17 @@ class DICOMwebClient {
     if ('studyInstanceUID' in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ('seriesInstanceUID' in options) {
-        console.log(
+        debugLog(
           `search for instances of series ${options.seriesInstanceUID}`,
         );
         url += `/series/${options.seriesInstanceUID}`;
       } else {
-        console.log(
+        debugLog(
           `search for instances of study ${options.studyInstanceUID}`,
         );
       }
     } else {
-      console.log('search for instances');
+      debugLog('search for instances');
     }
     url += '/instances';
     if ('queryParams' in options) {
@@ -1191,7 +1216,7 @@ class DICOMwebClient {
         'SOP Instance UID is required for retrieval of instance metadata',
       );
     }
-    console.log(`retrieve metadata of instance ${options.sopInstanceUID}`);
+    debugLog(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}/metadata`;
     let withCredentials = false;
     if ('withCredentials' in options) {
@@ -1232,7 +1257,7 @@ class DICOMwebClient {
         'frame numbers are required for retrieval of instance frames',
       );
     }
-    console.log(
+    debugLog(
       `retrieve frames ${options.frameNumbers.toString()} of instance ${
         options.sopInstanceUID
       }`,
@@ -1287,6 +1312,8 @@ class DICOMwebClient {
         '1.2.840.10008.1.2.4.91': ['image/jp2'],
         '1.2.840.10008.1.2.4.92': ['image/jpx'],
         '1.2.840.10008.1.2.4.93': ['image/jpx'],
+        '1.2.840.10008.1.2.4.201': ['image/jhc'],
+        '1.2.840.10008.1.2.4.202': ['image/jhc'],
       };
 
       const headers = {
@@ -1554,7 +1581,7 @@ class DICOMwebClient {
       );
     }
 
-    console.debug(
+    debugLog(
       `retrieve rendered frames ${options.frameNumbers.toString()} of instance ${
         options.sopInstanceUID
       }`,
@@ -1881,43 +1908,34 @@ class DICOMwebClient {
       return this._httpGet(url, options.headers, 'arraybuffer', null, withCredentials);
     }
 
-    if (!mediaTypes) {
-      return this._httpGetMultipartApplicationOctetStream(
-        url,
-        mediaTypes,
-        byteRange,
-        false,
-        false,
-        withCredentials,
-      );
+    if (mediaTypes) {
+      try {
+        const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
+
+        if (commonMediaType==='image/') {
+          return this._httpGetMultipartImage(
+            url,
+            mediaTypes,
+            byteRange,
+            false,
+            false,
+            progressCallback,
+            withCredentials,
+          );
+        }
+      } catch(e) {
+        // No-op - this happens sometimes if trying to fetch the specific desired type but want to fallback to octet-stream
+      }
     }
 
-    const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
-
-    if (commonMediaType === MEDIATYPES.OCTET_STREAM) {
-      return this._httpGetMultipartApplicationOctetStream(
-        url,
-        mediaTypes,
-        byteRange,
-        false,
-        progressCallback,
-        withCredentials,
-      );
-    }
-    if (commonMediaType.startsWith('image')) {
-      return this._httpGetMultipartImage(
-        url,
-        mediaTypes,
-        byteRange,
-        false,
-        false,
-        progressCallback,
-        withCredentials,
-      );
-    }
-
-    throw new Error(
-      `Media type ${commonMediaType} is not supported for retrieval of bulk data.`,
+    // Just use the media types provided
+    return this._httpGetMultipartApplicationOctetStream(
+      url,
+      mediaTypes,
+      byteRange,
+      false,
+      progressCallback,
+      withCredentials,
     );
   }
 
@@ -1954,6 +1972,8 @@ class DICOMwebClient {
       options.request,
     );
   }
+
+  
 }
 
 
