@@ -72,7 +72,7 @@ class DICOMwebClient {
    * @param {Object=} options.headers - HTTP headers
    * @param {Array.<RequestHook>=} options.requestHooks - Request hooks.
    * @param {Object=} options.verbose - print to console request warnings and errors, default true
-   * @param {Object=} options.debug - print to the console debug level information/status updates.  See setDebug
+   * @param {Object=} options.debug - print to the console debug level information/status updates.
    * @param {boolean|String} options.singlepart - retrieve singlepart for the named types.
    * The available types are:  bulkdata, video, image.  true means all.
    */
