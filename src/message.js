@@ -149,10 +149,12 @@ function multipartEncode(
     const contentArray = new Uint8Array(datasetBuffer);
     const contentLength = contentArray.length;
 
-    length += headerLength + contentLength + footerLength;
+    length += headerLength + contentLength;
 
     return contentArray;
   });
+
+  length += footerLength;
 
   // Allocate the array
   const multipartArray = new Uint8Array(length);
