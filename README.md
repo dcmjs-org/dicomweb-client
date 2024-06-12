@@ -19,8 +19,10 @@ The main motivations for this project is:
 
 Install the [dicomweb-client](https://www.npmjs.com/package/dicomweb-client) package using the `npm` package manager:
 
-```None
+```bash
 npm install dicomweb-client
+# or to install command line, use
+npm install -g dicomweb-client
 ```
 
 ## Building and testing
@@ -33,6 +35,49 @@ cd ~/dicomweb-client
 npm install
 npm run build
 npm test
+# To install the local copy bin files, use:
+npm install -g .
+```
+
+## Command Line
+There are three command line options for interacting with DICOMweb servers: `qido` for querying, `wado` for retrieving, and `stow` for storing.
+
+The supporting code the command line is in `lib` instead of `src` so that it doesn't get included in he default build of the client.
+
+### QIDO
+The qido command line can be used to query for studies, series or instances.  Some examples:
+
+```bash
+# Query for MR studies
+qido studies https://d33do7qe4w26qo.cloudfront.net/dicomweb -q ModalitiesInStudy=MR
+# Query for studies since yesterday
+qido studies https://d33do7qe4w26qo.cloudfront.net/dicomweb -q StudyDate=yesterday-
+
+# Query for series for Study UID 2.25.96975534054447904995905761963464388233 with Modality SR
+qido series  https://d33do7qe4w26qo.cloudfront.net/dicomweb 2.25.96975534054447904995905761963464388233 -q Modality=SR
+
+# Query for patient (only with /patient supporting endpoints):
+qido patient https://d33do7qe4w26qo.cloudfront.net/dicomweb -q PatientID=M1
+
+```
+
+### WADO
+The wado commandline can be used to retrieve part 10 or metadata endpoints.  It will save them to a directory
+in the DICOMweb structure.  This assumes that the QIDO queries are available to figure out the layout
+
+```bash
+# Retrieve metadata related study (metadata at series level, image data and bulkdata)
+# Default output is to user home directory (~) `~/dicomweb/studies/<studyUID>/....`
+wado metadata  https://d33do7qe4w26qo.cloudfront.net/dicomweb 2.25.96975534054447904995905761963464388233 
+```
+
+### STOW
+The STOW command line can be used to store part 10 or metadata to the remote server.
+
+```bash
+# Store part 10 DICOM to the given destination server.
+```
+stow part10 https://d33do7qe4w26qo.cloudfront.net/dicomweb file1.dcm ... fileN.dcm 
 ```
 
 ## Usage
