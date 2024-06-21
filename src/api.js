@@ -1904,19 +1904,32 @@ class DICOMwebClient {
    * Generate an absolute URI from a relative URI.
    * If the URI contains : then it is already absolute, return it.
    * If the URI starts with /, then just add it after the wadoURL
-   * Otherwise, assume the URL is relative to the wadoURL, and add studies/STUDYUID to it.
-   * @param {string} studyUid to use in the full URL
+   * 
+   * Otherwise, assume the URL is relative to the originally fetched URL -
+   * that needs to have been specified in the options as either:
+   *   * `MetadataURI`
+   *   * study UID for study relative path
+   *   * series UID for series relative path
+   * 
    * @param {string} uri to convert to full URL
+   * @param {object} options to get relative path from
    * @returns a URL to the requested resource.
    */
-  _handleRelativeURI(studyUid, uri) {
+  _handleRelativeURI(uri, options = {}) {
     if (!uri || uri.indexOf(':') !== -1) {
       return uri;
     }
     if (uri[0] === '/') {
       return this.wadoURL + uri;
     }
-    return `${this.wadoURL}/studies/${studyUid}/${uri}`;
+    const { StudyInstanceUID: studyUid, SeriesInstanceUID: seriesUid, MetadataURI: metadataUri } = options;
+    if( metadataUri ) {
+      return metadataUri.indexOf(':')===-1 ? `${this.wadoURL}/${metadataUri}/${uri}` : `${metadataUri}/${uri}`;
+    }
+    // Not quite right, but this is a guess that the path is study relative if the URI starts with series, AND the seriesUID is available.
+    const isSeriesRelative = seriesUid && !uri.startsWith('series');
+  
+    return isSeriesRelative ? `${this.wadoURL}/studies/${studyUid}/series/${seriesUid}/${uri}` : `${this.wadoURL}/studies/${studyUid}/${uri}`;
   }
 
   /**
@@ -1936,10 +1949,10 @@ class DICOMwebClient {
     if (!('BulkDataURI' in options)) {
       throw new Error('BulkDataURI is required.');
     }
-    const { StudyInstanceUID, BulkDataURI } = options;
+    const { BulkDataURI } = options;
 
     // Allow relative URI's, assume it is relative to the studyUID directory
-    const url = this._handleRelativeURI(StudyInstanceUID, BulkDataURI);
+    const url = this._handleRelativeURI(BulkDataURI, options);
     const { mediaTypes, byteRange } = options;
     const { withCredentials = false } = options;
     const { progressCallback = false } = options;
