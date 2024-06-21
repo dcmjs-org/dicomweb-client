@@ -145,7 +145,7 @@ function multipartEncode(
   let length = 0;
 
   // Calculate the total length for the final array
-  const contentArrays = datasets.map((datasetBuffer) => {
+  const contentArrays = datasets.map(datasetBuffer => {
     const contentArray = new Uint8Array(datasetBuffer);
     const contentLength = contentArray.length;
 
@@ -162,7 +162,7 @@ function multipartEncode(
 
   // Write each dataset into the multipart array
   let position = 0;
-  contentArrays.forEach((contentArray) => {
+  contentArrays.forEach(contentArray => {
     multipartArray.set(headerArray, position);
     multipartArray.set(contentArray, position + headerLength);
 
@@ -184,7 +184,8 @@ function multipartEncode(
  * @returns {Array} The content
  */
 function multipartDecode(response) {
-  const message = new Uint8Array(response);
+  // Use the raw data if it is provided in an appropriate format
+  const message = ArrayBuffer.isView(response) ? response : new Uint8Array(response);
 
   /* Set a maximum length to search for the header boundaries, otherwise
        findToken can run for a long time

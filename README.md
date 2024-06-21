@@ -9,9 +9,9 @@ For further details please refer to [PS3.18 of the DICOM standard](http://dicom.
 
 ## Goal
 
-**This is work-in-progress and should not be used in clinical practice.**
+**This is work-in-progress and should not be used in clinical practice.  Use at your own risk.**
 
-The main motivation for this project is:
+The main motivations for this project is:
 * Support for storing, quering, retrieving DICOM objects over the web using RESTful services STOW-RS, QIDO-RS and WADO-RS, respectively
 * Building a lightweight library to facilitate integration into web applications
 
@@ -49,10 +49,51 @@ client.searchForStudies().then(studies => {
 });
 ```
 
+## Configuration Options
+The API can be configured with a number of custom configuration options to control the requests.  These are:
+* url to retrieve from for the base requests
+* singlepart, either true or a set of parts from `bulkdata,image,video` to request as single part responses
+* headers to add to the retrieve
+* `XMLHttpRequest` can be passed to `storeInstances` as a property of the `options` parameter. When present, instead of creating a new `XMLHttpRequest` instance, the passed instance is used instead. One use of this would be to track the progress of a DICOM store and/or cancel it.
+
+An example use of `XMLHttpRequest` being passed into the store is shown in the js snippet below 
+as an example of where the upload's percentage progress is output to the console.
+
+```js
+const url = 'http://localhost:8080/dicomweb';
+const client = new DICOMwebClient.api.DICOMwebClient({url});
+
+// an ArrayBuffer of the DICOM object/file
+const dataSet = ... ; 
+
+// A custom HTTP request
+const request = new XMLHttpRequest();
+
+// A callback that outputs the percentage complete to the console.
+const progressCallback = evt => {
+  if (!evt.lengthComputable) {
+    // Progress computation is not possible.
+    return;
+  }
+
+  const percentComplete = Math.round((100 * evt.loaded) / evt.total);
+  console.log("storeInstances  is " + percentComplete + "%");
+};
+
+// Add the progress callback as a listener to the request upload object.
+request.upload.addEventListener('progress', progressCallback);
+
+const storeInstancesOptions = {
+  dataSets,
+  request,
+}
+client.storeInstances(storeInstancesOptions).then( () => console.log("storeInstances completed successfully.") );
+
+```
 
 ## For maintainers
 
-Use `semantic` commit messages to generate releases and change log entries: [Semantic Release: How does it work?](https://semantic-release.gitbook.io/semantic-release/#how-does-it-work)
+Use `semantic` commit messages to generate releases and change log entries: [Semantic Release: How does it work?](https://semantic-release.gitbook.io/semantic-release/#how-does-it-work).  Github actions are used to trigger building and uploading new npm packages.
 
 ## Citation
 
