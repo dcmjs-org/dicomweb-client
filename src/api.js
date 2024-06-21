@@ -246,7 +246,7 @@ class DICOMwebClient {
             } else if (request.responseType === 'arraybuffer') {
               resolve([request.response]);
             } else {
-            resolve(request.response);
+              resolve(request.response);
             }
           } else if (request.status === 202) {
             if (this.verbose) {
@@ -284,7 +284,7 @@ class DICOMwebClient {
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
-        const combinedHeaders = Object.assign({}, headers, this.headers);
+        const combinedHeaders = { ...headers, ...this.headers};
         const metadata = { method, url, headers: combinedHeaders };
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
@@ -335,7 +335,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationJson(url, params = {}, progressCallback, withCredentials) {
+  _httpGetApplicationJson(url, params = {}, progressCallback=null, withCredentials=false) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -364,7 +364,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationPdf(url, params = {}, progressCallback, withCredentials) {
+  _httpGetApplicationPdf(url, params = {}, progressCallback = null, withCredentials = false) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -398,8 +398,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -448,8 +448,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -498,8 +498,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -577,8 +577,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -636,8 +636,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     const headers = {};
     let supportedMediaTypes;
