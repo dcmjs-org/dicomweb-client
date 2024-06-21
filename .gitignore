@@ -57,6 +57,11 @@ typings/
 # Yarn lock file
 yarn.lock
 
+
+# Workspace files
+*.code-workspace
+.*.swp
+
 # dotenv environment variables file
 .env
 

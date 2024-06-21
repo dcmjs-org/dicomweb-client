@@ -284,7 +284,7 @@ class DICOMwebClient {
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
-        const combinedHeaders = Object.assign({}, headers, this.headers);
+        const combinedHeaders = { ...headers, ...this.headers};
         const metadata = { method, url, headers: combinedHeaders };
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
@@ -335,7 +335,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationJson(url, params = {}, progressCallback, withCredentials) {
+  _httpGetApplicationJson(url, params = {}, progressCallback=null, withCredentials=false) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -364,7 +364,7 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetApplicationPdf(url, params = {}, progressCallback, withCredentials) {
+  _httpGetApplicationPdf(url, params = {}, progressCallback = null, withCredentials = false) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -398,8 +398,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -448,8 +448,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -498,8 +498,8 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params = {},
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     let urlWithQueryParams = url;
 
@@ -577,8 +577,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -636,8 +636,8 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    progressCallback,
-    withCredentials,
+    progressCallback = null,
+    withCredentials = false,
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -859,16 +859,16 @@ class DICOMwebClient {
   }
 
   /**
-   * Builds an accept header field value for HTTP GET multipart request
+     * Builds an accept header field value for HTTP GET multipart request
    * messages.  Will throw an exception if no media types are found which are acceptable,
    * but will only log a verbose level message when types are specified which are
    * not acceptable.  This allows requesting several types with having to know
    * whether they are all acceptable or not.
-   *
-   * @param {Object[]} mediaTypes - Acceptable media types
-   * @param {Object[]} supportedMediaTypes - Supported media types
-   * @private
-   */
+     *
+     * @param {Object[]} mediaTypes - Acceptable media types
+     * @param {Object[]} supportedMediaTypes - Supported media types
+     * @private
+     */
   static _buildMultipartAcceptHeaderFieldValue(
     mediaTypes,
     supportedMediaTypes,
@@ -946,9 +946,9 @@ class DICOMwebClient {
       ) {
         if( this.verbose ) {
           console.warn(
-            `Media type ${mediaType} is not supported for requested resource`,
-          );
-        }
+          `Media type ${mediaType} is not supported for requested resource`,
+        );
+      }
         return;
       }
 
@@ -1384,7 +1384,7 @@ class DICOMwebClient {
     );
   }
 
- /**
+  /**
  * Element in mediaTypes parameter
  * @typedef {Object} MediaType
  * @param {String} [MediaType.mediaType] - ie 'image/jpeg', 'image/png'...
@@ -1901,6 +1901,38 @@ class DICOMwebClient {
   }
 
   /**
+   * Generate an absolute URI from a relative URI.
+   * If the URI contains : then it is already absolute, return it.
+   * If the URI starts with /, then just add it after the wadoURL
+   * 
+   * Otherwise, assume the URL is relative to the originally fetched URL -
+   * that needs to have been specified in the options as either:
+   *   * `MetadataURI`
+   *   * study UID for study relative path
+   *   * series UID for series relative path
+   * 
+   * @param {string} uri to convert to full URL
+   * @param {object} options to get relative path from
+   * @returns a URL to the requested resource.
+   */
+  _handleRelativeURI(uri, options = {}) {
+    if (!uri || uri.indexOf(':') !== -1) {
+      return uri;
+    }
+    if (uri[0] === '/') {
+      return this.wadoURL + uri;
+    }
+    const { StudyInstanceUID: studyUid, SeriesInstanceUID: seriesUid, MetadataURI: metadataUri } = options;
+    if( metadataUri ) {
+      return metadataUri.indexOf(':')===-1 ? `${this.wadoURL}/${metadataUri}/${uri}` : `${metadataUri}/${uri}`;
+    }
+    // Not quite right, but this is a guess that the path is study relative if the URI starts with series, AND the seriesUID is available.
+    const isSeriesRelative = seriesUid && !uri.startsWith('series');
+  
+    return isSeriesRelative ? `${this.wadoURL}/studies/${studyUid}/series/${seriesUid}/${uri}` : `${this.wadoURL}/studies/${studyUid}/${uri}`;
+  }
+
+  /**
    * Retrieves and parses BulkData from a BulkDataURI location.
    * Decodes the multipart encoded data and returns the resulting data
    * as an ArrayBuffer.
@@ -1917,8 +1949,10 @@ class DICOMwebClient {
     if (!('BulkDataURI' in options)) {
       throw new Error('BulkDataURI is required.');
     }
+    const { BulkDataURI } = options;
 
-    const url = options.BulkDataURI;
+    // Allow relative URI's, assume it is relative to the studyUID directory
+    const url = this._handleRelativeURI(BulkDataURI, options);
     const { mediaTypes, byteRange } = options;
     const { withCredentials = false } = options;
     const { progressCallback = false } = options;
@@ -1933,30 +1967,30 @@ class DICOMwebClient {
 
         if (commonMediaType==='image/') {
           return this._httpGetMultipartImage(
-            url,
-            mediaTypes,
-            byteRange,
+        url,
+        mediaTypes,
+        byteRange,
             false,
             false,
             progressCallback,
             withCredentials,
-          );
-        }
+      );
+    }
       } catch(e) {
         // No-op - this happens sometimes if trying to fetch the specific desired type but want to fallback to octet-stream
       }
     }
 
     // Just use the media types provided
-    return this._httpGetMultipartApplicationOctetStream(
-      url,
-      mediaTypes,
-      byteRange,
+      return this._httpGetMultipartApplicationOctetStream(
+        url,
+        mediaTypes,
+        byteRange,
       false,
       progressCallback,
       withCredentials,
-    );
-  }
+      );
+    }
 
   /**
    * Stores DICOM Instances.
