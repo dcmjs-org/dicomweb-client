@@ -1,3 +1,5 @@
+import XMLHttpRequest from 'xhr2';
+
 import { multipartEncode, multipartDecode } from './message.js';
 
 function isObject(obj) {
