@@ -314,14 +314,16 @@ class DICOMwebClient {
    * @param {Object} headers
    * @param {Object} responseType
    * @param {Function} progressCallback
+   * @param {XMLHttpRequest} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @return {*}
    * @private
    */
-  _httpGet(url, headers, responseType, progressCallback, withCredentials) {
+  _httpGet(url, headers, responseType, progressCallback, withCredentials,request) {
     return this._httpRequest(url, 'get', headers, {
       responseType,
       progressCallback,
       withCredentials,
+      request
     });
   }
 
@@ -682,6 +684,7 @@ class DICOMwebClient {
    corresponding transfer syntaxes
    * @param {Object} params - Additional HTTP GET query parameters
    * @param {Function} progressCallback
+   * @param {XMLHttpRequest} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
@@ -691,6 +694,7 @@ class DICOMwebClient {
     params,
     progressCallback,
     withCredentials,
+    request
   ) {
     const headers = {};
     const defaultMediaType = 'application/dicom';
@@ -726,7 +730,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials);
+    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials, request);
   }
 
   /**
@@ -1754,6 +1758,7 @@ class DICOMwebClient {
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
+   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @returns {Promise<ArrayBuffer>} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
@@ -1779,6 +1784,7 @@ class DICOMwebClient {
         false,
         progressCallback,
         withCredentials,
+        options.request
       ).then(getFirstResult);
     }
 
@@ -1790,6 +1796,7 @@ class DICOMwebClient {
         false,
         progressCallback,
         withCredentials,
+        options.request
       ).then(getFirstResult);
     }
 
