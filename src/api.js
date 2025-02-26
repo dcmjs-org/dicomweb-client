@@ -220,7 +220,6 @@ class DICOMwebClient {
    * @private
    */
   _httpRequest(url, method, headers = {}, request = {}) {
-    console.log(request)
     const { errorInterceptor, requestHooks } = this;
     return new Promise((resolve, reject) => {
       let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
