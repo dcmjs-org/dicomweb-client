@@ -214,7 +214,7 @@ class DICOMwebClient {
    * @param {String} url
    * @param {String} method
    * @param {Object} headers
-   * @param {Request} [request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [request] - Request Options
    * @param {Array} [request.data] - Data that should be stored
    *  @return {*}
    * @private
@@ -222,16 +222,16 @@ class DICOMwebClient {
   _httpRequest(url, method, headers = {}, request = {}) {
     const { errorInterceptor, requestHooks } = this;
     return new Promise((resolve, reject) => {
-      let instance = request.instance ? request.instance : new XMLHttpRequest();
+      let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
 
-      instance.open(method, url, true);
+      requestInstance.open(method, url, true);
       if ('responseType' in request) {
-        instance.responseType = request.responseType;
+        requestInstance.responseType = request.responseType;
       }
 
       if (typeof headers === 'object') {
         Object.keys(headers).forEach(key => {
-          instance.setRequestHeader(key, headers[key]);
+          requestInstance.setRequestHeader(key, headers[key]);
         });
       }
 
@@ -239,50 +239,50 @@ class DICOMwebClient {
       // (e.g. access tokens)
       const userHeaders = this.headers;
       Object.keys(userHeaders).forEach(key => {
-        instance.setRequestHeader(key, userHeaders[key]);
+        requestInstance.setRequestHeader(key, userHeaders[key]);
       });
 
       // Event triggered when upload starts
-      instance.onloadstart = function onloadstart() {
+      requestInstance.onloadstart = function onloadstart() {
         debugLog('upload started: ', url)
       };
 
       // Event triggered when upload ends
-      instance.onloadend = function onloadend() {
+      requestInstance.onloadend = function onloadend() {
         debugLog('upload finished')
       };
 
       // Handle response message
-      instance.onreadystatechange = () => {
-        if (instance.readyState === 4) {
-          if (instance.status === 200) {
-            const contentType = instance.getResponseHeader('Content-Type');
+      requestInstance.onreadystatechange = () => {
+        if (requestInstance.readyState === 4) {
+          if (requestInstance.status === 200) {
+            const contentType = requestInstance.getResponseHeader('Content-Type');
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
-              resolve(multipartDecode(instance.response));
-            } else if (instance.responseType === 'arraybuffer') {
-              resolve([instance.response]);
+              resolve(multipartDecode(requestInstance.response));
+            } else if (requestInstance.responseType === 'arraybuffer') {
+              resolve([requestInstance.response]);
             } else {
-              resolve(instance.response);
+              resolve(requestInstance.response);
             }
-          } else if (instance.status === 202) {
+          } else if (requestInstance.status === 202) {
             if (this.verbose) {
-              console.warn('some resources already existed: ', instance);
+              console.warn('some resources already existed: ', requestInstance);
             }
-            resolve(instance.response);
-          } else if (instance.status === 204) {
+            resolve(requestInstance.response);
+          } else if (requestInstance.status === 204) {
             if (this.verbose) {
-              console.warn('empty response for request: ', instance);
+              console.warn('empty response for request: ', requestInstance);
             }
             resolve([]);
           } else {
             const error = new Error('request failed');
-            error.request = instance;
-            error.response = instance.response;
-            error.status = instance.status;
+            error.request = requestInstance;
+            error.response = requestInstance.response;
+            error.status = requestInstance.status;
             if (this.verbose) {
-              console.error('request failed: ', instance);
+              console.error('request failed: ', requestInstance);
               console.error(error);
               console.error(error.response);
             }
@@ -297,7 +297,7 @@ class DICOMwebClient {
       // Event triggered while download progresses
       if ('progressCallback' in request) {
         if (typeof request.progressCallback === 'function') {
-          instance.onprogress = request.progressCallback;
+          requestInstance.onprogress = request.progressCallback;
         }
       }
 
@@ -307,20 +307,20 @@ class DICOMwebClient {
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
         const pipedRequest = pipeRequestHooks(requestHooks);
-        instance = pipedRequest(instance);
+        requestInstance = pipedRequest(requestInstance);
       }
 
       // Add withCredentials to request if needed
       if ('withCredentials' in request) {
         if (request.withCredentials) {
-          instance.withCredentials = true;
+          requestInstance.withCredentials = true;
         }
       }
 
       if ('data' in request) {
-        instance.send(request.data);
+        requestInstance.send(request.data);
       } else {
-        instance.send();
+        requestInstance.send();
       }
     });
   }
@@ -789,7 +789,7 @@ class DICOMwebClient {
    * @param {String} url - Unique resource locator
    * @param {Object} headers - HTTP header fields
    * @param {Array} data - Data that should be stored
-   * @param {Request} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} request - Request Options
    * @private
    * @returns {Promise} Response
    */
@@ -1371,7 +1371,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [options.request] - Request Options
    * @returns {Promise<ArrayBuffer>} Rendered DICOM Instance
    */
   retrieveInstanceRendered(options) {
@@ -1456,7 +1456,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [options.request] - Request Options
    * @returns {ArrayBuffer} Thumbnail
    */
   retrieveInstanceThumbnail(options) {
@@ -1520,7 +1520,7 @@ class DICOMwebClient {
    * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [options.request] - Request Options
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
   retrieveInstanceFramesRendered(options) {
@@ -1600,7 +1600,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [options.request] - Request Options
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
   retrieveInstanceFramesThumbnail(options) {
@@ -1675,7 +1675,7 @@ class DICOMwebClient {
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {string[]} options.mediaTypes
-   * @param {Request} options.request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} options.request - Request Options
    * @returns {Promise<ArrayBuffer>} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
@@ -1817,7 +1817,7 @@ class DICOMwebClient {
    * @param {string} options.BulkDataURI to retrieve
    * @param {Array}  options.mediaTypes to use to fetch the URI
    * @param {string} options.byteRange to request a sub-range (only valid on single part)
-   * @param {Request} options.request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} options.request - Request Options
    * @returns {Promise<Array>} Bulkdata parts
    */
   retrieveBulkData(options) {
