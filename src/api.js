@@ -220,6 +220,7 @@ class DICOMwebClient {
    * @private
    */
   _httpRequest(url, method, headers = {}, request = {}) {
+    console.log(request)
     const { errorInterceptor, requestHooks } = this;
     return new Promise((resolve, reject) => {
       let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
@@ -698,7 +699,7 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params,
-    request
+    request = {}
   ) {
     const headers = {};
     const defaultMediaType = 'application/dicom';
@@ -733,6 +734,8 @@ class DICOMwebClient {
       acceptableMediaTypes,
       supportedMediaTypes,
     );
+
+    request.responseType = 'arraybuffer';
 
     return this._httpGet(url, headers, request);
   }
@@ -1133,7 +1136,7 @@ class DICOMwebClient {
    * @param {String} [options.studyInstanceUID] - Study Instance UID
    * @param {String} [options.seriesInstanceUID] - Series Instance UID
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request]
+   * @param {Request} [options.request] - Request Options
    * @returns {Object[]} Instance representations (http://dicom.nema.org/medical/dicom/current/output/chtml/part18/sect_6.7.html#table_6.7.1-2b)
    */
   searchForInstances(options = {}) {
@@ -1316,6 +1319,7 @@ class DICOMwebClient {
           supportedMediaTypes,
         ),
       };
+      request.responseType = 'arraybuffer';
       return this._httpGet(url, headers, request);
     }
 
@@ -1371,7 +1375,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - Request Options
+   * @param {Request} [options.request] - Request Options - Request Options
    * @returns {Promise<ArrayBuffer>} Rendered DICOM Instance
    */
   retrieveInstanceRendered(options) {
@@ -1398,6 +1402,7 @@ class DICOMwebClient {
     const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
+      request.responseType = 'arraybuffer';
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
@@ -1456,7 +1461,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - Request Options
+   * @param {Request} [options.request] - Request Options - Request Options
    * @returns {ArrayBuffer} Thumbnail
    */
   retrieveInstanceThumbnail(options) {
@@ -1484,6 +1489,7 @@ class DICOMwebClient {
     const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
+      request.responseType = 'arraybuffer';
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
@@ -1520,7 +1526,7 @@ class DICOMwebClient {
    * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @param {MediaType[]} [options.mediaTypes] - Acceptable HTTP media types
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - Request Options
+   * @param {Request} [options.request] - Request Options - Request Options
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
   retrieveInstanceFramesRendered(options) {
@@ -1562,6 +1568,7 @@ class DICOMwebClient {
 
     if (!mediaTypes) {
       if (queryParams) {
+        request.responseType = 'arraybuffer';
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
       return this._httpGet(url, headers, request);
@@ -1600,7 +1607,7 @@ class DICOMwebClient {
    * @param {String} options.sopInstanceUID - SOP Instance UID
    * @param {String} options.frameNumbers - One-based indices of Frame Items
    * @param {Object} [options.queryParams] - HTTP query parameters
-   * @param {Request} [options.request] - Request Options
+   * @param {Request} [options.request] - Request Options - Request Options
    * @returns {ArrayBuffer[]} Rendered Frame Items as byte arrays
    */
   retrieveInstanceFramesThumbnail(options) {
@@ -1641,6 +1648,7 @@ class DICOMwebClient {
     const request = getRequestOptions(options.request);
 
     if (!mediaTypes) {
+      request.responseType = 'arraybuffer';
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
@@ -1830,6 +1838,7 @@ class DICOMwebClient {
     const request = getRequestOptions(options.request);
 
     if (this.singlepart.indexOf('bulkdata') !== -1) {
+      request.responseType = 'arraybuffer';
       return this._httpGet(url, options.headers, request);
     }
 
@@ -1869,7 +1878,7 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
    * @param {String} [options.studyInstanceUID] - Study Instance UID
-   * @param {Request} [options.request]
+   * @param {Request} [options.request] - Request Options
    * @returns {Promise} Response message
    */
   storeInstances(options) {
