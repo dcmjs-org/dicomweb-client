@@ -1,5 +1,13 @@
 import { multipartEncode, multipartDecode } from './message.js';
 
+/**
+ * @typedef {Object} Request
+ * @property {XMLHttpRequest} [instance] - If specified, the request to use, otherwise one will be created.
+ * @property {function(ProgressEvent):void} [progressCallback] - A callback function to handle progress events.
+ * @property {boolean} [withCredentials] - Whether to include credentials in the request.
+ * @property {string} [responseType] - The response type of the request.
+ */
+
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
 }
@@ -194,26 +202,24 @@ class DICOMwebClient {
    * @param {String} url
    * @param {String} method
    * @param {Object} headers
-   * @param {Object} options
-   * @param {Array.<RequestHook>} options.requestHooks - Request hooks.
-   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @return {*}
    * @private
    */
-  _httpRequest(url, method, headers = {}, options = {}) {
+  _httpRequest(url, method, headers = {}, request = {}) {
     const { errorInterceptor, requestHooks } = this;
-
+    console.log('request', request);
     return new Promise((resolve, reject) => {
-      let request = options.request ? options.request : new XMLHttpRequest();
+      let instance = request.instance ? request.instance : new XMLHttpRequest();
 
-      request.open(method, url, true);
-      if ('responseType' in options) {
-        request.responseType = options.responseType;
+      instance.open(method, url, true);
+      if ('responseType' in request) {
+        instance.responseType = request.responseType;
       }
 
       if (typeof headers === 'object') {
         Object.keys(headers).forEach(key => {
-          request.setRequestHeader(key, headers[key]);
+          instance.setRequestHeader(key, headers[key]);
         });
       }
 
@@ -221,50 +227,50 @@ class DICOMwebClient {
       // (e.g. access tokens)
       const userHeaders = this.headers;
       Object.keys(userHeaders).forEach(key => {
-        request.setRequestHeader(key, userHeaders[key]);
+        instance.setRequestHeader(key, userHeaders[key]);
       });
 
       // Event triggered when upload starts
-      request.onloadstart = function onloadstart() {
+      instance.onloadstart = function onloadstart() {
         debugLog('upload started: ', url)
       };
 
       // Event triggered when upload ends
-      request.onloadend = function onloadend() {
+      instance.onloadend = function onloadend() {
         debugLog('upload finished')
       };
 
       // Handle response message
-      request.onreadystatechange = () => {
-        if (request.readyState === 4) {
-          if (request.status === 200) {
-            const contentType = request.getResponseHeader('Content-Type');
+      instance.onreadystatechange = () => {
+        if (instance.readyState === 4) {
+          if (instance.status === 200) {
+            const contentType = instance.getResponseHeader('Content-Type');
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
-              resolve(multipartDecode(request.response));
-            } else if (request.responseType === 'arraybuffer') {
-              resolve([request.response]);
+              resolve(multipartDecode(instance.response));
+            } else if (instance.responseType === 'arraybuffer') {
+              resolve([instance.response]);
             } else {
-              resolve(request.response);
+              resolve(instance.response);
             }
-          } else if (request.status === 202) {
+          } else if (instance.status === 202) {
             if (this.verbose) {
-              console.warn('some resources already existed: ', request);
+              console.warn('some resources already existed: ', instance);
             }
-            resolve(request.response);
-          } else if (request.status === 204) {
+            resolve(instance.response);
+          } else if (instance.status === 204) {
             if (this.verbose) {
-              console.warn('empty response for request: ', request);
+              console.warn('empty response for request: ', instance);
             }
             resolve([]);
           } else {
             const error = new Error('request failed');
-            error.request = request;
-            error.response = request.response;
-            error.status = request.status;
+            error.request = instance;
+            error.response = instance.response;
+            error.status = instance.status;
             if (this.verbose) {
-              console.error('request failed: ', request);
+              console.error('request failed: ', instance);
               console.error(error);
               console.error(error.response);
             }
@@ -277,9 +283,9 @@ class DICOMwebClient {
       };
 
       // Event triggered while download progresses
-      if ('progressCallback' in options) {
-        if (typeof options.progressCallback === 'function') {
-          request.onprogress = options.progressCallback;
+      if ('progressCallback' in request) {
+        if (typeof request.progressCallback === 'function') {
+          instance.onprogress = request.progressCallback;
         }
       }
 
@@ -289,20 +295,20 @@ class DICOMwebClient {
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
         const pipedRequest = pipeRequestHooks(requestHooks);
-        request = pipedRequest(request);
+        instance = pipedRequest(instance);
       }
 
       // Add withCredentials to request if needed
-      if ('withCredentials' in options) {
-        if (options.withCredentials) {
-          request.withCredentials = true;
+      if ('withCredentials' in request) {
+        if (request.withCredentials) {
+          instance.withCredentials = true;
         }
       }
 
-      if ('data' in options) {
-        request.send(options.data);
+      if ('data' in request) {
+        instance.send(request.data);
       } else {
-        request.send();
+        instance.send();
       }
     });
   }
@@ -313,18 +319,12 @@ class DICOMwebClient {
    * @param {String} url
    * @param {Object} headers
    * @param {Object} responseType
-   * @param {Function} progressCallback
-   * @param {XMLHttpRequest} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} request
    * @return {*}
    * @private
    */
-  _httpGet(url, headers, responseType, progressCallback, withCredentials,request) {
-    return this._httpRequest(url, 'get', headers, {
-      responseType,
-      progressCallback,
-      withCredentials,
-      request
-    });
+  _httpGet(url, headers, request) {
+    return this._httpRequest(url, 'get', headers, request);
   }
 
   /**
@@ -683,8 +683,7 @@ class DICOMwebClient {
    * @param {Object[]} mediaTypes - Acceptable media types and optionally the UIDs of the
    corresponding transfer syntaxes
    * @param {Object} params - Additional HTTP GET query parameters
-   * @param {Function} progressCallback
-   * @param {XMLHttpRequest} request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} request - request options
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
@@ -692,8 +691,6 @@ class DICOMwebClient {
     url,
     mediaTypes,
     params,
-    progressCallback,
-    withCredentials,
     request
   ) {
     const headers = {};
@@ -730,7 +727,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    return this._httpGet(url, headers, 'arraybuffer', progressCallback, withCredentials, request);
+    return this._httpGet(url, headers, request);
   }
 
   /**
@@ -1758,7 +1755,8 @@ class DICOMwebClient {
    * @param {String} options.studyInstanceUID - Study Instance UID
    * @param {String} options.seriesInstanceUID - Series Instance UID
    * @param {String} options.sopInstanceUID - SOP Instance UID
-   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {string[]} options.mediaTypes
+   * @param {Request} options.request - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
    * @returns {Promise<ArrayBuffer>} DICOM Part 10 file as Arraybuffer
    */
   retrieveInstance(options) {
@@ -1774,17 +1772,18 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}`;
 
     const { mediaTypes } = options;
-    const { withCredentials = false } = options;
-    const { progressCallback = false } = options;
+    const  {request} = options;
+
+    if( !request.withCredentials) request.withCredentials = false;
+    if( !request.progressCallback) request.progressCallback = false;
+    if( !request.responseType) request.responseType = 'arraybuffer';
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationDicom(
         url,
         false,
         false,
-        progressCallback,
-        withCredentials,
-        options.request
+        request
       ).then(getFirstResult);
     }
 
@@ -1794,9 +1793,7 @@ class DICOMwebClient {
         url,
         mediaTypes,
         false,
-        progressCallback,
-        withCredentials,
-        options.request
+        request
       ).then(getFirstResult);
     }
 
@@ -1971,7 +1968,7 @@ class DICOMwebClient {
    * @param {Object} options
    * @param {ArrayBuffer[]} options.datasets - DICOM Instances in PS3.10 format
    * @param {String} [options.studyInstanceUID] - Study Instance UID
-   * @param {XMLHttpRequest} [options.request] - if specified, the request to use, otherwise one will be created; useful for adding custom upload and abort listeners/objects
+   * @param {Request} [options.request]
    * @returns {Promise} Response message
    */
   storeInstances(options) {
