@@ -1,4 +1,4 @@
-import { multipartEncode, multipartDecode } from './message.js';
+import { multipartEncode, multipartDecode } from './message';
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -307,7 +307,7 @@ class DICOMwebClient {
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
-        const combinedHeaders = Object.assign({}, headers, this.headers);
+        const combinedHeaders = { ...headers, ...this.headers };
         const metadata = { method, url, headers: combinedHeaders };
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
@@ -1103,7 +1103,6 @@ class DICOMwebClient {
    */
   searchForInstances(options = {}) {
     let url = this.qidoURL;
-    let withCredentials = false;
     if ('studyInstanceUID' in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ('seriesInstanceUID' in options) {
@@ -1750,8 +1749,6 @@ class DICOMwebClient {
             byteRange,
             false,
             false,
-            progressCallback,
-            withCredentials,
           );
         }
       } catch (e) {
