@@ -1,4 +1,6 @@
-import { multipartEncode, multipartDecode } from './message';
+import { multipartEncode, multipartDecode } from './message.js';
+
+
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -38,11 +40,11 @@ function areValidRequestHooks(requestHooks) {
  * @param {Request} request - Request options.
  */
 const getRequestOptions = (request = {}) => ({
-  instance: request.instance || new XMLHttpRequest(),
-  progressCallback: request.progressCallback || false,
-  withCredentials: request.withCredentials || false,
-  responseType: request.responseType,
-});
+    instance: request.instance || new XMLHttpRequest(),
+    progressCallback: request.progressCallback ||  false,
+    withCredentials: request.withCredentials || false,
+    responseType: request.responseType
+})
 
 const getFirstResult = result => result[0];
 
@@ -97,9 +99,7 @@ class DICOMwebClient {
   constructor(options) {
     this.baseURL = options.url;
     if (!this.baseURL) {
-      console.error(
-        'no DICOMweb base url provided - calls that require a URL will fail',
-      );
+      console.error('no DICOMweb base url provided - calls that require a URL will fail');
     }
 
     if ('username' in options) {
@@ -135,10 +135,7 @@ class DICOMwebClient {
 
     if (options.singlepart) {
       debugLog('use singlepart', options.singlepart);
-      this.singlepart =
-        options.singlepart === true
-          ? 'bulkdata,video,image'
-          : options.singlepart;
+      this.singlepart = options.singlepart === true ? 'bulkdata,video,image' : options.singlepart;
     } else {
       this.singlepart = '';
     }
@@ -157,14 +154,16 @@ class DICOMwebClient {
     this.verbose = options.verbose !== false;
 
     this.setDebug(options.debug);
+ 
+
   }
 
   /**
-   * Allows setting the debug log information.
+   * Allows setting the debug log information. 
    * Note this is different from verbose in that verbose is whether to include warning/error information, defaulting to true
-   *
-   * @param {boolean} debugLevel
-   * @param {function} debugLogFunction to call with the debug output arguments.
+   * 
+   * @param {boolean} debugLevel 
+   * @param {function} debugLogFunction to call with the debug output arguments. 
    */
   setDebug(debugLevel = false, debugLogFunction = null) {
     this.debugLevel = !!debugLevel;
@@ -173,13 +172,13 @@ class DICOMwebClient {
 
   /**
    * Gets debug flag
-   *
+   * 
    * @returns true if debug logging is enabled
    */
   getDebug() {
     return this.debugLevel;
   }
-
+ 
   /**
    * Sets verbose flag.
    *
@@ -223,9 +222,7 @@ class DICOMwebClient {
   _httpRequest(url, method, headers = {}, request = {}) {
     const { errorInterceptor, requestHooks } = this;
     return new Promise((resolve, reject) => {
-      let requestInstance = request.instance
-        ? request.instance
-        : new XMLHttpRequest();
+      let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
 
       requestInstance.open(method, url, true);
       if ('responseType' in request) {
@@ -247,21 +244,19 @@ class DICOMwebClient {
 
       // Event triggered when upload starts
       requestInstance.onloadstart = function onloadstart() {
-        debugLog('upload started: ', url);
+        debugLog('upload started: ', url)
       };
 
       // Event triggered when upload ends
       requestInstance.onloadend = function onloadend() {
-        debugLog('upload finished');
+        debugLog('upload finished')
       };
 
       // Handle response message
       requestInstance.onreadystatechange = () => {
         if (requestInstance.readyState === 4) {
           if (requestInstance.status === 200) {
-            const contentType = requestInstance.getResponseHeader(
-              'Content-Type',
-            );
+            const contentType = requestInstance.getResponseHeader('Content-Type');
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
@@ -307,7 +302,7 @@ class DICOMwebClient {
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
-        const combinedHeaders = { ...headers, ...this.headers };
+        const combinedHeaders = Object.assign({}, headers, this.headers);
         const metadata = { method, url, headers: combinedHeaders };
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
@@ -365,7 +360,11 @@ class DICOMwebClient {
 
     request.responseType = 'json';
 
-    return this._httpGet(urlWithQueryParams, headers, request);
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      request
+    );
   }
 
   /**
@@ -388,9 +387,13 @@ class DICOMwebClient {
     }
     const headers = { Accept: MEDIATYPES.PDF };
 
-    request.responseType = 'json';
+    request.responseType = 'json'
 
-    return this._httpGet(urlWithQueryParams, headers, request);
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      request,
+    );
   }
 
   /**
@@ -404,7 +407,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetImage(url, mediaTypes, params = {}, request = {}) {
+  _httpGetImage(
+    url,
+    mediaTypes,
+    params = {},
+    request = {}
+  ) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -427,9 +435,13 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
     const headers = { Accept: acceptHeaderFieldValue };
-    request.responseType = 'arraybuffer';
+    request.responseType = 'arraybuffer'
 
-    return this._httpGet(urlWithQueryParams, headers, request);
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      request,
+    );
   }
 
   /**
@@ -443,7 +455,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetText(url, mediaTypes, params = {}, request = {}) {
+  _httpGetText(
+    url,
+    mediaTypes,
+    params = {},
+    request = {}
+  ) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -468,7 +485,11 @@ class DICOMwebClient {
     const headers = { Accept: acceptHeaderFieldValue };
     request.responseType = 'arraybuffer';
 
-    return this._httpGet(urlWithQueryParams, headers, request);
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      request,
+    );
   }
 
   /**
@@ -482,7 +503,12 @@ class DICOMwebClient {
    * @return {*}
    * @private
    */
-  _httpGetVideo(url, mediaTypes, params = {}, request = {}) {
+  _httpGetVideo(
+    url,
+    mediaTypes,
+    params = {},
+    request = {}
+  ) {
     let urlWithQueryParams = url;
 
     if (typeof params === 'object') {
@@ -506,7 +532,11 @@ class DICOMwebClient {
     const headers = { Accept: acceptHeaderFieldValue };
     request.responseType = 'arraybuffer';
 
-    return this._httpGet(urlWithQueryParams, headers, request);
+    return this._httpGet(
+      urlWithQueryParams,
+      headers,
+      request,
+    );
   }
 
   /**
@@ -554,7 +584,7 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    request = {},
+    request = {}
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -614,7 +644,7 @@ class DICOMwebClient {
     byteRange,
     params,
     rendered = false,
-    request = {},
+    request = {}
   ) {
     const headers = {};
     let supportedMediaTypes;
@@ -664,7 +694,12 @@ class DICOMwebClient {
    * @private
    * @returns {Promise<Array>} Content of HTTP message body parts
    */
-  _httpGetMultipartApplicationDicom(url, mediaTypes, params, request = {}) {
+  _httpGetMultipartApplicationDicom(
+    url,
+    mediaTypes,
+    params,
+    request = {}
+  ) {
     const headers = {};
     const defaultMediaType = 'application/dicom';
     const supportedMediaTypes = {
@@ -723,7 +758,7 @@ class DICOMwebClient {
     mediaTypes,
     byteRange,
     params,
-    request = {},
+    request = {}
   ) {
     const headers = {};
     const defaultMediaType = 'application/octet-stream';
@@ -745,7 +780,7 @@ class DICOMwebClient {
       supportedMediaTypes,
     );
 
-    request.responseType = 'arraybuffer';
+    request.responseType = 'arraybuffer'
 
     return this._httpGet(url, headers, request);
   }
@@ -762,8 +797,7 @@ class DICOMwebClient {
    */
   _httpPost(url, headers, data, request) {
     return this._httpRequest(url, 'post', headers, {
-      ...request,
-      data,
+      ...request, data
     });
   }
 
@@ -779,7 +813,12 @@ class DICOMwebClient {
    */
   _httpPostApplicationJson(url, data, request) {
     const headers = { 'Content-Type': MEDIATYPES.DICOM_JSON };
-    return this._httpPost(url, headers, data, request);
+    return this._httpPost(
+      url,
+      headers,
+      data,
+      request,
+    );
   }
 
   /**
@@ -910,7 +949,7 @@ class DICOMwebClient {
         Array.isArray(supportedMediaTypes) &&
         !supportedMediaTypes.includes(mediaType)
       ) {
-        if (this.verbose) {
+        if( this.verbose ) {
           console.warn(
             `Media type ${mediaType} is not supported for requested resource`,
           );
@@ -921,10 +960,8 @@ class DICOMwebClient {
       fieldValueParts.push(fieldValue);
     });
 
-    if (!fieldValueParts.length) {
-      throw new Error(
-        `No acceptable media types found among ${JSON.stringify(mediaTypes)}`,
-      );
+    if( !fieldValueParts.length ) {
+      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)}`);
     }
 
     return fieldValueParts.join(', ');
@@ -1012,7 +1049,7 @@ class DICOMwebClient {
     if ('queryParams' in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1033,7 +1070,7 @@ class DICOMwebClient {
     }
     debugLog(`retrieve metadata of study ${options.studyInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/metadata`;
-    const request = getRequestOptions(options.request);
+    const request =getRequestOptions(options.request)    
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1056,8 +1093,8 @@ class DICOMwebClient {
     if ('queryParams' in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-
-    const request = getRequestOptions(options.request);
+    
+    const request = getRequestOptions(options.request)
 
     return this._httpGetApplicationJson(url, {}, request);
   }
@@ -1086,8 +1123,8 @@ class DICOMwebClient {
 
     debugLog(`retrieve metadata of series ${options.seriesInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/metadata`;
-
-    const request = getRequestOptions(options.request);
+    
+    const request = getRequestOptions(options.request)
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1106,10 +1143,14 @@ class DICOMwebClient {
     if ('studyInstanceUID' in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ('seriesInstanceUID' in options) {
-        debugLog(`search for instances of series ${options.seriesInstanceUID}`);
+        debugLog(
+          `search for instances of series ${options.seriesInstanceUID}`,
+        );
         url += `/series/${options.seriesInstanceUID}`;
       } else {
-        debugLog(`search for instances of study ${options.studyInstanceUID}`);
+        debugLog(
+          `search for instances of study ${options.studyInstanceUID}`,
+        );
       }
     } else {
       debugLog('search for instances');
@@ -1118,7 +1159,7 @@ class DICOMwebClient {
     if ('queryParams' in options) {
       url += DICOMwebClient._parseQueryParameters(options.queryParams);
     }
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1185,8 +1226,8 @@ class DICOMwebClient {
     }
     debugLog(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}/metadata`;
-
-    const request = getRequestOptions(options.request);
+    
+    const request = getRequestOptions(options.request)
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1233,8 +1274,8 @@ class DICOMwebClient {
     }/frames/${options.frameNumbers.toString()}`;
 
     const { mediaTypes } = options;
-
-    const request = getRequestOptions(options.request);
+    
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
@@ -1317,11 +1358,11 @@ class DICOMwebClient {
     );
   }
 
-  /**
-   * Element in mediaTypes parameter
-   * @typedef {Object} MediaType
-   * @param {String} [MediaType.mediaType] - ie 'image/jpeg', 'image/png'...
-   */
+ /**
+ * Element in mediaTypes parameter
+ * @typedef {Object} MediaType
+ * @param {String} [MediaType.mediaType] - ie 'image/jpeg', 'image/png'...
+ */
 
   /**
    * Retrieves an individual, server-side rendered DICOM Instance.
@@ -1356,28 +1397,51 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
       request.responseType = 'arraybuffer';
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, request);
+      return this._httpGet(
+        url,
+        headers,
+        request,
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith('image')) {
-      return this._httpGetImage(url, mediaTypes, queryParams, request);
+      return this._httpGetImage(
+        url,
+        mediaTypes,
+        queryParams,
+        request,
+      );
     }
     if (commonMediaType.startsWith('video')) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, request);
+      return this._httpGetVideo(
+        url,
+        mediaTypes,
+        queryParams,
+        request
+      );
     }
     if (commonMediaType.startsWith('text')) {
-      return this._httpGetText(url, mediaTypes, queryParams, request);
+      return this._httpGetText(
+        url,
+        mediaTypes,
+        queryParams,
+        request,
+      );
     }
     if (commonMediaType === MEDIATYPES.PDF) {
-      return this._httpGetApplicationPdf(url, queryParams, request);
+      return this._httpGetApplicationPdf(
+        url,
+        queryParams,
+        request,
+      );
     }
 
     throw new Error(
@@ -1419,20 +1483,29 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-
-    const request = getRequestOptions(options.request);
+   
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
       request.responseType = 'arraybuffer';
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, request);
+      return this._httpGet(
+        url,
+        headers,
+        request
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith('image')) {
-      return this._httpGetImage(url, mediaTypes, queryParams, request);
+      return this._httpGetImage(
+        url,
+        mediaTypes,
+        queryParams,
+        request
+      );
     }
 
     throw new Error(
@@ -1489,7 +1562,7 @@ class DICOMwebClient {
 
     const { mediaTypes, queryParams } = options;
     const headers = {};
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
       if (queryParams) {
@@ -1501,10 +1574,20 @@ class DICOMwebClient {
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith('image')) {
-      return this._httpGetImage(url, mediaTypes, queryParams, request);
+      return this._httpGetImage(
+        url,
+        mediaTypes,
+        queryParams,
+        request
+      );
     }
     if (commonMediaType.startsWith('video')) {
-      return this._httpGetVideo(url, mediaTypes, queryParams, request);
+      return this._httpGetVideo(
+        url,
+        mediaTypes,
+        queryParams,
+        request
+      );
     }
 
     throw new Error(
@@ -1567,12 +1650,21 @@ class DICOMwebClient {
       if (queryParams) {
         url += DICOMwebClient._parseQueryParameters(queryParams);
       }
-      return this._httpGet(url, headers, request);
+      return this._httpGet(
+        url,
+        headers,
+        request
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
     if (commonMediaType.startsWith('image')) {
-      return this._httpGetImage(url, mediaTypes, queryParams, request);
+      return this._httpGetImage(
+        url,
+        mediaTypes,
+        queryParams,
+        request
+      );
     }
 
     throw new Error(
@@ -1606,14 +1698,14 @@ class DICOMwebClient {
 
     const { mediaTypes } = options;
 
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationDicom(
         url,
         false,
         false,
-        request,
+        request
       ).then(getFirstResult);
     }
 
@@ -1623,7 +1715,7 @@ class DICOMwebClient {
         url,
         mediaTypes,
         false,
-        request,
+        request
       ).then(getFirstResult);
     }
 
@@ -1652,10 +1744,15 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}`;
 
     const { mediaTypes } = options;
-    const request = getRequestOptions(options.request);
+    const request = getRequestOptions(options.request)
 
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, request);
+      return this._httpGetMultipartApplicationDicom(
+        url,
+        false,
+        false,
+        request
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
@@ -1664,7 +1761,7 @@ class DICOMwebClient {
         url,
         mediaTypes,
         false,
-        request,
+        request
       );
     }
 
@@ -1692,7 +1789,12 @@ class DICOMwebClient {
     const request = getRequestOptions(options.request);
 
     if (!mediaTypes) {
-      return this._httpGetMultipartApplicationDicom(url, false, false, request);
+      return this._httpGetMultipartApplicationDicom(
+        url,
+        false,
+        false,
+        request
+      );
     }
 
     const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
@@ -1701,7 +1803,7 @@ class DICOMwebClient {
         url,
         mediaTypes,
         false,
-        request,
+        request
       );
     }
 
@@ -1742,16 +1844,18 @@ class DICOMwebClient {
       try {
         const commonMediaType = DICOMwebClient._getCommonMediaType(mediaTypes);
 
-        if (commonMediaType === 'image/') {
+        if (commonMediaType==='image/') {
           return this._httpGetMultipartImage(
             url,
             mediaTypes,
             byteRange,
             false,
             false,
+            progressCallback,
+            withCredentials,
           );
         }
-      } catch (e) {
+      } catch(e) {
         // No-op - this happens sometimes if trying to fetch the specific desired type but want to fallback to octet-stream
       }
     }
@@ -1762,7 +1866,7 @@ class DICOMwebClient {
       mediaTypes,
       byteRange,
       false,
-      request,
+      request
     );
   }
 
@@ -1788,12 +1892,18 @@ class DICOMwebClient {
     const { data, boundary } = multipartEncode(options.datasets);
     const headers = {
       'Content-Type': `multipart/related; type="application/dicom"; boundary="${boundary}"`,
-    };
+    };    
 
     const request = getRequestOptions(options.request);
-    return this._httpPost(url, headers, data, request);
+    return this._httpPost(
+      url,
+      headers,
+      data,
+      request
+    );
   }
 }
+
 
 export { DICOMwebClient };
 export default DICOMwebClient;
