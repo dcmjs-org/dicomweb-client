@@ -38,7 +38,7 @@ function identifyBoundary(header) {
   const parts = header.split('\r\n');
 
   for (let i = 0; i < parts.length; i++) {
-    if (parts[i].substr(0, 2) === '--') {
+    if (parts[i].substring(0, 2) === '--') {
       return parts[i];
     }
   }
@@ -180,15 +180,71 @@ function multipartEncode(
 }
 
 /**
+ * Splits the header string into  parts and extracts the simple contentType
+ * and transferSyntaxUID, assigning them, plus the headers map into the destination object.
+ *
+ * @param {*} destination
+ * @param {string} headerString
+ */
+function addHeaders(destination, headerString) {
+  if (!headerString) {
+    return;
+  }
+  const headerLines = headerString.split('\r\n').filter(Boolean);
+  const headers = new Map();
+  let transferSyntaxUID = null,
+    contentType = null;
+
+  for (const line of headerLines) {
+    const colon = line.indexOf(':');
+    if (colon === -1) {
+      continue;
+    }
+    const name = line.substring(0, colon).toLowerCase();
+    const value = line.substring(colon + 1).trim();
+    if (headers.has(name)) {
+      headers.get(name).push(value);
+    } else {
+      headers.set(name, [value]);
+    }
+    if (name === 'content-type') {
+      const endSimpleType = value.indexOf(';');
+      contentType ||= value.substring(
+        0,
+        endSimpleType === -1 ? value.length : endSimpleType,
+      );
+      const transferSyntaxStart = value.indexOf('transfer-syntax=');
+      if (transferSyntaxStart !== -1) {
+        const endTsuid = value.indexOf(';', transferSyntaxStart);
+        transferSyntaxUID = value.substring(
+          transferSyntaxStart + 16,
+          endTsuid === -1 ? value.length : endTsuid,
+        );
+      }
+    }
+  }
+
+  Object.defineProperty(destination, 'headers', { value: headers });
+  Object.defineProperty(destination, 'contentType', { value: contentType });
+  Object.defineProperty(destination, 'transferSyntaxUID', {
+    value: transferSyntaxUID,
+  });
+}
+
+/**
  * Decode a Multipart encoded ArrayBuffer and return the components as an Array.
  *
  * @param {ArrayBuffer} response Data encoded as a 'multipart/related' message
- * @returns {Array} The content
+ * @returns {Uint8Array[]} The content as an array of Uint8Array
+ *    Each item shall have a contentType value, and a transferSyntaxUID if available,
+ *    as well as the headers Map.  See parseHeaders for output.
+ *
  */
 function multipartDecode(response) {
   // Use the raw data if it is provided in an appropriate format
-  const message = ArrayBuffer.isView(response) ? response : new Uint8Array(response);
-
+  const message = ArrayBuffer.isView(response)
+    ? response
+    : new Uint8Array(response);
   /* Set a maximum length to search for the header boundaries, otherwise
        findToken can run for a long time
     */
@@ -210,6 +266,8 @@ function multipartDecode(response) {
   const boundary = stringToUint8Array(boundaryString);
   const boundaryLength = boundary.length;
   const components = [];
+
+  const headers = header.substring(boundary.length + 2);
 
   let offset = boundaryLength;
 
@@ -240,6 +298,8 @@ function multipartDecode(response) {
     // Extract data from response message, excluding "\r\n"
     const spacingLength = 2;
     const data = response.slice(offset, boundaryIndex - spacingLength);
+    // TODO - extract header data on a per frame basis.
+    addHeaders(data, headers);
 
     // Add the data to the array of results
     components.push(data);
@@ -261,4 +321,5 @@ export {
   multipartEncode,
   multipartDecode,
   guid,
+  addHeaders,
 };

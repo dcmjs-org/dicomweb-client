@@ -1,6 +1,4 @@
-import { multipartEncode, multipartDecode } from './message.js';
-
-
+import { multipartEncode, multipartDecode, addHeaders } from './message.js';
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -256,12 +254,16 @@ class DICOMwebClient {
       requestInstance.onreadystatechange = () => {
         if (requestInstance.readyState === 4) {
           if (requestInstance.status === 200) {
-            const contentType = requestInstance.getResponseHeader('Content-Type');
+            const contentType = requestInstance.getResponseHeader(
+              'Content-Type',
+            );
+            const headers = requestInstance.getAllResponseHeaders();
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
               resolve(multipartDecode(requestInstance.response));
             } else if (requestInstance.responseType === 'arraybuffer') {
+              addHeaders(requestInstance.response, headers);
               resolve([requestInstance.response]);
             } else {
               resolve(requestInstance.response);
