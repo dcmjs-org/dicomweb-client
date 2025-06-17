@@ -24,6 +24,7 @@ let dwc = new DICOMwebClient.api.DICOMwebClient({
   url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
   retrieveRendered: false,
 });
+
 describe('dicomweb.api.DICOMwebClient', function() {
   //
   // Note: you can add the following for debugging tests locally
@@ -124,10 +125,17 @@ describe('dicomweb.api.DICOMwebClient', function() {
       sopInstanceUID:
         '1.3.6.1.4.1.14519.5.2.1.2744.7002.325971588264730726076978589153',
       frameNumbers: '1',
+      // The next line should work, but the server side is broken
+      // mediaTypes: [ {mediaType: 'image/*' }],
     };
 
-    const frames = dwc.retrieveInstance(options);
-  });
+    const frames = await dwc.retrieveInstanceFrames(options);
+    expect(frames instanceof Array).toBe(true);
+    expect(frames.length).toBe(1);
+    expect(frames[0].contentType).toBe("application/octet-stream");
+    // The next line is the correct value for servers supporting image/*
+    //expect(frames[0].transferSyntaxUID).toBe('1.2.3');
+  }, 15000);
 
   it('should retrieve a single instance', async function() {
     // from sample.dcm
@@ -173,10 +181,9 @@ describe('dicomweb.api.DICOMwebClient', function() {
     const options = {
       studyInstanceUID: '999.999.3859744',
       seriesInstanceUID: '999.999.94827453',
-      sopInstanceUID: '999.999.133.1996.1.1800.1.6.25',
     };
 
-    const metadata = await dwc.retrieveInstanceMetadata(options);
+    const metadata = await dwc.retrieveSeriesMetadata(options);
 
     // TODO: Check why metadata is an array of objects, not just an object
     const bulkDataOptions = {

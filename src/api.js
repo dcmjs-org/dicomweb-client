@@ -1,6 +1,4 @@
-import { multipartEncode, multipartDecode } from './message.js';
-
-
+import { multipartEncode, multipartDecode, addHeaders } from './message.js';
 
 function isObject(obj) {
   return typeof obj === 'object' && obj !== null;
@@ -225,7 +223,7 @@ class DICOMwebClient {
       let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
 
       requestInstance.open(method, url, true);
-      if ('responseType' in request) {
+      if (request.responseType) {
         requestInstance.responseType = request.responseType;
       }
 
@@ -256,12 +254,16 @@ class DICOMwebClient {
       requestInstance.onreadystatechange = () => {
         if (requestInstance.readyState === 4) {
           if (requestInstance.status === 200) {
-            const contentType = requestInstance.getResponseHeader('Content-Type');
+            const contentType = requestInstance.getResponseHeader(
+              'Content-Type',
+            );
+            const headers = requestInstance.getAllResponseHeaders();
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
               resolve(multipartDecode(requestInstance.response));
             } else if (requestInstance.responseType === 'arraybuffer') {
+              addHeaders(requestInstance.response, headers);
               resolve([requestInstance.response]);
             } else {
               resolve(requestInstance.response);
@@ -295,10 +297,8 @@ class DICOMwebClient {
       };
 
       // Event triggered while download progresses
-      if ('progressCallback' in request) {
-        if (typeof request.progressCallback === 'function') {
-          requestInstance.onprogress = request.progressCallback;
-        }
+      if (typeof request.progressCallback === 'function') {
+        requestInstance.onprogress = request.progressCallback;
       }
 
       if (requestHooks && areValidRequestHooks(requestHooks)) {
@@ -311,13 +311,11 @@ class DICOMwebClient {
       }
 
       // Add withCredentials to request if needed
-      if ('withCredentials' in request) {
-        if (request.withCredentials) {
-          requestInstance.withCredentials = true;
-        }
+      if (request.withCredentials) {
+        requestInstance.withCredentials = true;
       }
 
-      if ('data' in request) {
+      if (request.data) {
         requestInstance.send(request.data);
       } else {
         requestInstance.send();
@@ -594,6 +592,7 @@ class DICOMwebClient {
         'image/gif',
         'image/png',
         'image/jp2',
+        'image/*',
       ];
     } else {
       supportedMediaTypes = {
@@ -608,6 +607,7 @@ class DICOMwebClient {
         '1.2.840.10008.1.2.4.91': ['image/jp2'],
         '1.2.840.10008.1.2.4.92': ['image/jpx'],
         '1.2.840.10008.1.2.4.93': ['image/jpx'],
+        '*': ['image/*'],
       };
 
       if (byteRange) {
@@ -961,7 +961,7 @@ class DICOMwebClient {
     });
 
     if( !fieldValueParts.length ) {
-      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)}`);
+      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)} testing against ${JSON.stringify(acceptableMediaTypes)}`);
     }
 
     return fieldValueParts.join(', ');
@@ -1227,7 +1227,7 @@ class DICOMwebClient {
     debugLog(`retrieve metadata of instance ${options.sopInstanceUID}`);
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/instances/${options.sopInstanceUID}/metadata`;
     
-    const request = getRequestOptions(options.request)
+    const request = getRequestOptions(options.request);
     return this._httpGetApplicationJson(url, {}, request);
   }
 
@@ -1276,6 +1276,7 @@ class DICOMwebClient {
     const { mediaTypes } = options;
     
     const request = getRequestOptions(options.request)
+    request.responseType = 'arraybuffer';
 
     if (!mediaTypes) {
       return this._httpGetMultipartApplicationOctetStream(
@@ -1317,7 +1318,6 @@ class DICOMwebClient {
           supportedMediaTypes,
         ),
       };
-      request.responseType = 'arraybuffer';
       return this._httpGet(url, headers, request);
     }
 

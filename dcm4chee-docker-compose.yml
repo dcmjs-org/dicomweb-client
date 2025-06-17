@@ -1,4 +1,3 @@
-version: "3"
 services:
   ldap:
     image: dcm4che/slapd-dcm4chee:2.4.44-13.3
