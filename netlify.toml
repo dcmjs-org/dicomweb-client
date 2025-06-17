@@ -1,0 +1,15 @@
+[build]
+  command = "npm install && npm run build"
+  publish = "dist"
+
+[test]
+   command = "npm run test"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--legacy-peer-deps"  # Optional, useful if you run into dependency resolution issues
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
