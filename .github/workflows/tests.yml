@@ -6,22 +6,18 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
+        uses: actions/checkout@v4
 
       - name: Install packages
-        uses: bahmutov/npm-install@v1
+        uses: oven-sh/setup-bun@v2
+        run: bun install
 
       - name: Run build
-        run: npm run build
+        run: bun run build
 
       - name: Run tests
-        run: npm run test
+        run: bun run test

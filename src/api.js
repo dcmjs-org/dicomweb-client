@@ -1125,7 +1125,7 @@ class DICOMwebClient {
     const url = `${this.wadoURL}/studies/${options.studyInstanceUID}/series/${options.seriesInstanceUID}/metadata`;
     
     const request = getRequestOptions(options.request)
-    return this._httpGetApplicationJson(url, {}, false, withCredentials);
+    return this._httpGetApplicationJson(url, {}, request);
   }
 
   /**
@@ -1140,7 +1140,6 @@ class DICOMwebClient {
    */
   searchForInstances(options = {}) {
     let url = this.qidoURL;
-    let withCredentials = false;
     if ('studyInstanceUID' in options) {
       url += `/studies/${options.studyInstanceUID}`;
       if ('seriesInstanceUID' in options) {
