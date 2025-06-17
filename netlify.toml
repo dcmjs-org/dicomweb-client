@@ -2,12 +2,13 @@
   command = "npm install && npm run build"
   publish = "build"
 
-[test]
-   command = "npm run test"
-
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"  # Optional, useful if you run into dependency resolution issues
+
+[build.lifecycle]
+  # This will run before the build command
+  onPostBuild = "npm run test"
 
 [[redirects]]
   from = "/*"

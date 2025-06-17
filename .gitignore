@@ -57,11 +57,15 @@ typings/
 
 # Yarn lock file
 yarn.lock
+bun.lock
 
 # dotenv environment variables file
 .env
 
 .idea
+
+*.code-workspace
+.vscode/
 
 # docker files created by the docker containers for testing
 tmp
