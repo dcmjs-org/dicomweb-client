@@ -7,21 +7,24 @@ on:
 
 jobs:
   publish-package:
-    runs-on: node:24
+    runs-on: ubuntu:latest
     environment: publish
 
+
+      
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Install packages
-        uses: bahmutov/npm-install@v1
+      - name: Install
+        uses: oven-sh/setup-bun@v2
+        run: bun install
 
       - name: Run build
-        run: npm run build
+        run: bun run build
 
       - name: Run tests
-        run: npm run test
+        run: bun run test
 
       - name: Semantic release
         uses: cycjimmy/semantic-release-action@v3
