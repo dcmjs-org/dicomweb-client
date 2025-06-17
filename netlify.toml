@@ -1,6 +1,6 @@
 [build]
   command = "npm install && npm run build"
-  publish = "dist"
+  publish = "build"
 
 [test]
    command = "npm run test"

@@ -31,6 +31,7 @@ bower_components
 
 # Build directory
 build/
+dist/
 
 # Dependency directories
 node_modules/
