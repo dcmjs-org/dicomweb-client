@@ -209,7 +209,7 @@ function addHeaders(destination, headerString) {
     }
     if (name === 'content-type') {
       const endSimpleType = value.indexOf(';');
-      contentType ||= value.substring(
+      contentType = value.substring(
         0,
         endSimpleType === -1 ? value.length : endSimpleType,
       );

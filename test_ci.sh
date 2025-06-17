@@ -1,5 +1,5 @@
 # Clear any previous data from the last test run
-rm -rf /tmp/dcm4chee-arc/db
+rm -rf ./tmp/dcm4chee-arc/db
 
 # now start dcm4chee archive and wait for it to startup
 echo 'Starting dcm4chee Docker container'
