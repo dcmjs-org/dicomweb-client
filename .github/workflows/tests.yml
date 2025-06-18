@@ -12,14 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install bun
-        uses: oven-sh/setup-bun@v2
-      
-      - name: Install dependencies
-        run: bun install
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install packages
+        uses: bahmutov/npm-install@v1
 
       - name: Run build
-        run: bun run build
+        run: npm run build
 
       - name: Run tests
-        run: bun run test
+        run: npm run test
