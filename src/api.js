@@ -895,6 +895,11 @@ class DICOMwebClient {
       DICOMwebClient._assertMediaTypeIsValid(mediaType);
       let fieldValue = `multipart/related; type="${mediaType}"`;
 
+      if (mediaType.endsWith("octet-stream")) {
+        // Prefer explicit transfer syntax
+        fieldValue += "; q=0.9";
+      }
+
       if (isObject(supportedMediaTypes)) {
         // SupportedMediaTypes is a lookup table that maps Transfer Syntax UID
         // to one or more Media Types
