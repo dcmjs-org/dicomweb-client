@@ -5,6 +5,15 @@ on:
     branches:
       - master
 
+# Publishing uses npm trusted publishing (OIDC) - no NPM_TOKEN is involved.
+# The npmjs.com trusted publisher for `dicomweb-client` must name this repository,
+# the workflow file `publish-package.yml`, and the `publish` environment below.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write # required to mint the OIDC token npm exchanges for a publish grant
+
 jobs:
   publish-package:
     runs-on: ubuntu-latest
@@ -13,11 +22,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install packages
         uses: bahmutov/npm-install@v1
@@ -28,10 +40,16 @@ jobs:
       - name: Run tests
         run: npm run test
 
+      # Node 22 bundles npm 10.x; trusted publishing needs npm 11.5.1+ so that
+      # the publish is accepted and provenance is attached.
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
       - name: Semantic release
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v6
         with:
-          semantic_version: 19.0.2
+          # v25 bundles @semantic-release/npm v13, the first release able to
+          # authenticate to npm with an OIDC token instead of NPM_TOKEN.
+          semantic_version: 25
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
