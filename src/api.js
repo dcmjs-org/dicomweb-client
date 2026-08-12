@@ -253,7 +253,8 @@ class DICOMwebClient {
       // Handle response message
       requestInstance.onreadystatechange = () => {
         if (requestInstance.readyState === 4) {
-          if (requestInstance.status === 200) {
+          // Accept both 200 OK and 206 Partial Content (for Range requests)
+          if (requestInstance.status === 200 || requestInstance.status === 206) {
             const contentType = requestInstance.getResponseHeader(
               'Content-Type',
             );
