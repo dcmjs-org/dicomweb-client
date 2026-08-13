@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/dcmjs-org/dicomweb-client.svg?branch=master)](https://travis-ci.com/dcmjs-org/dicomweb-client)
+[![Build Status](https://github.com/dcmjs-org/dicomweb-client/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/dcmjs-org/dicomweb-client/actions/workflows/tests.yml)
 
 # DICOMweb Client
 
@@ -127,5 +127,4 @@ The developers gratefully acknowledge their reseach support:
 * The [Neuroimage Analysis Center](http://nac.spl.harvard.edu)
 * The [National Center for Image Guided Therapy](http://ncigt.org)
 * The [MGH & BWH Center for Clinical Data Science](https://www.ccds.io/)
-
 
