@@ -1,4 +1,5 @@
 [![Build Status](https://github.com/dcmjs-org/dicomweb-client/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/dcmjs-org/dicomweb-client/actions/workflows/tests.yml)
+[![npm version](https://img.shields.io/npm/v/dicomweb-client.svg)](https://www.npmjs.com/package/dicomweb-client)
 
 # DICOMweb Client
 
