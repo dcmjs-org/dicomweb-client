@@ -6,8 +6,18 @@ on:
       - master
 
 # Publishing uses npm trusted publishing (OIDC) - no NPM_TOKEN is involved.
-# The npmjs.com trusted publisher for `dicomweb-client` must name this repository,
-# the workflow file `publish-package.yml`, and the `publish` environment below.
+# The trusted publisher on npmjs.com (Package settings -> Trusted publisher)
+# must be configured as:
+#
+#   Publisher:             GitHub Actions
+#   Organization or user:  dcmjs-org
+#   Repository:            dicomweb-client
+#   Workflow filename:     publish-package.yml
+#   Environment:           publish
+#
+# Every field is case sensitive, and npm does not validate them when they are
+# saved. A mismatch only shows up at publish time, as
+#   "OIDC token exchange with the npm registry failed: 404 ... package not found"
 permissions:
   contents: write
   issues: write
@@ -25,11 +35,14 @@ jobs:
         with:
           persist-credentials: false
 
+      # `registry-url` is deliberately omitted. It writes an .npmrc containing
+      # `_authToken=${NODE_AUTH_TOKEN}`, which makes semantic-release believe a
+      # token is configured, so a trusted-publishing failure is reported as a
+      # misleading `EINVALIDNPMTOKEN` 401 rather than as the OIDC problem it is.
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: 22
-          registry-url: "https://registry.npmjs.org"
+          node-version: 24
 
       - name: Install packages
         uses: bahmutov/npm-install@v1
@@ -40,10 +53,32 @@ jobs:
       - name: Run tests
         run: npm run test
 
-      # Node 22 bundles npm 10.x; trusted publishing needs npm 11.5.1+ so that
-      # the publish is accepted and provenance is attached.
+      # Trusted publishing needs npm 11.5.1+ so that the publish is accepted and
+      # provenance is attached. Node 24 already ships npm 11.x; upgrading keeps
+      # the floor explicit if the bundled version ever regresses.
       - name: Upgrade npm
-        run: npm install -g npm@latest
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      # npm matches the claims below against the trusted publisher configured
+      # for the package. Printing them makes a mismatch diagnosable from the log
+      # instead of only surfacing as a 404 from the token exchange.
+      - name: Show the OIDC claims npm will match against
+        run: |
+          set -euo pipefail
+          id_token=$(curl -sS \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=npm:registry.npmjs.org" \
+            | jq -r .value)
+          echo "::add-mask::$id_token"
+          payload=$(echo "$id_token" | cut -d. -f2 | tr '_-' '/+')
+          case $((${#payload} % 4)) in
+            2) payload="$payload==" ;;
+            3) payload="$payload=" ;;
+          esac
+          echo "$payload" | base64 -d \
+            | jq '{aud, repository, repository_owner, workflow_ref, job_workflow_ref, environment}'
 
       - name: Semantic release
         uses: cycjimmy/semantic-release-action@v6
