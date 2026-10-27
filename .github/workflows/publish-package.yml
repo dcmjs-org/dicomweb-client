@@ -81,7 +81,7 @@ jobs:
             | jq '{aud, repository, repository_owner, workflow_ref, job_workflow_ref, environment}'
 
       - name: Semantic release
-        uses: cycjimmy/semantic-release-action@v6
+        uses: cycjimmy/semantic-release-action@v8
         with:
           # v25 bundles @semantic-release/npm v13, the first release able to
           # authenticate to npm with an OIDC token instead of NPM_TOKEN.
