@@ -198,6 +198,41 @@ describe('dicomweb.api.DICOMwebClient', function() {
   }, 15000);
 });
 
+describe('retrieveBulkData with image media types', function() {
+  it('should request the bulk data as an image', async function() {
+    const client = new DICOMwebClient.api.DICOMwebClient({
+      url: 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs',
+    });
+    spyOn(client, '_httpGetMultipartImage').and.returnValue(
+      Promise.resolve([]),
+    );
+    spyOn(client, '_httpGetMultipartApplicationOctetStream').and.returnValue(
+      Promise.resolve([]),
+    );
+    const mediaTypes = [
+      { mediaType: 'image/jls', transferSyntaxUID: '1.2.840.10008.1.2.4.80' },
+    ];
+
+    await client.retrieveBulkData({
+      BulkDataURI: 'http://localhost:8008/bulkdata',
+      mediaTypes,
+      request: { withCredentials: true },
+    });
+
+    expect(client._httpGetMultipartImage).toHaveBeenCalledWith(
+      'http://localhost:8008/bulkdata',
+      mediaTypes,
+      undefined,
+      false,
+      false,
+      jasmine.objectContaining({ withCredentials: true }),
+    );
+    expect(
+      client._httpGetMultipartApplicationOctetStream,
+    ).not.toHaveBeenCalled();
+  });
+});
+
 describe('Request hooks', function() {
   let requestHook1Spy, requestHook2Spy, url, metadataUrl, request;
 
