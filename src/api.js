@@ -1852,8 +1852,7 @@ class DICOMwebClient {
             byteRange,
             false,
             false,
-            progressCallback,
-            withCredentials,
+            request,
           );
         }
       } catch(e) {
