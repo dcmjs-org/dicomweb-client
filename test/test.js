@@ -262,3 +262,16 @@ describe('Request hooks', function() {
     expect(requestHook2Spy).toHaveBeenCalledWith(request, metadata);
   });
 });
+
+describe('_buildMultipartAcceptHeaderFieldValue', function() {
+  it('should report the supported media types when none is acceptable', function() {
+    expect(() =>
+      DICOMwebClient.api.DICOMwebClient._buildMultipartAcceptHeaderFieldValue(
+        [{ mediaType: 'image/png' }],
+        ['application/octet-stream'],
+      ),
+    ).toThrowError(
+      'No acceptable media types found among [{"mediaType":"image/png"}] testing against ["application/octet-stream"]',
+    );
+  });
+});
