@@ -962,7 +962,7 @@ class DICOMwebClient {
     });
 
     if( !fieldValueParts.length ) {
-      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)} testing against ${JSON.stringify(acceptableMediaTypes)}`);
+      throw new Error(`No acceptable media types found among ${JSON.stringify(mediaTypes)} testing against ${JSON.stringify(supportedMediaTypes)}`);
     }
 
     return fieldValueParts.join(', ');
