@@ -353,6 +353,11 @@ class DICOMwebClient {
       }
 
       if (signal) {
+        /** The signal may have been aborted while request hooks ran */
+        if (signal.aborted) {
+          reject(getAbortReason(signal));
+          return;
+        }
         /**
          * Abort the request object that is actually sent, i.e. after request
          * hooks may have replaced it.

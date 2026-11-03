@@ -139,6 +139,35 @@ describe('Request abort signal', function() {
     expect(replacement.aborted).toBe(true);
   });
 
+  it('rejects without sending when a request hook aborts the signal', async function() {
+    const controller = new AbortController();
+    const instance = new FakeXMLHttpRequest();
+    const abortingHook = jasmine
+      .createSpy('abortingHook', function(request, metadata) {
+        return request;
+      })
+      .and.callFake(request => {
+        controller.abort();
+        return request;
+      });
+    const dwc = new DICOMwebClient.api.DICOMwebClient({
+      url,
+      verbose: false,
+      requestHooks: [abortingHook],
+    });
+    let error;
+    try {
+      await dwc.retrieveInstanceFrames({
+        ...frameOptions,
+        request: { instance, signal: controller.signal },
+      });
+    } catch (e) {
+      error = e;
+    }
+    expect(error.name).toBe('AbortError');
+    expect(instance.sent).toBe(false);
+  });
+
   it('does not pass a signal to request hooks when none is given', async function() {
     const requestHook = jasmine
       .createSpy('requestHook', function(request, metadata) {
