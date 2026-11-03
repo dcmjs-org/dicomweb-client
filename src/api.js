@@ -32,6 +32,9 @@ function areValidRequestHooks(requestHooks) {
  * @property {function(ProgressEvent):void} [progressCallback] - A callback function to handle progress events.
  * @property {string} [responseType] - The response type of the request.
  * @property {boolean} [withCredentials] - Whether to include credentials in the request.
+ * @property {AbortSignal} [signal] - Aborts the request. The returned promise then rejects
+ *   with `signal.reason` (a DOMException named "AbortError" by default) and the
+ *   `errorInterceptor` is not called.
  */
 
 /**
@@ -41,10 +44,24 @@ const getRequestOptions = (request = {}) => ({
     instance: request.instance || new XMLHttpRequest(),
     progressCallback: request.progressCallback ||  false,
     withCredentials: request.withCredentials || false,
-    responseType: request.responseType
+    responseType: request.responseType,
+    signal: request.signal,
 })
 
 const getFirstResult = result => result[0];
+
+/**
+ * Error with which a request aborted through an AbortSignal rejects.
+ *
+ * @param {AbortSignal} signal - Aborted signal
+ * @return {*} The signal's reason, or a DOMException named "AbortError"
+ */
+const getAbortReason = signal => {
+  if (signal.reason !== undefined) {
+    return signal.reason;
+  }
+  return new DOMException('The operation was aborted.', 'AbortError');
+};
 
 const MEDIATYPES = {
   DICOM: 'application/dicom',
@@ -219,7 +236,15 @@ class DICOMwebClient {
    */
   _httpRequest(url, method, headers = {}, request = {}) {
     const { errorInterceptor, requestHooks } = this;
-    return new Promise((resolve, reject) => {
+    const { signal } = request;
+    return new Promise((resolvePromise, rejectPromise) => {
+      let resolve = resolvePromise;
+      let reject = rejectPromise;
+      if (signal && signal.aborted) {
+        reject(getAbortReason(signal));
+        return;
+      }
+
       let requestInstance = request.instance ? request.instance : new XMLHttpRequest();
 
       requestInstance.open(method, url, true);
@@ -252,6 +277,10 @@ class DICOMwebClient {
 
       // Handle response message
       requestInstance.onreadystatechange = () => {
+        /** An aborted request has already been rejected with the abort reason */
+        if (signal && signal.aborted) {
+          return;
+        }
         if (requestInstance.readyState === 4) {
           // Accept both 200 OK and 206 Partial Content (for Range requests)
           if (requestInstance.status === 200 || requestInstance.status === 206) {
@@ -305,6 +334,10 @@ class DICOMwebClient {
       if (requestHooks && areValidRequestHooks(requestHooks)) {
         const combinedHeaders = Object.assign({}, headers, this.headers);
         const metadata = { method, url, headers: combinedHeaders };
+        if (signal) {
+          /** Lets hooks (e.g. retries) stop when the request is aborted */
+          metadata.signal = signal;
+        }
         const pipeRequestHooks = functions => args =>
           functions.reduce((props, fn) => fn(props, metadata), args);
         const pipedRequest = pipeRequestHooks(requestHooks);
@@ -314,6 +347,25 @@ class DICOMwebClient {
       // Add withCredentials to request if needed
       if (request.withCredentials) {
         requestInstance.withCredentials = true;
+      }
+
+      if (signal) {
+        /**
+         * Abort the request object that is actually sent, i.e. after request
+         * hooks may have replaced it.
+         */
+        const sentInstance = requestInstance;
+        const onAbort = () => {
+          sentInstance.abort();
+          reject(getAbortReason(signal));
+        };
+        signal.addEventListener('abort', onAbort, { once: true });
+        const settle = callback => value => {
+          signal.removeEventListener('abort', onAbort);
+          callback(value);
+        };
+        resolve = settle(resolve);
+        reject = settle(reject);
       }
 
       if (request.data) {
