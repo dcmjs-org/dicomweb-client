@@ -170,3 +170,65 @@ describe('Request abort signal', function() {
     expect(instance.aborted).toBe(false);
   });
 });
+
+describe('Request abort signal cleanup', function() {
+  const url = 'http://localhost:8008/dcm4chee-arc/aets/DCM4CHEE/rs';
+  const frameOptions = {
+    studyInstanceUID: '1.2.3',
+    seriesInstanceUID: '1.2.3.4',
+    sopInstanceUID: '1.2.3.4.5',
+    frameNumbers: [1],
+  };
+
+  it('rejects and releases the signal when send throws', async function() {
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url });
+    const instance = new FakeXMLHttpRequest();
+    const sendError = new Error('send failed');
+    instance.send = () => {
+      throw sendError;
+    };
+    const controller = new AbortController();
+    const removeSpy = spyOn(
+      controller.signal,
+      'removeEventListener',
+    ).and.callThrough();
+    let error;
+    try {
+      await dwc.retrieveInstanceFrames({
+        ...frameOptions,
+        request: { instance, signal: controller.signal },
+      });
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBe(sendError);
+    expect(removeSpy).toHaveBeenCalledWith('abort', jasmine.any(Function));
+  });
+
+  it('rejects when the errorInterceptor throws', async function() {
+    const dwc = new DICOMwebClient.api.DICOMwebClient({
+      url,
+      errorInterceptor: () => {
+        throw new Error('interceptor failed');
+      },
+    });
+    const instance = new FakeXMLHttpRequest();
+    const controller = new AbortController();
+    const promise = dwc.retrieveInstanceFrames({
+      ...frameOptions,
+      request: { instance, signal: controller.signal },
+    });
+    try {
+      instance.respond(500, null);
+    } catch (e) {
+      /** The interceptor's error propagates from the event handler */
+    }
+    let error;
+    try {
+      await promise;
+    } catch (e) {
+      error = e;
+    }
+    expect(error.status).toBe(500);
+  });
+});

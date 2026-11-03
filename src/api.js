@@ -319,9 +319,12 @@ class DICOMwebClient {
               console.error(error.response);
             }
 
-            errorInterceptor(error);
-
-            reject(error);
+            try {
+              errorInterceptor(error);
+            } finally {
+              /** Settle (and release the abort listener) even if the interceptor throws */
+              reject(error);
+            }
           }
         }
       };
@@ -368,10 +371,15 @@ class DICOMwebClient {
         reject = settle(reject);
       }
 
-      if (request.data) {
-        requestInstance.send(request.data);
-      } else {
-        requestInstance.send();
+      try {
+        if (request.data) {
+          requestInstance.send(request.data);
+        } else {
+          requestInstance.send();
+        }
+      } catch (error) {
+        /** Reject through the wrapper so the abort listener is released */
+        reject(error);
       }
     });
   }
