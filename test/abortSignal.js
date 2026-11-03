@@ -62,7 +62,7 @@ describe('Request abort signal', function() {
   });
 
   it('rejects without sending when the signal is already aborted', async function() {
-    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor });
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor, verbose: false });
     const instance = new FakeXMLHttpRequest();
     const controller = new AbortController();
     controller.abort();
@@ -81,7 +81,7 @@ describe('Request abort signal', function() {
   });
 
   it('aborts an in-flight request and rejects with the abort reason', async function() {
-    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor });
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor, verbose: false });
     const instance = new FakeXMLHttpRequest();
     const controller = new AbortController();
     const reason = new Error('tile no longer needed');
@@ -97,7 +97,12 @@ describe('Request abort signal', function() {
     } catch (e) {
       error = e;
     }
-    expect(error).toBe(reason);
+    if (controller.signal.reason !== undefined) {
+      expect(error).toBe(reason);
+    } else {
+      /** Browsers without AbortSignal.reason (Chrome < 98) reject with AbortError */
+      expect(error.name).toBe('AbortError');
+    }
     expect(instance.aborted).toBe(true);
     expect(errorInterceptor).not.toHaveBeenCalled();
   });
@@ -111,6 +116,7 @@ describe('Request abort signal', function() {
       .and.callFake(() => replacement);
     const dwc = new DICOMwebClient.api.DICOMwebClient({
       url,
+      verbose: false,
       errorInterceptor,
       requestHooks: [requestHook],
     });
@@ -141,6 +147,7 @@ describe('Request abort signal', function() {
       .and.callFake(request => request);
     const dwc = new DICOMwebClient.api.DICOMwebClient({
       url,
+      verbose: false,
       requestHooks: [requestHook],
     });
     const instance = new FakeXMLHttpRequest();
@@ -154,7 +161,7 @@ describe('Request abort signal', function() {
   });
 
   it('ignores an abort after the request has completed', async function() {
-    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor });
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, errorInterceptor, verbose: false });
     const instance = new FakeXMLHttpRequest();
     instance.responseType = 'arraybuffer';
     const controller = new AbortController();
@@ -181,7 +188,7 @@ describe('Request abort signal cleanup', function() {
   };
 
   it('rejects and releases the signal when send throws', async function() {
-    const dwc = new DICOMwebClient.api.DICOMwebClient({ url });
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, verbose: false });
     const instance = new FakeXMLHttpRequest();
     const sendError = new Error('send failed');
     instance.send = () => {
@@ -208,6 +215,7 @@ describe('Request abort signal cleanup', function() {
   it('rejects when the errorInterceptor throws', async function() {
     const dwc = new DICOMwebClient.api.DICOMwebClient({
       url,
+      verbose: false,
       errorInterceptor: () => {
         throw new Error('interceptor failed');
       },
