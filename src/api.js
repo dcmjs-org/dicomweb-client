@@ -291,7 +291,15 @@ class DICOMwebClient {
             // Automatically distinguishes between multipart and singlepart in an array buffer, and
             // converts them into a consistent type.
             if (contentType && contentType.indexOf('multipart') !== -1) {
-              resolve(multipartDecode(requestInstance.response));
+              let parts;
+              try {
+                parts = multipartDecode(requestInstance.response);
+              } catch (error) {
+                /** Settle (and release the abort listener) on a malformed body */
+                reject(error);
+                return;
+              }
+              resolve(parts);
             } else if (requestInstance.responseType === 'arraybuffer') {
               addHeaders(requestInstance.response, headers);
               resolve([requestInstance.response]);

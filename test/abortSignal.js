@@ -241,6 +241,30 @@ describe('Request abort signal cleanup', function() {
     expect(removeSpy).toHaveBeenCalledWith('abort', jasmine.any(Function));
   });
 
+  it('rejects and releases the signal on a malformed multipart body', async function() {
+    const dwc = new DICOMwebClient.api.DICOMwebClient({ url, verbose: false });
+    const instance = new FakeXMLHttpRequest();
+    instance.getResponseHeader = () => 'multipart/related; type="application/octet-stream"';
+    const controller = new AbortController();
+    const removeSpy = spyOn(
+      controller.signal,
+      'removeEventListener',
+    ).and.callThrough();
+    const promise = dwc.retrieveInstanceFrames({
+      ...frameOptions,
+      request: { instance, signal: controller.signal },
+    });
+    instance.respond(200, new Uint8Array([1, 2, 3]).buffer);
+    let error;
+    try {
+      await promise;
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeDefined();
+    expect(removeSpy).toHaveBeenCalledWith('abort', jasmine.any(Function));
+  });
+
   it('rejects when the errorInterceptor throws', async function() {
     const dwc = new DICOMwebClient.api.DICOMwebClient({
       url,
